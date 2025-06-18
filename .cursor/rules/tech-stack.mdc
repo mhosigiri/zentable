@@ -1,0 +1,100 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Tech Stack Reference - Cursor for Slides
+
+## Core Framework & Architecture
+- **Next.js 13+** with App Router architecture
+- **TypeScript** for type safety throughout the application
+- **React 18** with modern hooks and concurrent features
+- **Client-side rendering** with localStorage persistence (no backend database)
+
+## Styling & UI Components
+- **Tailwind CSS** for utility-first styling
+- **shadcn/ui** component library for consistent UI elements
+- **Radix UI** primitives for accessible components
+- **Lucide React** for consistent iconography
+- **CSS Variables** for theme customization
+- **Glass morphism** design pattern with backdrop blur effects
+
+## AI & Machine Learning
+- **OpenAI GPT-4o-mini** for text generation and content creation
+- **@ai-sdk/openai** for OpenAI integration
+- **Replicate Flux Schnell** for AI image generation
+- **@ai-sdk/replicate** for Replicate integration
+- **Streaming responses** for real-time AI content generation
+
+## Rich Text Editing
+- **Tiptap** as the primary rich text editor
+- **@tiptap/react** for React integration
+- **@tiptap/starter-kit** for basic editing features
+- **@tiptap/extension-*** for advanced formatting (color, alignment, images, etc.)
+- **Bubble menu** for contextual formatting options
+
+## Drag & Drop
+- **@dnd-kit/core** for drag and drop functionality
+- **@dnd-kit/sortable** for sortable slide reordering
+- **@dnd-kit/utilities** for drag and drop utilities
+- **Keyboard accessibility** support for drag operations
+
+## Form Management
+- **React Hook Form** for form state management
+- **@hookform/resolvers** for form validation
+- **Zod** for schema validation and type inference
+
+## State Management & Data
+- **React useState/useEffect** for local component state
+- **localStorage** for document persistence
+- **Custom hooks** for reusable state logic
+- **Context API** for global state where needed
+
+## Development Tools
+- **ESLint** for code linting (disabled during builds)
+- **PostCSS** for CSS processing
+- **Autoprefixer** for CSS vendor prefixes
+- **TypeScript** strict mode enabled
+
+## Key Dependencies
+```json
+{
+  "@ai-sdk/openai": "^0.0.66",
+  "@ai-sdk/replicate": "^0.2.8",
+  "@dnd-kit/core": "^6.1.0",
+  "@tiptap/react": "^2.8.0",
+  "next": "13.5.1",
+  "react": "18.2.0",
+  "tailwindcss": "3.3.3",
+  "typescript": "5.2.2",
+  "zod": "^3.23.8"
+}
+```
+
+## API Routes Structure
+- **`/api/generate-outline`** - Creates presentation outlines from prompts
+- **`/api/generate-slide`** - Generates individual slide content
+- **`/api/generate-image`** - Creates AI-generated images for slides
+
+## File Structure Patterns
+- **`app/`** - Next.js App Router pages and API routes
+- **`components/`** - Reusable React components
+- **`components/ui/`** - shadcn/ui component library
+- **`components/slides/`** - Slide template components
+- **`components/editor/`** - Rich text editor components
+- **`lib/`** - Utility functions and shared logic
+- **`hooks/`** - Custom React hooks
+
+## Configuration Files
+- **[next.config.js](mdc:next.config.js)** - Next.js configuration
+- **[tailwind.config.ts](mdc:tailwind.config.ts)** - Tailwind CSS configuration
+- **[tsconfig.json](mdc:tsconfig.json)** - TypeScript configuration
+- **[components.json](mdc:components.json)** - shadcn/ui configuration
+
+## Design System
+- **Color Palette**: Blue to indigo to purple gradients
+- **Typography**: Inter font family
+- **Spacing**: Tailwind's spacing scale
+- **Border Radius**: Consistent rounded corners
+- **Shadows**: Layered shadow system for depth
+- **Animations**: Smooth transitions and hover effects

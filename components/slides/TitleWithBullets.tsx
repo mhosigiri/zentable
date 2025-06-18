@@ -6,19 +6,21 @@ import { SlideData } from './SlideRenderer';
 interface TitleWithBulletsProps extends SlideData {
   onUpdate?: (updates: Partial<SlideData>) => void;
   isEditable?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 export function TitleWithBullets({ 
   title, 
-  bulletPoints, 
+  bulletPoints = [], 
   isGenerating, 
   onUpdate, 
-  isEditable = false 
+  isEditable = false,
+  theme = 'light'
 }: TitleWithBulletsProps) {
 
   const handleTitleChange = (newTitle: string) => {
     if (onUpdate) {
-      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') }); // Strip HTML tags for title
+      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') });
     }
   };
 
@@ -41,31 +43,45 @@ export function TitleWithBullets({
     }
   };
 
-  // Convert bullet points to HTML for editor
-  const bulletPointsHTML = bulletPoints?.length 
-    ? `<ul>${bulletPoints.map(point => `<li>${point}</li>`).join('')}</ul>`
-    : '<ul><li>First point</li><li>Second point</li><li>Third point</li></ul>';
+  // Default bullet points if none provided
+  const defaultBulletPoints = [
+    'First key point about your topic',
+    'Second important consideration or detail',
+    'Third supporting argument or example',
+    'Fourth conclusion or call to action'
+  ];
+
+  const displayBulletPoints = bulletPoints.length > 0 ? bulletPoints : defaultBulletPoints;
+
+  const isDark = theme === 'dark';
 
   return (
-    <div className="w-full min-h-[500px] bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col p-8">
+    <div className={`w-full min-h-[500px] rounded-lg shadow-lg border flex flex-col p-8 ${
+      isDark 
+        ? 'bg-gray-900 border-gray-700' 
+        : 'bg-white border-gray-200'
+    }`}>
       {/* Title */}
       {(title || isEditable) && (
         <div className="mb-8">
           {isGenerating ? (
-            <div className="h-12 bg-gray-200 rounded w-3/4 mx-auto animate-pulse"></div>
+            <div className={`h-12 rounded w-full animate-pulse ${
+              isDark ? 'bg-gray-700' : 'bg-gray-200'
+            }`}></div>
           ) : isEditable ? (
-            <div className="text-center">
-              <TiptapEditor
-                content={title || 'Slide Title'}
-                onChange={handleTitleChange}
-                placeholder="Enter slide title..."
-                className="text-center"
-              />
-            </div>
+            <TiptapEditor
+              content={title || 'Slide Title'}
+              onChange={handleTitleChange}
+              placeholder="Enter slide title..."
+              variant="title"
+              className={`text-left ${isDark ? '[&_.ProseMirror]:text-white' : ''}`}
+            />
           ) : (
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 text-left leading-tight mb-0">
+            <h1 className={`text-3xl md:text-4xl font-bold text-left leading-tight ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
               {title}
-            </h2>
+            </h1>
           )}
         </div>
       )}
@@ -74,30 +90,43 @@ export function TitleWithBullets({
       <div className="flex-1 flex flex-col justify-start">
         {isGenerating ? (
           <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex items-start space-x-4">
-                <div className="w-2 h-2 bg-gray-200 rounded-full mt-3 flex-shrink-0"></div>
-                <div className="flex-1">
-                  <div className="h-5 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-5 bg-gray-200 rounded w-4/5"></div>
+                <div className={`w-2 h-2 rounded-full mt-3 flex-shrink-0 ${
+                  isDark ? 'bg-gray-600' : 'bg-gray-200'
+                }`}></div>
+                <div className="flex-1 space-y-2">
+                  <div className={`h-5 rounded w-full ${
+                    isDark ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}></div>
+                  <div className={`h-5 rounded w-4/5 ${
+                    isDark ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}></div>
                 </div>
               </div>
             ))}
           </div>
         ) : isEditable ? (
           <TiptapEditor
-            content={bulletPointsHTML}
+            content={`<ul>${displayBulletPoints.map(point => `<li>${point}</li>`).join('')}</ul>`}
             onChange={handleBulletPointsChange}
             placeholder="• Add your bullet points here..."
-            className="[&_.ProseMirror_ul]:space-y-3 [&_.ProseMirror_li]:flex [&_.ProseMirror_li]:items-start [&_.ProseMirror_li]:space-x-3 [&_.ProseMirror_li]:text-lg [&_.ProseMirror_li]:leading-relaxed [&_.ProseMirror_li]:text-gray-700"
+            variant="body"
+            className={`[&_.ProseMirror_ul]:space-y-4 [&_.ProseMirror_li]:flex [&_.ProseMirror_li]:items-start [&_.ProseMirror_li]:space-x-4 ${
+              isDark ? '[&_.ProseMirror]:text-gray-300' : ''
+            }`}
           />
         ) : (
-          bulletPoints && bulletPoints.length > 0 && (
+          displayBulletPoints && displayBulletPoints.length > 0 && (
             <ul className="space-y-4 list-none">
-              {bulletPoints.map((point, index) => (
+              {displayBulletPoints.map((point, index) => (
                 <li key={index} className="flex items-start space-x-4">
-                  <div className="w-2 h-2 bg-gray-900 rounded-full mt-3 flex-shrink-0"></div>
-                  <p className="text-lg md:text-xl text-gray-700 leading-relaxed font-normal">
+                  <div className={`w-2 h-2 rounded-full mt-3 flex-shrink-0 ${
+                    isDark ? 'bg-white' : 'bg-gray-900'
+                  }`}></div>
+                  <p className={`text-lg md:text-xl leading-relaxed font-normal ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
                     {point}
                   </p>
                 </li>

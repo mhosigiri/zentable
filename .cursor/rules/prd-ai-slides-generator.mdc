@@ -1,0 +1,235 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Product Requirements Document - AI Slides Generator with Copilot
+
+## 🎯 Product Vision
+Build an intelligent, AI-powered presentation creation platform that transforms simple prompts into professional slide decks with an integrated AI copilot for real-time assistance and content refinement.
+
+## 📋 Executive Summary
+**Product Name**: Cursor for Slides (PresentAI)  
+**Target Users**: Content creators, educators, business professionals, marketers  
+**Core Value Proposition**: Create stunning presentations in seconds with AI assistance and real-time editing support  
+
+## 🎯 Product Goals
+
+### Primary Goals
+1. **AI-First Content Generation**: Transform user prompts into comprehensive, professional presentations
+2. **Intelligent Copilot Integration**: Provide contextual AI assistance for content editing and improvements
+3. **Seamless User Experience**: Minimize friction from idea to finished presentation
+4. **Professional Quality Output**: Generate presentation-ready content with proper formatting and design
+
+### Success Metrics
+- **Time to First Slide**: < 30 seconds from prompt to generated content
+- **User Engagement**: 80%+ of users complete their presentation after starting
+- **Content Quality**: 90%+ user satisfaction with AI-generated content
+- **Copilot Usage**: 70%+ of users interact with AI copilot during editing
+
+## 🏗️ Current Implementation Status
+
+### ✅ Completed Features
+
+#### **Core AI Generation Pipeline**
+- **Outline Generation** via [/api/generate-outline](mdc:app/api/generate-outline/route.ts)
+  - Structured outline creation from user prompts
+  - Smart template type selection
+  - Streaming responses for real-time updates
+  - Multi-language support (EN, ES, FR, DE)
+
+- **Individual Slide Generation** via [/api/generate-slide](mdc:app/api/generate-slide/route.ts)
+  - Template-specific content generation
+  - Content expansion from bullet points
+  - Style adaptation (Default, Modern, Minimal, Creative)
+
+- **AI Image Generation** via [/api/generate-image](mdc:app/api/generate-image/route.ts)
+  - Professional presentation images
+  - 16:9 aspect ratio optimization
+  - Contextual image prompts
+
+#### **Slide Template System**
+- **10 Template Types** in [components/slides/](mdc:components/slides)
+  - Basic layouts: Blank Card, Title with Bullets
+  - Image layouts: Image+Text, Text+Image, Title+Bullets+Image
+  - Multi-column layouts: 2, 3, 4 columns with/without headings
+  - Smart template selection based on content analysis
+
+#### **Rich Text Editor**
+- **Tiptap Integration** in [TiptapEditor.tsx](mdc:components/editor/TiptapEditor.tsx)
+  - Bubble menu with formatting options
+  - Real-time content editing
+  - Image support and styling
+  - Color picker and text alignment
+
+#### **User Interface**
+- **Landing Page** in [app/page.tsx](mdc:app/page.tsx) - Marketing homepage
+- **Creation Workflow** in [app/create/](mdc:app/create)
+  - Generate from prompt [/create/generate](mdc:app/create/generate/page.tsx)
+  - Paste existing content [/create/paste](mdc:app/create/paste/page.tsx)
+  - Import files/URLs [/create/import](mdc:app/create/import/page.tsx)
+- **Presentation Editor** in [/docs/[id]](mdc:app/docs/[id]/page.tsx)
+  - Slide-by-slide editing
+  - Drag-and-drop reordering
+  - Real-time content updates
+
+#### **Data Management**
+- **Client-side persistence** using localStorage
+- **Document structure** with metadata and content
+- **State management** with React hooks
+
+## 🚀 Planned Features - AI Copilot Integration
+
+### **Phase 1: Chat-Based Copilot**
+#### **Core Chat Interface**
+- **Floating Chat Widget**: Always-accessible AI assistant
+- **Context-Aware Responses**: Understands current slide and presentation context
+- **Natural Language Commands**: Process user requests in conversational format
+
+#### **Content Assistance Commands**
+```
+Examples:
+- "Make this slide more engaging"
+- "Add bullet points about market trends"
+- "Rewrite this in a more professional tone"
+- "Generate an image for this slide"
+- "Create a conclusion slide"
+```
+
+#### **Technical Implementation**
+- **New API Route**: `/api/copilot-chat` for conversational AI
+- **Context Management**: Track current slide, presentation state, and user intent
+- **Streaming Responses**: Real-time chat experience
+- **Action Integration**: Execute changes directly from chat commands
+
+### **Phase 2: Advanced Copilot Features**
+#### **Smart Suggestions**
+- **Proactive Recommendations**: Suggest improvements based on content analysis
+- **Template Optimization**: Recommend better template types for content
+- **Content Gap Analysis**: Identify missing information or weak points
+
+#### **Collaborative Editing**
+- **Inline Suggestions**: Show AI recommendations directly in the editor
+- **Accept/Reject Interface**: Easy approval workflow for AI suggestions
+- **Version History**: Track changes made by AI copilot
+
+#### **Advanced Content Generation**
+- **Slide Continuation**: "Add 3 more slides about [topic]"
+- **Content Refinement**: Iterative improvement of existing content
+- **Style Consistency**: Maintain consistent tone and style across presentation
+
+## 🛠️ Technical Architecture
+
+### **Current Stack** (Reference: [tech-stack.mdc](mdc:.cursor/rules/tech-stack.mdc))
+- **Frontend**: Next.js 13 + React 18 + TypeScript
+- **AI Integration**: OpenAI GPT-4o-mini + Replicate Flux Schnell
+- **Editor**: Tiptap rich text editor
+- **UI**: Tailwind CSS + shadcn/ui
+- **State**: React hooks + localStorage
+
+### **Copilot Architecture Extensions**
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Chat Widget   │◄──►│  Copilot Engine  │◄──►│  Context Store  │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  User Commands  │    │   AI Processing  │    │ Slide Content   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+## 📱 User Experience Flow
+
+### **Current Flow**
+1. **Landing** → Choose creation method
+2. **Input** → Provide prompt + settings
+3. **Generation** → AI creates outline → slides → images
+4. **Editing** → Manual content refinement
+5. **Export** → Final presentation
+
+### **Enhanced Flow with Copilot**
+1. **Landing** → Choose creation method
+2. **Input** → Provide prompt + settings
+3. **Generation** → AI creates outline → slides → images
+4. **Copilot Assistance** → AI suggests improvements and responds to chat
+5. **Collaborative Editing** → User + AI refine content together
+6. **Export** → Polished, AI-optimized presentation
+
+## 🎨 Design Requirements
+
+### **Chat Interface Design**
+- **Floating Widget**: Bottom-right corner, expandable/collapsible
+- **Chat History**: Persistent conversation during editing session
+- **Action Buttons**: Quick actions for common requests
+- **Loading States**: Clear indication when AI is processing
+
+### **Integration Points**
+- **Slide Editor**: Seamless integration with existing [TiptapEditor](mdc:components/editor/TiptapEditor.tsx)
+- **Slide Navigation**: Context awareness of current slide
+- **Template System**: Integration with existing [slide templates](mdc:components/slides)
+
+## 🔧 Development Priorities
+
+### **Immediate (Phase 1)**
+1. **Chat Interface Component**: Build floating chat widget
+2. **Copilot API**: Create `/api/copilot-chat` endpoint
+3. **Context Management**: Track presentation and slide state
+4. **Basic Commands**: Implement core content editing commands
+
+### **Short-term (Phase 2)**
+1. **Advanced Suggestions**: Proactive AI recommendations
+2. **Inline Editing**: Direct AI suggestions in editor
+3. **Content Analysis**: Identify improvement opportunities
+4. **Performance Optimization**: Efficient AI request handling
+
+### **Long-term (Phase 3)**
+1. **Multi-modal Input**: Voice commands and image analysis
+2. **Collaboration Features**: Multi-user editing with AI assistance
+3. **Template Learning**: AI learns from user preferences
+4. **Export Enhancements**: Advanced formatting and sharing options
+
+## 📊 Success Criteria
+
+### **Functional Requirements**
+- ✅ AI generates professional presentations from prompts
+- ✅ Users can edit content with rich text editor
+- 🔄 AI copilot responds to natural language commands
+- 🔄 Copilot provides contextual suggestions and improvements
+- 🔄 Real-time collaboration between user and AI
+
+### **Performance Requirements**
+- **Response Time**: < 3 seconds for copilot responses
+- **Generation Speed**: < 30 seconds for full presentation
+- **Accuracy**: 90%+ relevant AI suggestions
+- **Reliability**: 99%+ uptime for AI services
+
+### **User Experience Requirements**
+- **Intuitive Interface**: No learning curve for basic features
+- **Responsive Design**: Works on desktop and tablet
+- **Accessibility**: Keyboard navigation and screen reader support
+- **Error Handling**: Graceful degradation when AI services are unavailable
+
+## 🔄 Current Status & Next Steps
+
+### **✅ Completed**
+- Core AI generation pipeline
+- Rich slide templates and editor
+- Professional UI/UX design
+- Client-side data persistence
+
+### **🔄 In Progress**
+- AI copilot integration planning
+- Chat interface design
+- Context management architecture
+
+### **📋 Next Steps**
+1. **Design copilot chat interface**
+2. **Implement `/api/copilot-chat` endpoint**
+3. **Build context-aware AI assistant**
+4. **Integrate chat widget with existing editor**
+5. **Test and iterate on user experience**
+
+---
+
+**This PRD serves as the roadmap for evolving the current AI slides generator into a comprehensive AI-assisted presentation creation platform with intelligent copilot capabilities.**

@@ -47,6 +47,8 @@ export default function PresentationPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlideIndex, setGeneratingSlideIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [generatingImages, setGeneratingImages] = useState(new Set<number>());
+  const [generatingSlides, setGeneratingSlides] = useState(new Set<number>());
 
   // Load document data from localStorage
   useEffect(() => {
@@ -67,6 +69,14 @@ export default function PresentationPage() {
 
   // Initialize slides from outline - only create the requested number of slides
   const initializeSlides = (outline: GeneratedOutline, requestedCount: number) => {
+    // Prevent re-initialization if slides already exist
+    if (slides.length > 0) {
+      console.log('🚫 Slides already initialized, skipping re-generation');
+      return;
+    }
+
+    console.log('✅ Initializing slides for the first time');
+    
     // Only create slides from sections, no automatic title slide
     // Take only the requested number of sections
     const sectionsToUse = outline.sections.slice(0, requestedCount);
@@ -96,7 +106,6 @@ export default function PresentationPage() {
       try {
         await generateSlide(section, i);
       } catch (error) {
-        console.error(`Error generating slide ${i}:`, error);
         // Continue with next slide even if one fails
       }
     }
@@ -107,6 +116,15 @@ export default function PresentationPage() {
 
   // Generate individual slide
   const generateSlide = async (section: OutlineSection, slideIndex: number) => {
+    // Prevent duplicate slide generation
+    if (generatingSlides.has(slideIndex)) {
+      console.log('🚫 Already generating slide:', slideIndex, 'skipping duplicate');
+      return;
+    }
+
+    console.log('🎯 Starting slide generation for:', slideIndex);
+    setGeneratingSlides(prev => new Set(prev).add(slideIndex));
+
     try {
       const response = await fetch('/api/generate-slide', {
         method: 'POST',
@@ -133,6 +151,9 @@ export default function PresentationPage() {
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let lastUpdate = 0;
+      let latestData: any = null;
+      const UPDATE_THROTTLE = 100; // Throttle updates to every 100ms
 
       while (true) {
         const { done, value } = await reader.read();
@@ -145,56 +166,141 @@ export default function PresentationPage() {
         const lines = buffer.split('\n');
         buffer = lines.pop() || ''; // Keep incomplete line in buffer
         
+        const now = Date.now();
+        let shouldUpdate = false;
+        
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
               const streamData = JSON.parse(line.slice(6));
-              console.log('Received slide data:', streamData);
               
-              // Update the slide with the latest partial data
-              setSlides(prevSlides => 
-                prevSlides.map((slide, index) => 
-                  index === slideIndex 
-                    ? { 
-                        ...slide, 
-                        ...streamData,
-                        isGenerating: false
-                      }
-                    : slide
-                )
-              );
-
-              // If slide has imagePrompt, generate image
-              if (streamData.imagePrompt && !streamData.imageUrl) {
-                generateSlideImage(streamData.imagePrompt, slideIndex);
+              // Only update if we have meaningful data
+              if (Object.keys(streamData).length > 0) {
+                latestData = streamData;
+                shouldUpdate = true;
               }
             } catch (e) {
-              console.error('Error parsing slide data:', e);
+              // Silently ignore parsing errors to avoid console spam
             }
           }
         }
+        
+        // Throttled update with latest data
+        if (shouldUpdate && latestData && (now - lastUpdate > UPDATE_THROTTLE)) {
+          lastUpdate = now;
+          
+          // Batch updates to reduce re-renders
+          setSlides(prevSlides => {
+            const newSlides = [...prevSlides];
+            const currentSlide = newSlides[slideIndex];
+            
+            // Only update if the data has actually changed
+            const hasChanges = Object.keys(latestData).some(key => 
+              currentSlide[key as keyof SlideData] !== latestData[key]
+            );
+            
+            if (hasChanges) {
+              newSlides[slideIndex] = { 
+                ...currentSlide, 
+                ...latestData,
+                isGenerating: false
+              };
+              return newSlides;
+            }
+            
+            return prevSlides;
+          });
+
+          // Don't generate image during streaming to avoid multiple calls
+          // Image will be generated after streaming completes
+        }
       }
-    } catch (error) {
-      console.error('Error generating slide:', error);
-      // Mark slide as failed
-      setSlides(prevSlides => 
-        prevSlides.map((slide, index) => 
-          index === slideIndex 
-            ? { 
-                ...slide, 
-                isGenerating: false,
-                title: section.title,
-                bulletPoints: section.bulletPoints
-              }
-            : slide
-        )
-      );
-    }
+      
+      // Final update with any remaining data
+      if (latestData) {
+        setSlides(prevSlides => {
+          const newSlides = [...prevSlides];
+          const currentSlide = newSlides[slideIndex];
+          
+          newSlides[slideIndex] = { 
+            ...currentSlide, 
+            ...latestData,
+            isGenerating: false
+          };
+          return newSlides;
+        });
+
+        // Generate image only after streaming is completely finished
+        if (latestData.imagePrompt && !latestData.imageUrl) {
+          console.log('🎯 Streaming complete, generating image for slide:', slideIndex);
+          generateSlideImage(latestData.imagePrompt, slideIndex);
+        }
+      }
+
+      // Remove from generating slides set
+      setGeneratingSlides(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(slideIndex);
+        return newSet;
+      });
+          } catch (error) {
+        console.error('❌ Slide generation failed for slide:', slideIndex, error);
+        
+        // Remove from generating slides set
+        setGeneratingSlides(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(slideIndex);
+          return newSet;
+        });
+        
+        // Mark slide as failed
+        setSlides(prevSlides => 
+          prevSlides.map((slide, index) => 
+            index === slideIndex 
+              ? { 
+                  ...slide, 
+                  isGenerating: false,
+                  title: section.title,
+                  bulletPoints: section.bulletPoints
+                }
+              : slide
+          )
+        );
+      }
   };
 
   // Generate image for slide
   const generateSlideImage = async (imagePrompt: string, slideIndex: number) => {
     try {
+      console.log('🎨 Attempting image generation for slide:', slideIndex, 'with prompt:', imagePrompt);
+      
+      // Check if already generating this slide's image
+      if (generatingImages.has(slideIndex)) {
+        console.log('🚫 Already generating image for slide:', slideIndex);
+        return;
+      }
+
+      // Check if slide already has an image
+      const currentSlide = slides[slideIndex];
+      if (currentSlide?.imageUrl) {
+        console.log('🚫 Slide already has image:', slideIndex);
+        return;
+      }
+
+      console.log('✅ Proceeding with image generation for slide:', slideIndex);
+      
+      // Add to generating set
+      setGeneratingImages(prev => new Set(prev).add(slideIndex));
+      
+      // Mark slide as generating image to prevent duplicate calls
+      setSlides(prevSlides => 
+        prevSlides.map((slide, index) => 
+          index === slideIndex 
+            ? { ...slide, isGeneratingImage: true }
+            : slide
+        )
+      );
+
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
@@ -209,16 +315,41 @@ export default function PresentationPage() {
 
       const { imageUrl } = await response.json();
       
+      console.log('✅ Image generated successfully for slide:', slideIndex);
+      
+      // Remove from generating set
+      setGeneratingImages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(slideIndex);
+        return newSet;
+      });
+      
       // Update slide with generated image
       setSlides(prevSlides => 
         prevSlides.map((slide, index) => 
           index === slideIndex 
-            ? { ...slide, imageUrl }
+            ? { ...slide, imageUrl, isGeneratingImage: false }
             : slide
         )
       );
     } catch (error) {
-      console.error('Error generating image:', error);
+      console.error('❌ Image generation failed for slide:', slideIndex, error);
+      
+      // Remove from generating set
+      setGeneratingImages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(slideIndex);
+        return newSet;
+      });
+      
+      // Mark as failed
+      setSlides(prevSlides => 
+        prevSlides.map((slide, index) => 
+          index === slideIndex 
+            ? { ...slide, isGeneratingImage: false }
+            : slide
+        )
+      );
     }
   };
 

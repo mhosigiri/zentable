@@ -40,7 +40,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface OutlineSection {
   id: string;
   title: string;
-  bulletPoints: string[];
+  bulletPoints?: string[];
   templateType: string;
 }
 
@@ -67,8 +67,8 @@ function SortableOutlineCard({ section, index, onEdit }: {
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingBullets, setIsEditingBullets] = useState(false);
-  const [editTitle, setEditTitle] = useState(section.title);
-  const [editBullets, setEditBullets] = useState(section.bulletPoints.join('\n'));
+  const [editTitle, setEditTitle] = useState(section.title || '');
+  const [editBullets, setEditBullets] = useState((section.bulletPoints || []).join('\n'));
 
   const {
     attributes,
@@ -151,7 +151,7 @@ function SortableOutlineCard({ section, index, onEdit }: {
                   onBlur={handleBulletsSave}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') {
-                      setEditBullets(section.bulletPoints.join('\n'));
+                      setEditBullets((section.bulletPoints || []).join('\n'));
                       setIsEditingBullets(false);
                     }
                   }}
@@ -165,7 +165,7 @@ function SortableOutlineCard({ section, index, onEdit }: {
                   onClick={() => setIsEditingBullets(true)}
                 >
                   <ul className="space-y-1">
-                    {section.bulletPoints.map((point, pointIndex) => (
+                    {(section.bulletPoints || []).map((point, pointIndex) => (
                       <li key={pointIndex} className="text-sm text-gray-600 flex items-start">
                         <span className="w-1 h-1 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
                         <span className="leading-relaxed">{point}</span>
@@ -484,21 +484,23 @@ export default function OutlinePage() {
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-4 max-w-3xl mx-auto">
-                    {generatedOutline.sections.map((section, index) => (
-                      <SortableOutlineCard
-                        key={section.id}
-                        section={section}
-                        index={index}
-                        onEdit={handleEditSection}
-                      />
-                    ))}
+                    {generatedOutline.sections
+                      .filter(section => section && section.title) // Only render sections with titles
+                      .map((section, index) => (
+                        <SortableOutlineCard
+                          key={section.id}
+                          section={section}
+                          index={index}
+                          onEdit={handleEditSection}
+                        />
+                      ))}
                   </div>
                 </SortableContext>
               </DndContext>
             ) : (
               // Show streaming progress
               <div className="space-y-4 max-w-3xl mx-auto">
-                {generatedOutline?.sections?.map((section, index) => (
+                {generatedOutline?.sections?.filter(section => section && section.title).map((section, index) => (
                   <Card key={section.id || index} className="bg-white/90 backdrop-blur-sm border border-blue-200/50 animate-pulse">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
@@ -510,17 +512,19 @@ export default function OutlinePage() {
                             {section.title || 'Generating...'}
                           </h3>
                           <ul className="space-y-1">
-                            {section.bulletPoints?.map((point, pointIndex) => (
-                              <li key={pointIndex} className="text-sm text-gray-600 flex items-start">
-                                <span className="w-1 h-1 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                <span className="leading-relaxed">{point}</span>
-                              </li>
-                            )) || (
-                              <li className="text-sm text-gray-400 flex items-start">
-                                <span className="w-1 h-1 bg-gray-300 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                <span className="leading-relaxed">Generating bullet points...</span>
-                              </li>
-                            )}
+                            {(section.bulletPoints && section.bulletPoints.length > 0) ? 
+                              section.bulletPoints.map((point, pointIndex) => (
+                                <li key={pointIndex} className="text-sm text-gray-600 flex items-start">
+                                  <span className="w-1 h-1 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                                  <span className="leading-relaxed">{point}</span>
+                                </li>
+                              )) : (
+                                <li className="text-sm text-gray-400 flex items-start">
+                                  <span className="w-1 h-1 bg-gray-300 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                                  <span className="leading-relaxed">Generating bullet points...</span>
+                                </li>
+                              )
+                            }
                           </ul>
                         </div>
                       </div>

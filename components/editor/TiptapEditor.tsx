@@ -17,18 +17,37 @@ import {
   AlignCenter, 
   AlignRight,
   Palette,
-  Type
+  Type,
+  List,
+  ListOrdered
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { parseMarkdownToHtml, hasMarkdownFormatting } from '@/lib/utils';
 
 interface TiptapEditorProps {
   content: string;
   onChange: (content: string) => void;
   placeholder?: string;
   className?: string;
+  variant?: 'title' | 'subtitle' | 'body' | 'default';
 }
 
-export function TiptapEditor({ content, onChange, placeholder, className }: TiptapEditorProps) {
+function getEditorClasses(variant: string): string {
+  const baseClasses = 'tiptap-editor focus:outline-none min-h-[60px] p-3';
+  
+  switch (variant) {
+    case 'title':
+      return `${baseClasses} text-3xl md:text-4xl font-bold text-gray-900 leading-tight`;
+    case 'subtitle':
+      return `${baseClasses} text-xl md:text-2xl font-semibold text-gray-900 leading-tight`;
+    case 'body':
+      return `${baseClasses} text-base md:text-lg text-gray-700 leading-relaxed`;
+    default:
+      return `${baseClasses} prose prose-sm sm:prose lg:prose-lg max-w-none`;
+  }
+}
+
+export function TiptapEditor({ content, onChange, placeholder, className, variant = 'default' }: TiptapEditorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const editor = useEditor({
@@ -36,6 +55,21 @@ export function TiptapEditor({ content, onChange, placeholder, className }: Tipt
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
+        },
+        bulletList: {
+          HTMLAttributes: {
+            class: 'tiptap-bullet-list',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'tiptap-ordered-list',
+          },
+        },
+        listItem: {
+          HTMLAttributes: {
+            class: 'tiptap-list-item',
+          },
         },
       }),
       Underline,
@@ -59,7 +93,7 @@ export function TiptapEditor({ content, onChange, placeholder, className }: Tipt
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[60px] p-3',
+        class: getEditorClasses(variant),
       },
     },
   });
@@ -67,7 +101,11 @@ export function TiptapEditor({ content, onChange, placeholder, className }: Tipt
   // Update editor content when prop changes
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      // Check if content contains markdown and parse it
+      const processedContent = hasMarkdownFormatting(content) 
+        ? parseMarkdownToHtml(content) 
+        : content;
+      editor.commands.setContent(processedContent);
     }
   }, [content, editor]);
 
@@ -151,6 +189,26 @@ export function TiptapEditor({ content, onChange, placeholder, className }: Tipt
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={`h-8 w-8 p-0 ${editor.isActive('bulletList') ? 'bg-gray-100' : ''}`}
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={`h-8 w-8 p-0 ${editor.isActive('orderedList') ? 'bg-gray-100' : ''}`}
+        >
+          <ListOrdered className="h-4 w-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
         <div className="relative">
           <Button
             variant="ghost"
@@ -191,7 +249,7 @@ export function TiptapEditor({ content, onChange, placeholder, className }: Tipt
       {/* Editor Content */}
       <EditorContent 
         editor={editor} 
-        className="min-h-[60px] cursor-text [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[60px] [&_.ProseMirror]:p-3"
+        className="min-h-[60px] cursor-text"
       />
     </div>
   );

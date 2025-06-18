@@ -8,8 +8,11 @@ import { TwoColumnWithHeadings } from './TwoColumnWithHeadings';
 import { ThreeColumns } from './ThreeColumns';
 import { ThreeColumnWithHeadings } from './ThreeColumnWithHeadings';
 import { FourColumns } from './FourColumns';
+import { FourColumnsWithHeadings } from './FourColumnsWithHeadings';
 import { TitleWithBullets } from './TitleWithBullets';
 import { TitleWithBulletsAndImage } from './TitleWithBulletsAndImage';
+import { Bullets } from './Bullets';
+import { Paragraph } from './Paragraph';
 
 export interface SlideData {
   id: string;
@@ -30,6 +33,31 @@ export interface SlideData {
   imageUrl?: string;
   imagePrompt?: string;
   isGenerating?: boolean;
+  isGeneratingImage?: boolean;
+  // New properties for Bullets template
+  bullets?: Array<{
+    title: string;
+    description: string;
+  }>;
+  conclusion?: string;
+  // New properties for Paragraph template
+  sections?: Array<{
+    heading: string;
+    paragraphs: string[];
+  }>;
+  // New properties for column templates with bullets
+  leftBullets?: string[];
+  rightBullets?: string[];
+  centerBullets?: string[];
+  column1Bullets?: string[];
+  column2Bullets?: string[];
+  column3Bullets?: string[];
+  column4Bullets?: string[];
+  // Column headings for multi-column templates
+  column1Heading?: string;
+  column2Heading?: string;
+  column3Heading?: string;
+  column4Heading?: string;
 }
 
 interface SlideRendererProps {
@@ -72,11 +100,20 @@ export function SlideRenderer({ slide, onUpdate, isEditable = false }: SlideRend
     case 'four-columns':
       return <FourColumns {...commonProps} />;
     
+    case 'four-columns-with-headings':
+      return <FourColumnsWithHeadings {...commonProps} />;
+    
     case 'title-with-bullets':
       return <TitleWithBullets {...commonProps} />;
     
     case 'title-with-bullets-and-image':
       return <TitleWithBulletsAndImage {...commonProps} />;
+    
+    case 'bullets':
+      return <Bullets {...commonProps} />;
+    
+    case 'paragraph':
+      return <Paragraph {...commonProps} />;
     
     default:
       return <BlankCard {...commonProps} />;
