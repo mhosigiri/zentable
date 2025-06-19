@@ -102,6 +102,32 @@ const TitleWithBulletsAndImageSchema = z.object({
   imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
 });
 
+const TitleWithTextSchema = z.object({
+  title: z.string().describe('Main title for the slide'),
+  content: z.string().describe('Short paragraph of text content (3-5 sentences maximum, can include basic HTML formatting)'),
+});
+
+const AccentLeftSchema = z.object({
+  title: z.string().describe('Main title for the slide'),
+  content: z.string().optional().describe('Text content to accompany the image (optional, use if content is better as paragraph)'),
+  bulletPoints: z.array(z.string()).optional().describe('Array of bullet points (optional, use if content is better as bullets)'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+});
+
+const AccentRightSchema = z.object({
+  title: z.string().describe('Main title for the slide'),
+  content: z.string().optional().describe('Text content to accompany the image (optional, use if content is better as paragraph)'),
+  bulletPoints: z.array(z.string()).optional().describe('Array of bullet points (optional, use if content is better as bullets)'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+});
+
+const AccentTopSchema = z.object({
+  title: z.string().describe('Main title for the slide'),
+  content: z.string().optional().describe('Text content to accompany the image (optional, use if content is better as paragraph)'),
+  bulletPoints: z.array(z.string()).optional().describe('Array of bullet points (optional, use if content is better as bullets)'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+});
+
 function getSchemaForTemplate(templateType: string): z.ZodType<any> {
   switch (templateType) {
     case 'blank-card':
@@ -126,10 +152,18 @@ function getSchemaForTemplate(templateType: string): z.ZodType<any> {
       return TitleWithBulletsSchema;
     case 'title-with-bullets-and-image':
       return TitleWithBulletsAndImageSchema;
+    case 'title-with-text':
+      return TitleWithTextSchema;
     case 'bullets':
       return BulletsSchema;
     case 'paragraph':
       return ParagraphSchema;
+    case 'accent-left':
+      return AccentLeftSchema;
+    case 'accent-right':
+      return AccentRightSchema;
+    case 'accent-top':
+      return AccentTopSchema;
     default:
       return BlankCardSchema;
   }
@@ -140,46 +174,58 @@ function getPromptForTemplate(templateType: string, sectionTitle: string, bullet
   
   switch (templateType) {
     case 'blank-card':
-      return `Create a clean slide with a clear title and concise, impactful content. Keep text brief and scannable - max 2-3 short sentences or key phrases. Base it on: ${baseContent}`;
+      return `Create a clean slide with a clear title and concise, impactful content. Choose the most appropriate format - either brief bullet points or short paragraphs. Keep all text scannable and presentation-ready. Base it on: ${baseContent}`;
     
     case 'image-and-text':
-      return `Create a slide with compelling but brief text content (2-3 short sentences max) and describe a specific, professional image. Keep text scannable and presentation-ready. Base it on: ${baseContent}`;
+      return `Create a slide with compelling but brief text content and describe a specific, professional image. Choose between bullet points or short paragraphs based on what works best for the content. Keep text scannable (max 2-3 sentences if paragraphs, 1-2 lines if bullets). Base it on: ${baseContent}`;
     
     case 'text-and-image':
-      return `Create a slide with concise, impactful text content (2-3 short sentences max) and describe a relevant professional image. Focus on key insights, not detailed explanations. Base it on: ${baseContent}`;
+      return `Create a slide with concise, impactful text content and describe a relevant professional image. Use bullets for lists/key points or short paragraphs for explanations - whatever fits the content best. Make bullet points substantial (1-2 lines) and keep all text scannable. Base it on: ${baseContent}`;
     
     case 'two-columns':
-      return `Create a two-column slide with balanced, brief bullet points (2-4 per column). Each bullet should be 1 line maximum - clear, actionable, and scannable. Base it on: ${baseContent}`;
+      return `Create a two-column slide with balanced content (2-4 items per column). Use bullet points for lists or brief paragraphs for explanations - choose what's most appropriate for each column. Keep content scannable and presentation-ready. Base it on: ${baseContent}`;
     
     case 'two-column-with-headings':
-      return `Create a two-column slide with clear headings (3-4 words max) and brief bullet points (2-4 per column, 1 line each). Keep content scannable and presentation-ready. Base it on: ${baseContent}`;
+      return `Create a two-column slide with clear headings (3-4 words max) and supporting content. Use bullet points for key points or brief paragraphs for explanations based on what works best. Keep all content scannable. Base it on: ${baseContent}`;
     
     case 'three-columns':
-      return `Create a three-column slide with concise bullet points (2-3 per column, 1 line each). Focus on key insights that can be quickly scanned and understood. Base it on: ${baseContent}`;
+      return `Create a three-column slide with concise content (2-3 items per column). Choose bullet points for lists or short paragraphs for explanations based on content type. Focus on key insights that can be quickly scanned. Base it on: ${baseContent}`;
     
     case 'three-column-with-headings':
-      return `Create a three-column slide with short headings (2-3 words max) and brief bullet points (2-3 per column, 1 line each). Prioritize clarity and visual readability. Base it on: ${baseContent}`;
+      return `Create a three-column slide with short headings (2-3 words max) and supporting content. Use bullets for key points or brief paragraphs for explanations - whatever is most appropriate. Prioritize clarity and readability. Base it on: ${baseContent}`;
     
     case 'four-columns':
-      return `Create a four-column slide with concise bullet points (2-3 per column, 1 line each). Each bullet should be a key insight, not a detailed explanation. Base it on: ${baseContent}`;
+      return `Create a four-column slide with concise content (2-3 items per column). Use bullet points for lists or brief sentences for explanations based on what's most effective for each column. Keep all text scannable. Base it on: ${baseContent}`;
     
     case 'four-columns-with-headings':
-      return `Create a four-column slide with short, descriptive headings (2-3 words max) and brief bullet points (2-3 per column, 1 line each). Keep all text scannable. Base it on: ${baseContent}`;
+      return `Create a four-column slide with short, descriptive headings (2-3 words max) and supporting content. Choose between bullet points or brief explanations based on what works best for each section. Base it on: ${baseContent}`;
     
     case 'bullets':
-      return `Create a slide with 4 numbered bullet points in a 2x2 grid. Each bullet needs a short title (3-5 words) and brief description (1-2 lines max). Add a concise conclusion (1-2 sentences). Base it on: ${baseContent}`;
+      return `Create a slide with 4 numbered bullet points in a 2x2 grid. Each bullet needs a short title (3-5 words) and brief description (1-2 lines max). Add a concise conclusion (1-2 sentences). This template specifically uses bullets. Base it on: ${baseContent}`;
     
     case 'paragraph':
-      return `Create a slide with 2-3 sections, each with a short heading (3-4 words) and 1-2 brief paragraphs (2-3 sentences each, not long blocks of text). Include a concise conclusion (1-2 sentences). Base it on: ${baseContent}`;
+      return `Create a slide with 2-3 sections, each with a short heading (3-4 words) and 1-2 brief paragraphs (2-3 sentences each). This template specifically uses paragraphs for explanations. Include a concise conclusion (1-2 sentences). Base it on: ${baseContent}`;
     
     case 'title-with-bullets':
-      return `Create a slide with a strong title and 3-5 clear, concise bullet points. Each bullet should be 1 line maximum - impactful and easy to read on a slide. Base it on: ${baseContent}`;
+      return `Create a slide with a strong title and 3-5 clear, substantive bullet points. Each bullet should be 1-2 lines maximum - impactful and comprehensive enough to be meaningful. This template specifically uses bullet points. Base it on: ${baseContent}`;
     
     case 'title-with-bullets-and-image':
-      return `Create a slide with a compelling title, 3-4 brief bullet points (1 line each), and describe a relevant professional image. Keep all text scannable and presentation-ready. Base it on: ${baseContent}`;
+      return `Create a slide with a compelling title, 3-4 substantial bullet points (1-2 lines each), and describe a relevant professional image. This template specifically uses bullet points. Make each bullet meaningful and scannable. Base it on: ${baseContent}`;
+    
+    case 'title-with-text':
+      return `Create a slide with a strong title and a concise paragraph of text (3-5 sentences maximum). Use a single, well-written paragraph that captures the key message clearly and concisely. This template is ideal for brief explanations, summaries, or context that's too detailed for bullet points but doesn't need multiple paragraphs. Keep it engaging and focused. Base it on: ${baseContent}`;
+    
+    case 'accent-left':
+      return `Create a slide with a compelling title and content that works well with a prominent left-side image. Choose between bullet points (3-4 items) or a brief paragraph based on what's most effective. The image will be on the left taking up significant space, so content should be concise and impactful. Create a detailed, professional image prompt that complements and enhances the content. Base it on: ${baseContent}`;
+    
+    case 'accent-right':
+      return `Create a slide with a compelling title and content that works well with a prominent right-side image. Choose between bullet points (3-4 items) or a brief paragraph based on what's most effective. The image will be on the right taking up significant space, so content should be concise and impactful. Create a detailed, professional image prompt that complements and enhances the content. Base it on: ${baseContent}`;
+    
+    case 'accent-top':
+      return `Create a slide with a compelling title and content that works well with a prominent top image. Choose between bullet points (3-4 items) or a brief paragraph based on what's most effective. The image will be at the top taking up significant space, so content should be concise and impactful. Create a detailed, professional image prompt that complements and enhances the content. Base it on: ${baseContent}`;
     
     default:
-      return `Create concise slide content with brief, impactful text that can be easily read and understood on a presentation slide. Avoid long paragraphs. Base it on: ${baseContent}`;
+      return `Create concise slide content with brief, impactful text. Choose between bullet points or short paragraphs based on what's most appropriate for the content. Ensure all text can be easily read and understood on a presentation slide. Base it on: ${baseContent}`;
   }
 }
 
@@ -218,9 +264,10 @@ export async function POST(req: Request) {
 CRITICAL INSTRUCTIONS FOR PRESENTATION SLIDES:
 - DO NOT use the outline bullet points directly - they are reference points only
 - CREATE concise, presentation-ready content that expands meaningfully on the topic
+- CHOOSE the most appropriate format: bullet points for lists/key points, paragraphs for explanations
 - Keep ALL text brief and scannable - this is for VISUAL presentation slides
-- Each bullet point should be 1 line maximum (8-12 words ideal)
-- Paragraphs should be 2-3 sentences maximum, not long blocks of text
+- If using bullet points: 1-2 lines maximum (12-20 words ideal for impactful content)
+- If using paragraphs: 2-3 sentences maximum, not long blocks of text
 - Use active voice, strong verbs, and impactful language
 - Make content immediately understandable when viewed on a slide
 - Prioritize clarity and visual readability over comprehensive detail
@@ -228,16 +275,22 @@ CRITICAL INSTRUCTIONS FOR PRESENTATION SLIDES:
 - Ensure content flows logically and supports the main message
 - Each piece of content should be presentation-ready and appropriately sized for slides
 
+CONTENT FORMAT FLEXIBILITY:
+- Use bullet points when listing key points, features, benefits, or steps
+- Use short paragraphs when explaining concepts, providing context, or telling a story
+- Choose the format that best serves the content and audience understanding
+- Mix formats within a slide if appropriate (e.g., intro paragraph + bullet list)
+
 CONTENT LENGTH GUIDELINES:
 - Titles: 3-8 words maximum
-- Bullet points: 1 line, 8-12 words ideal
+- Bullet points: 1-2 lines, 12-20 words ideal (substantive but scannable)
 - Paragraphs: 2-3 sentences maximum
 - Headings: 2-4 words maximum
 - Descriptions: Brief and impactful, not explanatory essays
 
 Template: ${templateType}
 
-Remember: Transform the outline into CONCISE, visually-friendly presentation content that audiences can quickly read and understand!`;
+Remember: Transform the outline into CONCISE, visually-friendly presentation content that audiences can quickly read and understand! Choose the best format (bullets vs paragraphs) for each piece of content and make bullet points substantial enough to be meaningful.`;
 
     const { partialObjectStream } = streamObject({
       model: openai('gpt-4o-mini'),

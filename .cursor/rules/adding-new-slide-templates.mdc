@@ -1,0 +1,225 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Adding New Slide Templates
+
+This guide outlines the complete process for adding new slide templates to the cursor-for-slides presentation application.
+
+## Overview
+The slide system uses a modular architecture with templates that can be dynamically selected during presentation generation. Each template has its own component, API schema, and rendering logic.
+
+## Step-by-Step Process
+
+### 1. Create the Template Component
+Create a new component in [components/slides/basic/](mdc:components/slides/basic) following this pattern:
+
+```typescript
+// components/slides/basic/YourTemplate.tsx
+'use client';
+
+import { TiptapEditor } from '@/components/editor/TiptapEditor';
+import { SlideData } from '../SlideRenderer';
+import { SlideWrapper } from '../SlideWrapper';
+
+interface YourTemplateProps extends SlideData {
+  onUpdate?: (updates: Partial<SlideData>) => void;
+  isEditable?: boolean;
+  theme?: 'light' | 'dark';
+}
+
+export function YourTemplate({ 
+  // Define your specific props here based on template needs
+  title, 
+  content, // or bulletPoints, sections, etc.
+  isGenerating, 
+  onUpdate, 
+  isEditable = false,
+  theme = 'light'
+}: YourTemplateProps) {
+  // Implementation with SlideWrapper
+  return (
+    <SlideWrapper>
+      {/* Your template content */}
+    </SlideWrapper>
+  );
+}
+```
+
+**Key Requirements:**
+- Use `SlideWrapper` for consistent styling and glass effects
+- Support both editable and read-only modes
+- Handle loading states with `isGenerating`
+- Support light/dark themes
+- Use `TiptapEditor` for editable content
+
+### 2. Update SlideRenderer
+Add your template to [components/slides/SlideRenderer.tsx](mdc:components/slides/SlideRenderer.tsx):
+
+1. **Import the component:**
+```typescript
+import { YourTemplate } from './basic/YourTemplate';
+```
+
+2. **Add case to switch statement:**
+```typescript
+case 'your-template-type':
+  return <YourTemplate {...commonProps} />;
+```
+
+3. **Update SlideData interface if needed:**
+Add any new properties your template requires to the `SlideData` interface.
+
+### 3. Update Generate Outline API
+Modify [app/api/generate-outline/route.ts](mdc:app/api/generate-outline/route.ts):
+
+1. **Add to template enum:**
+```typescript
+templateType: z.enum([
+  // ... existing templates
+  'your-template-type'
+])
+```
+
+2. **Add to allTemplates array:**
+```typescript
+const allTemplates = [
+  // ... existing templates
+  'your-template-type'
+];
+```
+
+3. **Update template selection logic:**
+Add conditions in `selectTemplateType()` function to determine when your template should be used:
+```typescript
+// Your template selection logic
+if (contentText.includes('your-keywords')) {
+  suitableTemplates.push('your-template-type');
+}
+```
+
+### 4. Update Generate Slide API
+Modify [app/api/generate-slide/route.ts](mdc:app/api/generate-slide/route.ts):
+
+1. **Create schema for your template:**
+```typescript
+const YourTemplateSchema = z.object({
+  title: z.string().describe('Main title for the slide'),
+  // Add your specific fields with descriptions
+  content: z.string().describe('Description of content structure'),
+});
+```
+
+2. **Add to getSchemaForTemplate():**
+```typescript
+case 'your-template-type':
+  return YourTemplateSchema;
+```
+
+3. **Add to getPromptForTemplate():**
+```typescript
+case 'your-template-type':
+  return `Create a slide with [specific instructions for your template]. Base it on: ${baseContent}`;
+```
+
+### 5. Create Test Page
+Create a test page in [app/tests/](mdc:app/tests) to verify your template:
+
+```typescript
+// app/tests/test-your-template/page.tsx
+'use client';
+
+import { YourTemplate } from '@/components/slides/basic/YourTemplate';
+import { useTheme } from '@/contexts/ThemeContext';
+import { ThemedLayout } from '@/components/ui/themed-layout';
+
+export default function TestYourTemplatePage() {
+  const sampleData = {
+    id: 'test-your-template',
+    templateType: 'your-template-type',
+    title: 'Sample Title',
+    // Add your sample data
+    isEditable: true
+  };
+
+  return (
+    <ThemedLayout>
+      <div className="min-h-screen p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Test: Your Template
+            </h1>
+            <p className="text-gray-600">
+              Testing your new template component
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-8 min-h-[600px]">
+            <YourTemplate {...sampleData} />
+          </div>
+
+          <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+            <h3 className="font-semibold mb-2">Template Info:</h3>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Template Type: your-template-type</li>
+              <li>• Features: [describe features]</li>
+              <li>• Use Case: [describe use cases]</li>
+              <li>• Content: [describe content structure]</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </ThemedLayout>
+  );
+}
+```
+
+## Template Design Guidelines
+
+### Component Structure
+- Always wrap content in `<SlideWrapper>` for consistent styling
+- Support both editable and read-only modes
+- Handle loading states with skeleton animations
+- Use proper TypeScript interfaces extending `SlideData`
+
+### Content Guidelines
+- Keep content scannable and presentation-ready
+- Support both light and dark themes
+- Use semantic HTML structure
+- Implement proper accessibility features
+
+### API Integration
+- Define clear, descriptive schemas
+- Write specific prompts for content generation
+- Include template in selection logic with appropriate triggers
+- Test with various content types
+
+## Testing Checklist
+- [ ] Component renders correctly in both modes (editable/read-only)
+- [ ] Loading states work properly
+- [ ] Theme switching works (light/dark)
+- [ ] Content updates properly in editable mode
+- [ ] Template appears in generation system
+- [ ] API generates appropriate content for template
+- [ ] Test page demonstrates all features
+
+## Common Patterns
+
+### Simple Text Templates
+Use for templates with title + single content area (like [TitleWithText](mdc:components/slides/basic/TitleWithText.tsx))
+
+### Multi-Column Templates
+Use grid layouts for templates with multiple content areas (like [TwoColumns](mdc:components/slides/basic/TwoColumns.tsx))
+
+### Complex Structured Templates
+Use for templates with multiple content types (like [Bullets](mdc:components/slides/basic/Bullets.tsx) with numbered items)
+
+## File References
+- Template Components: [components/slides/basic/](mdc:components/slides/basic)
+- Slide Renderer: [components/slides/SlideRenderer.tsx](mdc:components/slides/SlideRenderer.tsx)
+- Generate Outline API: [app/api/generate-outline/route.ts](mdc:app/api/generate-outline/route.ts)
+- Generate Slide API: [app/api/generate-slide/route.ts](mdc:app/api/generate-slide/route.ts)
+- Test Pages: [app/tests/](mdc:app/tests)
+- Slide Wrapper: [components/slides/SlideWrapper.tsx](mdc:components/slides/SlideWrapper.tsx)

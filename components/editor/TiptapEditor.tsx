@@ -21,7 +21,7 @@ import {
   List,
   ListOrdered
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { parseMarkdownToHtml, hasMarkdownFormatting } from '@/lib/utils';
 
 interface TiptapEditorProps {
@@ -49,6 +49,8 @@ function getEditorClasses(variant: string): string {
 
 export function TiptapEditor({ content, onChange, placeholder, className, variant = 'default' }: TiptapEditorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const isUserTypingRef = useRef(false);
+  const lastContentRef = useRef(content);
 
   const editor = useEditor({
     extensions: [
@@ -89,7 +91,15 @@ export function TiptapEditor({ content, onChange, placeholder, className, varian
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      isUserTypingRef.current = true;
+      const newContent = editor.getHTML();
+      lastContentRef.current = newContent;
+      onChange(newContent);
+      
+      // Reset the flag after a short delay
+      setTimeout(() => {
+        isUserTypingRef.current = false;
+      }, 100);
     },
     editorProps: {
       attributes: {
@@ -98,14 +108,40 @@ export function TiptapEditor({ content, onChange, placeholder, className, varian
     },
   });
 
-  // Update editor content when prop changes
+  // Update editor content when prop changes, but preserve cursor position
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (editor && content !== lastContentRef.current && !isUserTypingRef.current) {
+      // Save current selection/cursor position
+      const { from, to } = editor.state.selection;
+      const wasEditorFocused = editor.isFocused;
+      
       // Check if content contains markdown and parse it
       const processedContent = hasMarkdownFormatting(content) 
         ? parseMarkdownToHtml(content) 
         : content;
-      editor.commands.setContent(processedContent);
+      
+      // Update content without triggering onChange
+      editor.commands.setContent(processedContent, false);
+      
+      // Restore cursor position if editor was focused and position is valid
+      if (wasEditorFocused) {
+        const docSize = editor.state.doc.content.size;
+        const safeFrom = Math.min(from, docSize);
+        const safeTo = Math.min(to, docSize);
+        
+        // Use setTimeout to ensure the content update is complete
+        setTimeout(() => {
+          try {
+            editor.commands.setTextSelection({ from: safeFrom, to: safeTo });
+            editor.commands.focus();
+          } catch (error) {
+            // If position restoration fails, just focus at the end
+            editor.commands.focus('end');
+          }
+        }, 0);
+      }
+      
+      lastContentRef.current = content;
     }
   }, [content, editor]);
 

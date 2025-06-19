@@ -2,6 +2,7 @@
 
 import { TiptapEditor } from '@/components/editor/TiptapEditor';
 import { SlideData } from './SlideRenderer';
+import { SlideWrapper } from './SlideWrapper';
 
 interface BlankCardProps extends SlideData {
   onUpdate?: (updates: Partial<SlideData>) => void;
@@ -33,11 +34,7 @@ export function BlankCard({
   const isDark = theme === 'dark';
   
   return (
-    <div className={`w-full min-h-[500px] rounded-lg shadow-lg border flex flex-col items-center justify-center p-8 ${
-      isDark 
-        ? 'bg-gray-900 border-gray-700' 
-        : 'bg-white border-gray-200'
-    }`}>
+    <SlideWrapper className="items-center justify-center">
       {isGenerating ? (
         <div className="animate-pulse space-y-6 w-full max-w-4xl">
           <div className={`h-12 rounded w-3/4 mx-auto ${
@@ -61,7 +58,7 @@ export function BlankCard({
                 />
               ) : (
                 <h1 className={`text-3xl md:text-4xl font-bold mb-4 leading-tight ${
-                  isDark ? 'text-white' : 'text-gray-900'
+                  isDark ? 'text-white drop-shadow-lg' : 'text-gray-900 drop-shadow-sm'
                 }`}>
                   {title}
                 </h1>
@@ -81,7 +78,7 @@ export function BlankCard({
                 />
               ) : (
                 <p className={`text-base md:text-lg leading-relaxed ${
-                  isDark ? 'text-gray-300' : 'text-gray-600'
+                  isDark ? 'text-white/90 drop-shadow-md' : 'text-gray-700 drop-shadow-sm'
                 }`}>
                   {content}
                 </p>
@@ -97,6 +94,6 @@ export function BlankCard({
           )}
         </div>
       )}
-    </div>
+    </SlideWrapper>
   );
 }

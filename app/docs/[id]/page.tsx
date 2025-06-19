@@ -3,7 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/contexts/ThemeContext';
 import { SlideRenderer, SlideData } from '@/components/slides/SlideRenderer';
+import { ThemedLayout } from '@/components/ui/themed-layout';
+import { SlidesHeader } from '@/components/ui/slides-header';
+import { SlidesSidebar } from '@/components/ui/slides-sidebar';
+import { TemplateSelectionModal } from '@/components/ui/template-selection-modal';
+import { AIGenerationModal } from '@/components/ui/ai-generation-modal';
+import { InterSlideAddButtons } from '@/components/ui/inter-slide-add-buttons';
+import { SlideDragHandle } from '@/components/ui/slide-drag-handle';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -36,11 +46,13 @@ interface DocumentData {
   createdAt: string;
   status: string;
   outline?: GeneratedOutline;
+  generatedSlides?: SlideData[];
 }
 
 export default function PresentationPage() {
   const params = useParams();
   const documentId = params.id as string;
+  const { setTheme, getThemeForDocument } = useTheme();
   
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [slides, setSlides] = useState<SlideData[]>([]);
@@ -49,8 +61,28 @@ export default function PresentationPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [generatingImages, setGeneratingImages] = useState(new Set<number>());
   const [generatingSlides, setGeneratingSlides] = useState(new Set<number>());
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false); // Prevent conflicts during programmatic scroll
+  
+  // Phase 3: Modal states for slide addition
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [isGeneratingNewSlide, setIsGeneratingNewSlide] = useState(false);
+  const [insertAtIndex, setInsertAtIndex] = useState<number | null>(null); // For inter-slide insertion
 
-  // Load document data from localStorage
+  // Phase 4: Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before starting drag
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Load document data and theme from localStorage
   useEffect(() => {
     const loadDocumentData = () => {
       const stored = localStorage.getItem(`document_${documentId}`);
@@ -58,23 +90,124 @@ export default function PresentationPage() {
         const data: DocumentData = JSON.parse(stored);
         setDocumentData(data);
         
-        if (data.outline) {
+        // Load theme for this document
+        const documentTheme = getThemeForDocument(documentId);
+        setTheme(documentTheme, documentId);
+        
+        // First, try to load existing generated slides
+        if (data.generatedSlides && data.generatedSlides.length > 0) {
+          console.log('✅ Loading existing generated slides from localStorage');
+          setSlides(data.generatedSlides);
+        } else if (data.outline) {
+          // Only generate slides if none exist
+          console.log('🔄 No existing slides found, initializing new slides');
           initializeSlides(data.outline, data.cardCount);
         }
       }
     };
 
     loadDocumentData();
-  }, [documentId]);
+  }, [documentId, setTheme, getThemeForDocument]);
+
+  // Save slides to localStorage whenever they change
+  useEffect(() => {
+    if (documentData && slides.length > 0) {
+      const updatedData: DocumentData = {
+        ...documentData,
+        generatedSlides: slides
+      };
+      localStorage.setItem(`document_${documentId}`, JSON.stringify(updatedData));
+    }
+  }, [slides, documentData, documentId]);
+
+  // Phase 2: Auto-detect current slide based on scroll position
+  useEffect(() => {
+    if (slides.length === 0 || isAutoScrolling) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the slide that's most visible in the viewport
+        let mostVisibleSlide = null;
+        let maxVisibility = 0;
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > maxVisibility) {
+            maxVisibility = entry.intersectionRatio;
+            mostVisibleSlide = entry.target;
+          }
+        });
+
+        if (mostVisibleSlide) {
+          const slideIndex = parseInt(
+            (mostVisibleSlide as HTMLElement).getAttribute('data-slide-index') || '0'
+          );
+          if (slideIndex !== currentSlideIndex) {
+            setCurrentSlideIndex(slideIndex);
+          }
+        }
+      },
+      {
+        root: null, // Use viewport as root
+        rootMargin: '-20% 0px -20% 0px', // Only consider slides in middle 60% of viewport
+        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] // Multiple thresholds for better detection
+      }
+    );
+
+    // Observe all slide elements
+    const slideElements = document.querySelectorAll('[data-slide-index]');
+    slideElements.forEach((element) => observer.observe(element));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [slides.length, currentSlideIndex, isAutoScrolling]);
+
+  // Phase 2: Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle arrow keys when not in an input field
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        (event.target as HTMLElement)?.contentEditable === 'true'
+      ) {
+        return;
+      }
+
+      switch (event.key) {
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          event.preventDefault();
+          if (currentSlideIndex > 0) {
+            handleSlideSelect(currentSlideIndex - 1);
+          }
+          break;
+        case 'ArrowDown':
+        case 'ArrowRight':
+          event.preventDefault();
+          if (currentSlideIndex < slides.length - 1) {
+            handleSlideSelect(currentSlideIndex + 1);
+          }
+          break;
+        case 'Home':
+          event.preventDefault();
+          handleSlideSelect(0);
+          break;
+        case 'End':
+          event.preventDefault();
+          handleSlideSelect(slides.length - 1);
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentSlideIndex, slides.length]);
 
   // Initialize slides from outline - only create the requested number of slides
   const initializeSlides = (outline: GeneratedOutline, requestedCount: number) => {
-    // Prevent re-initialization if slides already exist
-    if (slides.length > 0) {
-      console.log('🚫 Slides already initialized, skipping re-generation');
-      return;
-    }
-
     console.log('✅ Initializing slides for the first time');
     
     // Only create slides from sections, no automatic title slide
@@ -364,35 +497,354 @@ export default function PresentationPage() {
     );
   };
 
+  // Sidebar handlers - Phase 2: Navigation & Selection
+  const handleSlideSelect = (index: number) => {
+    setCurrentSlideIndex(index);
+    setIsAutoScrolling(true);
+    
+    // Smooth scroll to selected slide
+    const slideElement = document.querySelector(`[data-slide-index="${index}"]`);
+    if (slideElement) {
+      slideElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'nearest'
+      });
+      
+      // Re-enable auto-detection after scroll completes
+      setTimeout(() => {
+        setIsAutoScrolling(false);
+      }, 1000); // Allow time for smooth scroll to complete
+    } else {
+      setIsAutoScrolling(false);
+    }
+  };
+
+  // Phase 3: Slide addition functions
+  const addNewSlide = (templateType: string, slideData: Partial<SlideData> = {}, insertIndex?: number) => {
+    const newSlide: SlideData = {
+      id: `slide-${Date.now()}`,
+      templateType,
+      title: slideData.title || 'New Slide',
+      content: slideData.content || '',
+      bulletPoints: slideData.bulletPoints || [],
+      isGenerating: false,
+      ...slideData
+    };
+
+    // Use provided insertIndex or default to after current slide
+    const targetIndex = insertIndex !== undefined ? insertIndex : currentSlideIndex + 1;
+    const newSlides = [...slides];
+    newSlides.splice(targetIndex, 0, newSlide);
+    
+    setSlides(newSlides);
+    setCurrentSlideIndex(targetIndex);
+    
+    // Reset insert position
+    setInsertAtIndex(null);
+    
+    // Scroll to new slide after a brief delay
+    setTimeout(() => {
+      handleSlideSelect(targetIndex);
+    }, 100);
+  };
+
+  const handleAddSlide = () => {
+    // Add a basic blank slide
+    addNewSlide('blank-card');
+  };
+
+  const handleAddFromTemplate = () => {
+    setShowTemplateModal(true);
+  };
+
+  const handleAddWithAI = () => {
+    setShowAIModal(true);
+  };
+
+  const handleTemplateSelect = (templateType: string) => {
+    addNewSlide(templateType, {}, insertAtIndex || undefined);
+  };
+
+  // Inter-slide add handlers
+  const handleInterSlideAdd = (insertIndex: number) => {
+    setInsertAtIndex(insertIndex);
+    addNewSlide('blank-card', {}, insertIndex);
+  };
+
+  const handleInterSlideAddFromTemplate = (insertIndex: number) => {
+    setInsertAtIndex(insertIndex);
+    setShowTemplateModal(true);
+  };
+
+  const handleInterSlideAddWithAI = (insertIndex: number) => {
+    setInsertAtIndex(insertIndex);
+    setShowAIModal(true);
+  };
+
+  // Phase 4: Slide reordering function
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = slides.findIndex(slide => slide.id === active.id);
+      const newIndex = slides.findIndex(slide => slide.id === over.id);
+      
+      const reorderedSlides = arrayMove(slides, oldIndex, newIndex);
+      setSlides(reorderedSlides);
+      
+      // Update current slide index if needed
+      if (oldIndex === currentSlideIndex) {
+        setCurrentSlideIndex(newIndex);
+      } else if (oldIndex < currentSlideIndex && newIndex >= currentSlideIndex) {
+        setCurrentSlideIndex(currentSlideIndex - 1);
+      } else if (oldIndex > currentSlideIndex && newIndex <= currentSlideIndex) {
+        setCurrentSlideIndex(currentSlideIndex + 1);
+      }
+    }
+  };
+
+  // Sidebar reorder handler
+  const handleSidebarReorder = (oldIndex: number, newIndex: number) => {
+    const reorderedSlides = arrayMove(slides, oldIndex, newIndex);
+    setSlides(reorderedSlides);
+    
+    // Update current slide index if needed
+    if (oldIndex === currentSlideIndex) {
+      setCurrentSlideIndex(newIndex);
+    } else if (oldIndex < currentSlideIndex && newIndex >= currentSlideIndex) {
+      setCurrentSlideIndex(currentSlideIndex - 1);
+    } else if (oldIndex > currentSlideIndex && newIndex <= currentSlideIndex) {
+      setCurrentSlideIndex(currentSlideIndex + 1);
+    }
+  };
+
+  // Phase 5: Slide management functions
+
+  const handleDuplicateSlide = (index: number) => {
+    const slideToClone = slides[index];
+    const duplicatedSlide: SlideData = {
+      ...slideToClone,
+      id: `slide-${Date.now()}`,
+      title: `${slideToClone.title} (Copy)`
+    };
+    
+    const newSlides = [...slides];
+    newSlides.splice(index + 1, 0, duplicatedSlide);
+    setSlides(newSlides);
+    
+    // Update current slide index if needed
+    if (index < currentSlideIndex) {
+      setCurrentSlideIndex(currentSlideIndex + 1);
+    }
+  };
+
+  const handleDeleteSlide = (index: number) => {
+    if (slides.length <= 1) return; // Don't delete the last slide
+    
+    const newSlides = slides.filter((_, i) => i !== index);
+    setSlides(newSlides);
+    
+    // Update current slide index
+    if (index < currentSlideIndex) {
+      setCurrentSlideIndex(currentSlideIndex - 1);
+    } else if (index === currentSlideIndex) {
+      // If deleting current slide, move to previous or stay at 0
+      setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1));
+    }
+  };
+
+  const handleMoveSlideUp = (index: number) => {
+    if (index === 0) return; // Can't move first slide up
+    
+    const reorderedSlides = arrayMove(slides, index, index - 1);
+    setSlides(reorderedSlides);
+    
+    // Update current slide index if needed
+    if (index === currentSlideIndex) {
+      setCurrentSlideIndex(index - 1);
+    } else if (index - 1 === currentSlideIndex) {
+      setCurrentSlideIndex(currentSlideIndex + 1);
+    }
+  };
+
+  const handleMoveSlideDown = (index: number) => {
+    if (index === slides.length - 1) return; // Can't move last slide down
+    
+    const reorderedSlides = arrayMove(slides, index, index + 1);
+    setSlides(reorderedSlides);
+    
+    // Update current slide index if needed
+    if (index === currentSlideIndex) {
+      setCurrentSlideIndex(index + 1);
+    } else if (index + 1 === currentSlideIndex) {
+      setCurrentSlideIndex(currentSlideIndex - 1);
+    }
+  };
+
+  const handleHideSlide = (index: number) => {
+    // TODO: Implement hide functionality
+    console.log('Hide slide:', index);
+  };
+
+  const handleExportSlide = (index: number) => {
+    // TODO: Implement export functionality
+    console.log('Export slide:', index);
+  };
+
+  const handleAIGenerate = async (prompt: string, templateType: string) => {
+    setIsGeneratingNewSlide(true);
+    
+    try {
+      // Create placeholder slide
+      const placeholderSlide: SlideData = {
+        id: `slide-${Date.now()}`,
+        templateType: templateType === 'magic' ? 'title-with-bullets' : templateType,
+        title: 'Generating...',
+        content: prompt,
+        bulletPoints: [],
+        isGenerating: true
+      };
+
+      const targetIndex = insertAtIndex !== null ? insertAtIndex : currentSlideIndex + 1;
+      const newSlides = [...slides];
+      newSlides.splice(targetIndex, 0, placeholderSlide);
+      
+      setSlides(newSlides);
+      setCurrentSlideIndex(targetIndex);
+
+      // Generate slide content using existing API
+      const response = await fetch('/api/generate-slide', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sectionTitle: prompt,
+          bulletPoints: [],
+          templateType: templateType === 'magic' ? 'title-with-bullets' : templateType,
+          style: documentData?.style || 'default',
+          language: documentData?.language || 'en',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate slide');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let latestData: any = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const streamData = JSON.parse(line.slice(6));
+              if (Object.keys(streamData).length > 0) {
+                latestData = streamData;
+              }
+            } catch (e) {
+              // Ignore parsing errors
+            }
+          }
+        }
+      }
+
+      // Update slide with generated content
+      if (latestData) {
+        setSlides(prevSlides => 
+          prevSlides.map((slide, index) => 
+            index === targetIndex 
+              ? { 
+                  ...slide, 
+                  ...latestData,
+                  isGenerating: false
+                }
+              : slide
+          )
+        );
+
+        // Generate image if needed
+        if (latestData.imagePrompt && !latestData.imageUrl) {
+          generateSlideImage(latestData.imagePrompt, targetIndex);
+        }
+      }
+
+      setShowAIModal(false);
+      
+      // Scroll to new slide
+      setTimeout(() => {
+        handleSlideSelect(targetIndex);
+      }, 100);
+      
+      // Reset insert position
+      setInsertAtIndex(null);
+      
+    } catch (error) {
+      console.error('Failed to generate slide:', error);
+      // Remove failed slide
+      setSlides(prevSlides => prevSlides.filter((_, index) => index !== currentSlideIndex + 1));
+    } finally {
+      setIsGeneratingNewSlide(false);
+    }
+  };
+
   if (!documentData || slides.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-gray-600">Loading presentation...</p>
+      <ThemedLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
+            <p className="text-white/80">Loading presentation...</p>
+          </div>
         </div>
-      </div>
+      </ThemedLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-lg font-semibold text-gray-900 truncate max-w-md">
-              {documentData.outline?.title || 'Presentation'}
-            </h1>
+    <ThemedLayout>
+      {/* Slides Sidebar */}
+      <SlidesSidebar
+        slides={slides}
+        currentSlideIndex={currentSlideIndex}
+        onSlideSelect={handleSlideSelect}
+        onAddSlide={handleAddSlide}
+        onAddFromTemplate={handleAddFromTemplate}
+        onAddWithAI={handleAddWithAI}
+        onReorderSlides={handleSidebarReorder}
+        onDuplicateSlide={handleDuplicateSlide}
+        onDeleteSlide={handleDeleteSlide}
+        onMoveSlideUp={handleMoveSlideUp}
+        onMoveSlideDown={handleMoveSlideDown}
+        onHideSlide={handleHideSlide}
+        onExportSlide={handleExportSlide}
+      />
+
+      <SlidesHeader 
+        title={documentData.outline?.title || 'Presentation'}
+        additionalButtons={
+          <>
             {isGenerating && (
-              <div className="flex items-center text-blue-600 text-sm">
+              <div className="flex items-center text-blue-600 text-sm mr-4">
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 Generating slides... ({generatingSlideIndex + 1}/{slides.length})
               </div>
             )}
-          </div>
-          
-          <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
               size="sm"
@@ -415,51 +867,102 @@ export default function PresentationPage() {
             >
               <Share2 className="w-4 h-4" />
             </Button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Main Content - Vertical Slide Layout */}
       <main className="max-w-4xl mx-auto px-6 py-8">
-        <div className="space-y-8">
-          {slides.map((slide, index) => (
-            <div key={slide.id} className="relative">
-              {/* Slide Number */}
-              <div className="absolute -left-12 top-4 text-sm text-gray-400 font-medium">
-                {index + 1}
-              </div>
-              
-              {/* Slide Content */}
-              <div className="relative">
-                <SlideRenderer 
-                  slide={slide} 
-                  onUpdate={(updates) => updateSlideContent(index, updates)}
-                  isEditable={!slide.isGenerating}
-                />
-                
-                {/* Generation Status Overlay */}
-                {slide.isGenerating && (
-                  <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-                      <p className="text-gray-600">Generating slide content...</p>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="space-y-0">
+            {/* Add button before first slide */}
+            <InterSlideAddButtons
+              onAddSlide={() => handleInterSlideAdd(0)}
+              onAddFromTemplate={() => handleInterSlideAddFromTemplate(0)}
+              onAddWithAI={() => handleInterSlideAddWithAI(0)}
+              insertIndex={0}
+            />
+            
+            <SortableContext
+              items={slides.map(slide => slide.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {slides.map((slide, index) => (
+                <div key={slide.id}>
+                  {/* Slide Container with Drag Handle */}
+                  <SlideDragHandle 
+                    slideId={slide.id}
+                    slideIndex={index}
+                    totalSlides={slides.length}
+                    onDuplicate={handleDuplicateSlide}
+                    onDelete={handleDeleteSlide}
+                    onMoveUp={handleMoveSlideUp}
+                    onMoveDown={handleMoveSlideDown}
+                    onHide={handleHideSlide}
+                    onExport={handleExportSlide}
+                  >
+                    <div 
+                      className="relative mb-8"
+                      data-slide-index={index} // For scroll targeting
+                    >
+                      {/* Slide Number */}
+                      <div className="absolute -left-12 top-4 text-sm text-white/60 font-medium">
+                        {index + 1}
+                      </div>
+                      
+                      {/* Slide Content */}
+                      <div className="relative">
+                        <SlideRenderer 
+                          slide={slide} 
+                          onUpdate={(updates) => updateSlideContent(index, updates)}
+                          isEditable={!slide.isGenerating}
+                        />
+                        
+                        {/* Generation Status Overlay */}
+                        {slide.isGenerating && (
+                          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                            <div className="text-center">
+                              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+                              <p className="text-gray-600">Generating slide content...</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                  </SlideDragHandle>
+                  
+                  {/* Add button after each slide */}
+                  <InterSlideAddButtons
+                    onAddSlide={() => handleInterSlideAdd(index + 1)}
+                    onAddFromTemplate={() => handleInterSlideAddFromTemplate(index + 1)}
+                    onAddWithAI={() => handleInterSlideAddWithAI(index + 1)}
+                    insertIndex={index + 1}
+                  />
+                </div>
+              ))}
+            </SortableContext>
+          </div>
+        </DndContext>
       </main>
 
-      {/* Footer with slide count */}
-      <footer className="bg-white border-t border-gray-200 px-6 py-4 sticky bottom-0">
-        <div className="max-w-4xl mx-auto flex items-center justify-center">
-          <span className="text-sm text-gray-500">
-            {slides.length} slides
-          </span>
-        </div>
-      </footer>
-    </div>
+      {/* Phase 3: Modals for slide addition */}
+      <TemplateSelectionModal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onSelectTemplate={handleTemplateSelect}
+      />
+
+      <AIGenerationModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onGenerate={handleAIGenerate}
+        isGenerating={isGeneratingNewSlide}
+      />
+
+    </ThemedLayout>
   );
 }

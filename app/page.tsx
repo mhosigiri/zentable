@@ -2,38 +2,13 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { LandingHeader } from '@/components/ui/landing-header';
 import { ArrowRight, Sparkles, Presentation, Zap } from 'lucide-react';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <header className="border-b border-white/20 backdrop-blur-sm bg-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
-              <Presentation className="h-8 w-8 text-indigo-600" />
-              <span className="text-xl font-bold text-gray-900">PresentAI</span>
-            </div>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Features
-              </Link>
-              <Link href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Pricing
-              </Link>
-              <Link href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">
-                About
-              </Link>
-              <Link href="/create">
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
-                  Get Started
-                </Button>
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">

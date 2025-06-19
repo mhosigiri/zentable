@@ -7,8 +7,9 @@ export async function POST(req: Request) {
   try {
     console.log('🎨 Image generation request received');
     
-    const { prompt } = await req.json();
+    const { prompt, templateType } = await req.json();
     console.log('📝 Prompt:', prompt);
+    console.log('🎯 Template Type:', templateType);
 
     if (!prompt) {
       console.log('❌ No prompt provided');
@@ -26,6 +27,19 @@ export async function POST(req: Request) {
 
     console.log('✅ REPLICATE_API_TOKEN is configured');
     
+    // Determine aspect ratio based on template type
+    let aspectRatio: '16:9' | '9:16' | '1:1' | '3:2' | '2:3' = '16:9';
+    
+    if (templateType === 'accent-left' || templateType === 'accent-right') {
+      aspectRatio = '2:3'; // Vertical aspect ratio for side images
+    } else if (templateType === 'accent-top') {
+      aspectRatio = '16:9'; // Wide aspect ratio for top images
+    } else if (templateType === 'accent-background') {
+      aspectRatio = '16:9'; // Wide aspect ratio for background images
+    }
+    
+    console.log('📐 Using aspect ratio:', aspectRatio);
+
     const enhancedPrompt = `${prompt}, professional presentation style, clean, modern, high quality`;
     console.log('🚀 Enhanced prompt:', enhancedPrompt);
 
@@ -34,7 +48,7 @@ export async function POST(req: Request) {
     const { image } = await generateImage({
       model: replicate.image('black-forest-labs/flux-schnell'),
       prompt: enhancedPrompt,
-      aspectRatio: '16:9', // Good for presentation slides
+      aspectRatio: aspectRatio,
     });
 
     console.log('✅ Image generated successfully');

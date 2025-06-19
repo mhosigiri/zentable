@@ -23,7 +23,11 @@ const OutlineSchema = z.object({
         'four-columns',
         'four-columns-with-headings',
         'title-with-bullets',
-        'title-with-bullets-and-image'
+        'title-with-bullets-and-image',
+        'title-with-text',
+        'accent-left',
+        'accent-right',
+        'accent-top'
       ]).describe('Template type that best fits the content and purpose of this section')
     })
   ).describe('Array of presentation sections with supporting bullet points and template types')
@@ -48,7 +52,11 @@ function selectTemplateType(title: string, bulletPoints: string[], index: number
     'four-columns',
     'four-columns-with-headings',
     'title-with-bullets',
-    'title-with-bullets-and-image'
+    'title-with-bullets-and-image',
+    'title-with-text',
+    'accent-left',
+    'accent-right',
+    'accent-top'
   ];
   
   // Enhanced variety logic - prioritize unused templates first
@@ -68,7 +76,7 @@ function selectTemplateType(title: string, bulletPoints: string[], index: number
       contentText.includes('picture') || contentText.includes('diagram') || contentText.includes('chart') ||
       contentText.includes('example') || contentText.includes('case study') || 
       contentText.includes('demonstration') || contentText.includes('showcase')) {
-    suitableTemplates.push('image-and-text', 'text-and-image', 'title-with-bullets-and-image');
+    suitableTemplates.push('image-and-text', 'text-and-image', 'title-with-bullets-and-image', 'accent-left', 'accent-right', 'accent-top');
   }
   
   // Comparison or contrasting content
@@ -101,12 +109,15 @@ function selectTemplateType(title: string, bulletPoints: string[], index: number
     suitableTemplates.push('bullets', 'title-with-bullets');
   }
   
-  // Long-form content that works better as paragraphs
+  // Content that works well as short text or paragraphs
   if (contentText.includes('strategy') || contentText.includes('process') || 
       contentText.includes('methodology') || contentText.includes('framework') ||
       contentText.includes('analysis') || contentText.includes('overview') ||
-      contentText.includes('summary') || contentText.includes('conclusion')) {
-    suitableTemplates.push('paragraph', 'title-with-bullets');
+      contentText.includes('summary') || contentText.includes('conclusion') ||
+      contentText.includes('explanation') || contentText.includes('description') ||
+      contentText.includes('background') || contentText.includes('context') ||
+      contentText.includes('definition') || contentText.includes('concept')) {
+    suitableTemplates.push('paragraph', 'title-with-bullets', 'title-with-text');
   }
   
   // Multi-item content based on bullet count
@@ -160,7 +171,7 @@ function selectTemplateType(title: string, bulletPoints: string[], index: number
   if (index === 0) {
     // First slide - prefer visually striking templates
     const firstSlidePreferred = finalTemplates.filter(t => 
-      ['title-with-bullets-and-image', 'image-and-text', 'text-and-image', 'bullets'].includes(t)
+      ['title-with-bullets-and-image', 'image-and-text', 'text-and-image', 'bullets', 'accent-left', 'accent-right', 'accent-top'].includes(t)
     );
     if (firstSlidePreferred.length > 0) {
       return firstSlidePreferred[Math.floor(Math.random() * firstSlidePreferred.length)];

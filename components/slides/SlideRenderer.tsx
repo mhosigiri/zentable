@@ -1,18 +1,23 @@
 'use client';
 
 import { BlankCard } from './BlankCard';
-import { ImageAndText } from './ImageAndText';
-import { TextAndImage } from './TextAndImage';
-import { TwoColumns } from './TwoColumns';
-import { TwoColumnWithHeadings } from './TwoColumnWithHeadings';
-import { ThreeColumns } from './ThreeColumns';
-import { ThreeColumnWithHeadings } from './ThreeColumnWithHeadings';
-import { FourColumns } from './FourColumns';
-import { FourColumnsWithHeadings } from './FourColumnsWithHeadings';
-import { TitleWithBullets } from './TitleWithBullets';
-import { TitleWithBulletsAndImage } from './TitleWithBulletsAndImage';
-import { Bullets } from './Bullets';
-import { Paragraph } from './Paragraph';
+import { ImageAndText } from './basic/ImageAndText';
+import { TextAndImage } from './basic/TextAndImage';
+import { TwoColumns } from './basic/TwoColumns';
+import { TwoColumnWithHeadings } from './basic/TwoColumnWithHeadings';
+import { ThreeColumns } from './basic/ThreeColumns';
+import { ThreeColumnWithHeadings } from './basic/ThreeColumnWithHeadings';
+import { FourColumns } from './basic/FourColumns';
+import { FourColumnsWithHeadings } from './basic/FourColumnsWithHeadings';
+import { TitleWithBullets } from './basic/TitleWithBullets';
+import { TitleWithBulletsAndImage } from './basic/TitleWithBulletsAndImage';
+import { TitleWithText } from './basic/TitleWithText';
+import { Bullets } from './basic/Bullets';
+import { Paragraph } from './basic/Paragraph';
+import { AccentLeft } from './basic/AccentLeft';
+import { AccentRight } from './basic/AccentRight';
+import { AccentTop } from './basic/AccentTop';
+import { AccentBackground } from './basic/AccentBackground';
 
 export interface SlideData {
   id: string;
@@ -109,11 +114,26 @@ export function SlideRenderer({ slide, onUpdate, isEditable = false }: SlideRend
     case 'title-with-bullets-and-image':
       return <TitleWithBulletsAndImage {...commonProps} />;
     
+    case 'title-with-text':
+      return <TitleWithText {...commonProps} />;
+    
     case 'bullets':
       return <Bullets {...commonProps} />;
     
     case 'paragraph':
       return <Paragraph {...commonProps} />;
+    
+    case 'accent-left':
+      return <AccentLeft {...commonProps} />;
+    
+    case 'accent-right':
+      return <AccentRight {...commonProps} />;
+    
+    case 'accent-top':
+      return <AccentTop {...commonProps} />;
+    
+    case 'accent-background':
+      return <AccentBackground {...commonProps} />;
     
     default:
       return <BlankCard {...commonProps} />;

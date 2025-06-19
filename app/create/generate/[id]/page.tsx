@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SlidesHeader } from '@/components/ui/slides-header';
 import { 
   Home, 
   RefreshCw, 
@@ -58,6 +59,7 @@ interface DocumentData {
   createdAt: string;
   status: string;
   outline?: GeneratedOutline;
+  generatedSlides?: any[]; // Add this field to match the docs page
 }
 
 function SortableOutlineCard({ section, index, onEdit }: { 
@@ -203,7 +205,7 @@ export default function OutlinePage() {
     })
   );
 
-  // Load document data from localStorage
+  // Load document data and theme from localStorage
   useEffect(() => {
     const loadDocumentData = () => {
       const stored = localStorage.getItem(`document_${documentId}`);
@@ -214,6 +216,8 @@ export default function OutlinePage() {
         setCardCount(data.cardCount.toString());
         setStyle(data.style);
         setLanguage(data.language);
+        
+
         
         if (data.outline) {
           setGeneratedOutline(data.outline);
@@ -360,10 +364,11 @@ export default function OutlinePage() {
 
   const handleGenerateSlides = () => {
     if (generatedOutline && documentData) {
-      // Save the final outline state
+      // Save the final outline state and clear any existing generated slides
       saveDocumentData({ 
         outline: generatedOutline,
-        status: 'ready-for-slides'
+        status: 'ready-for-slides',
+        generatedSlides: undefined // Clear existing slides to force regeneration
       });
       
       // Navigate to the presentation page
@@ -373,10 +378,13 @@ export default function OutlinePage() {
 
   if (!documentData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-gray-600">Loading document...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <SlidesHeader title="Generate Outline" showHomeButton={true} />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-700" />
+            <p className="text-gray-600">Loading document...</p>
+          </div>
         </div>
       </div>
     );
@@ -384,14 +392,7 @@ export default function OutlinePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <header className="border-b border-white/20 backdrop-blur-sm bg-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-4">
-            <h1 className="text-lg font-semibold text-gray-900">Generate</h1>
-          </div>
-        </div>
-      </header>
+      <SlidesHeader title="Generate Outline" showHomeButton={true} />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Prompt Section */}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SlidesHeader } from '@/components/ui/slides-header';
 import { 
   FileText, 
   Sparkles, 
@@ -34,17 +35,7 @@ export default function CreatePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <header className="border-b border-white/20 backdrop-blur-sm bg-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center py-4">
-            <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SlidesHeader title="Create with AI" showHomeButton={true} />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Main Title */}
