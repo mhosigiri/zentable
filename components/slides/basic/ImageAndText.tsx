@@ -12,8 +12,7 @@ interface ImageAndTextProps extends SlideData {
 }
 
 export function ImageAndText({ 
-  title, 
-  content, 
+  content,
   imageUrl, 
   imagePrompt, 
   isGenerating, 
@@ -24,17 +23,28 @@ export function ImageAndText({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const handleTitleChange = (newTitle: string) => {
+  const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') });
+      console.log('💾 ImageAndText - Content being saved:', newContent);
+      onUpdate({ content: newContent });
     }
   };
 
-  const handleContentChange = (newContent: string) => {
-    if (onUpdate) {
-      onUpdate({ content: newContent.replace(/<[^>]*>/g, '') });
-    }
-  };
+  const defaultContent = `<h1>Visual Content Slide</h1>
+
+<p>This slide combines visual and textual content to create a compelling presentation. The image on the left provides visual context while this text area offers detailed explanation and supporting information.</p>
+
+<p>Use this layout when you want to:</p>
+<ul>
+  <li>Showcase a product or concept visually</li>
+  <li>Explain a process or workflow</li>
+  <li>Provide context for visual data</li>
+  <li>Create engaging narrative content</li>
+</ul>
+
+<p>The visual-text combination helps reinforce your message and makes it more memorable for your audience.</p>`;
+
+  const displayContent = content || defaultContent;
 
   return (
     <SlideWrapper layout="horizontal">
@@ -98,42 +108,13 @@ export function ImageAndText({
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            {(title || isEditable) && (
-              <div>
-                {isEditable ? (
-                  <TiptapEditor
-                    content={title || 'Slide Title'}
-                    onChange={handleTitleChange}
-                    placeholder="Enter slide title..."
-                    variant="title"
-                    className="text-left"
-                  />
-                ) : (
-                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 drop-shadow-sm leading-tight">
-                    {title}
-                  </h1>
-                )}
-              </div>
-            )}
-            
-            {(content || isEditable) && (
-              <div>
-                {isEditable ? (
-                  <TiptapEditor
-                    content={content || 'Add your content here...'}
-                    onChange={handleContentChange}
-                    placeholder="Enter slide content..."
-                    variant="body"
-                  />
-                ) : (
-                  <p className="text-base md:text-lg text-gray-800 drop-shadow-sm leading-relaxed">
-                    {content}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          <TiptapEditor
+            content={displayContent}
+            onChange={handleContentChange}
+            placeholder="Enter slide content with headings, paragraphs, and lists..."
+            className="w-full"
+            editable={isEditable}
+          />
         )}
       </div>
     </SlideWrapper>

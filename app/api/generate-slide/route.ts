@@ -6,126 +6,82 @@ export const dynamic = 'force-dynamic';
 
 // Define schemas for different slide templates
 const BlankCardSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  content: z.string().describe('Main content or description'),
+  content: z.string().describe('Complete HTML content starting with a heading (h1, h2, or h3) followed by the main content. Use appropriate formatting like <p>, <strong>, <em>, or additional headings. Structure: <h1>Title</h1><p>Content description...</p>'),
 });
 
 const ImageAndTextSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  content: z.string().describe('Text content to accompany the image'),
+  content: z.string().describe('Complete HTML content with h1 title followed by paragraphs and/or bullet points that complement the image. Structure: <h1>Title</h1><p>Description text...</p><ul><li>Key point 1</li><li>Key point 2</li></ul>'),
   imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
 });
 
 const TextAndImageSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  content: z.string().describe('Text content to accompany the image'),
+  content: z.string().describe('Complete HTML content with h1 title followed by paragraphs and/or bullet points that complement the image. Structure: <h1>Title</h1><p>Description text...</p><ul><li>Key point 1</li><li>Key point 2</li></ul>'),
   imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
 });
 
 const TwoColumnsSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  leftBullets: z.array(z.string()).describe('Array of bullet points for the left column (2-4 points)'),
-  rightBullets: z.array(z.string()).describe('Array of bullet points for the right column (2-4 points)'),
+  content: z.string().describe('Complete HTML content with h1 title and table-based two-column layout. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h3>Left Column</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h3>Right Column</h3><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const TwoColumnWithHeadingsSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  leftHeading: z.string().describe('Heading for the left column'),
-  leftBullets: z.array(z.string()).describe('Array of bullet points for the left column (2-4 points)'),
-  rightHeading: z.string().describe('Heading for the right column'),
-  rightBullets: z.array(z.string()).describe('Array of bullet points for the right column (2-4 points)'),
+  content: z.string().describe('Complete HTML content with h1 title and table-based two-column layout with styled headings. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Left Heading</h2><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Right Heading</h2><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const ThreeColumnsSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  leftBullets: z.array(z.string()).describe('Array of bullet points for the left column (2-3 points)'),
-  centerBullets: z.array(z.string()).describe('Array of bullet points for the center column (2-3 points)'),
-  rightBullets: z.array(z.string()).describe('Array of bullet points for the right column (2-3 points)'),
+  content: z.string().describe('Complete HTML content with h1 title and table-based three-column layout. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h3>Column 1</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h3>Column 2</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h3>Column 3</h3><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const ThreeColumnWithHeadingsSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  leftHeading: z.string().describe('Heading for the left column'),
-  leftBullets: z.array(z.string()).describe('Array of bullet points for the left column (2-3 points)'),
-  centerHeading: z.string().describe('Heading for the center column'),
-  centerBullets: z.array(z.string()).describe('Array of bullet points for the center column (2-3 points)'),
-  rightHeading: z.string().describe('Heading for the right column'),
-  rightBullets: z.array(z.string()).describe('Array of bullet points for the right column (2-3 points)'),
+  content: z.string().describe('Complete HTML content with h1 title and table-based three-column layout with styled headings. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 1 Heading</h2><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 2 Heading</h2><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 3 Heading</h2><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const FourColumnsSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  column1Bullets: z.array(z.string()).describe('Array of bullet points for the first column (2-3 points)'),
-  column2Bullets: z.array(z.string()).describe('Array of bullet points for the second column (2-3 points)'),
-  column3Bullets: z.array(z.string()).describe('Array of bullet points for the third column (2-3 points)'),
-  column4Bullets: z.array(z.string()).describe('Array of bullet points for the fourth column (2-3 points)'),
+  content: z.string().describe('Complete HTML content with h1 title and table-based four-column layout. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h3>Column 1</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h3>Column 2</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h3>Column 3</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h3>Column 4</h3><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const FourColumnsWithHeadingsSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  column1Heading: z.string().describe('Heading for the first column'),
-  column1Bullets: z.array(z.string()).describe('Array of bullet points for the first column (2-3 points)'),
-  column2Heading: z.string().describe('Heading for the second column'),
-  column2Bullets: z.array(z.string()).describe('Array of bullet points for the second column (2-3 points)'),
-  column3Heading: z.string().describe('Heading for the third column'),
-  column3Bullets: z.array(z.string()).describe('Array of bullet points for the third column (2-3 points)'),
-  column4Heading: z.string().describe('Heading for the fourth column'),
-  column4Bullets: z.array(z.string()).describe('Array of bullet points for the fourth column (2-3 points)'),
+  content: z.string().describe('Complete HTML content with h1 title and table-based four-column layout with styled headings. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 1</h2><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 2</h2><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 3</h2><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 4</h2><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const BulletsSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  bullets: z.array(z.object({
-    title: z.string().describe('Title for the bullet point'),
-    description: z.string().describe('Description for the bullet point'),
-  })).describe('Array of 4 numbered bullet points with titles and descriptions'),
-  conclusion: z.string().describe('Concluding paragraph that summarizes the key points'),
+  content: z.string().describe('Complete HTML content with h1 title and table-based 2x2 grid layout for numbered bullet points. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1rem 1rem 0; vertical-align: top;"><h3><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">1</span>Point Title</h3><p>Description</p></td><td style="width: 50%; padding: 0 0 1rem 1rem; vertical-align: top;"><h3><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">2</span>Point Title</h3><p>Description</p></td></tr><tr><td style="width: 50%; padding: 1rem 1rem 0 0; vertical-align: top;"><h3><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">3</span>Point Title</h3><p>Description</p></td><td style="width: 50%; padding: 1rem 0 0 1rem; vertical-align: top;"><h3><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">4</span>Point Title</h3><p>Description</p></td></tr></table><hr style="margin: 2rem 0; border: 1px solid #e5e7eb;" /><p><strong>Conclusion:</strong> Summary content</p>'),
 });
 
 const ParagraphSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  sections: z.array(z.object({
-    heading: z.string().describe('Section heading'),
-    paragraphs: z.array(z.string()).describe('Array of paragraphs for this section (1-2 paragraphs)'),
-  })).describe('Array of 2-3 sections with headings and paragraphs'),
-  conclusion: z.string().describe('Concluding paragraph that summarizes the content'),
+  content: z.string().describe('Complete HTML content with h1 title followed by multiple sections with h2 headings and paragraphs. Structure: <h1>Title</h1><h2>Section 1</h2><p>Paragraph 1</p><p>Paragraph 2</p><h2>Section 2</h2><p>Paragraph 1</p><p>Paragraph 2</p><h2>Conclusion</h2><p>Concluding thoughts</p>'),
 });
 
 const TitleWithBulletsSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  bulletPoints: z.array(z.string()).describe('Array of bullet points (3-5 points)'),
+  content: z.string().describe('Complete HTML content starting with a heading (h1, h2, or h3) followed by formatted bullet points using <ul> and <li> tags (3-5 points). Include formatting like <strong>, <em>, or additional heading tags if appropriate for emphasis. Structure: <h1>Title</h1><ul><li><p>Point 1</p></li>...</ul>'),
 });
 
 const TitleWithBulletsAndImageSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  bulletPoints: z.array(z.string()).describe('Array of bullet points (3-4 points)'),
+  content: z.string().describe('Complete HTML content starting with h1 title followed by formatted bullet points using <ul> and <li> tags (3-4 points). Include formatting like <strong>, <em> for emphasis. Structure: <h1>Title</h1><ul><li>Point 1</li><li>Point 2</li></ul>'),
   imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
 });
 
 const TitleWithTextSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  content: z.string().describe('Short paragraph of text content (3-5 sentences maximum, can include basic HTML formatting)'),
+  content: z.string().describe('Complete HTML content starting with h1 title followed by paragraph content (3-5 sentences maximum). Structure: <h1>Title</h1><p>Short paragraph content...</p>'),
 });
 
 const AccentLeftSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  content: z.string().optional().describe('Text content to accompany the image (optional, use if content is better as paragraph)'),
-  bulletPoints: z.array(z.string()).optional().describe('Array of bullet points (optional, use if content is better as bullets)'),
+  content: z.string().describe('Complete HTML content starting with h1 title followed by paragraphs and/or bullet points. Choose the format that best fits the content. Structure: <h1>Title</h1><p>Content...</p> or <h1>Title</h1><ul><li>Point 1</li><li>Point 2</li></ul>'),
   imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
 });
 
 const AccentRightSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  content: z.string().optional().describe('Text content to accompany the image (optional, use if content is better as paragraph)'),
-  bulletPoints: z.array(z.string()).optional().describe('Array of bullet points (optional, use if content is better as bullets)'),
+  content: z.string().describe('Complete HTML content starting with h1 title followed by paragraphs and/or bullet points. Choose the format that best fits the content. Structure: <h1>Title</h1><p>Content...</p> or <h1>Title</h1><ul><li>Point 1</li><li>Point 2</li></ul>'),
   imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
 });
 
 const AccentTopSchema = z.object({
-  title: z.string().describe('Main title for the slide'),
-  content: z.string().optional().describe('Text content to accompany the image (optional, use if content is better as paragraph)'),
-  bulletPoints: z.array(z.string()).optional().describe('Array of bullet points (optional, use if content is better as bullets)'),
+  content: z.string().describe('Complete HTML content starting with h1 title followed by paragraphs and/or bullet points. Choose the format that best fits the content. Structure: <h1>Title</h1><p>Content...</p> or <h1>Title</h1><ul><li>Point 1</li><li>Point 2</li></ul>'),
   imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+});
+
+const AccentBackgroundSchema = z.object({
+  content: z.string().describe('Complete HTML content starting with h1 title followed by paragraphs and/or bullet points. Choose the format that best fits the content. Structure: <h1>Title</h1><p>Content...</p> or <h1>Title</h1><ul><li>Point 1</li><li>Point 2</li></ul>'),
+  imagePrompt: z.string().describe('Detailed prompt for generating a background image that complements the content'),
 });
 
 function getSchemaForTemplate(templateType: string): z.ZodType<any> {
@@ -164,6 +120,8 @@ function getSchemaForTemplate(templateType: string): z.ZodType<any> {
       return AccentRightSchema;
     case 'accent-top':
       return AccentTopSchema;
+    case 'accent-background':
+      return AccentBackgroundSchema;
     default:
       return BlankCardSchema;
   }
@@ -174,58 +132,55 @@ function getPromptForTemplate(templateType: string, sectionTitle: string, bullet
   
   switch (templateType) {
     case 'blank-card':
-      return `Create a clean slide with a clear title and concise, impactful content. Choose the most appropriate format - either brief bullet points or short paragraphs. Keep all text scannable and presentation-ready. Base it on: ${baseContent}`;
+      return `Create complete HTML content starting with a heading (h1, h2, or h3) for the title, followed by concise, impactful content. Choose the most appropriate format - either brief bullet points using <ul><li> or short paragraphs using <p>. Use HTML formatting like <strong> for emphasis. Keep all text scannable and presentation-ready. Structure: <h1>Your Title</h1><p>Your content...</p> or with bullets. Base it on: ${baseContent}`;
     
     case 'image-and-text':
-      return `Create a slide with compelling but brief text content and describe a specific, professional image. Choose between bullet points or short paragraphs based on what works best for the content. Keep text scannable (max 2-3 sentences if paragraphs, 1-2 lines if bullets). Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title followed by paragraphs and/or bullet points that complement the image. Structure: <h1>Title</h1><p>Description text...</p><ul><li>Key point 1</li><li>Key point 2</li></ul>. Also create a detailed, professional image prompt. Keep text scannable (max 2-3 sentences if paragraphs, 1-2 lines if bullets). Base it on: ${baseContent}`;
     
     case 'text-and-image':
-      return `Create a slide with concise, impactful text content and describe a relevant professional image. Use bullets for lists/key points or short paragraphs for explanations - whatever fits the content best. Make bullet points substantial (1-2 lines) and keep all text scannable. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title followed by paragraphs and/or bullet points that complement the image. Structure: <h1>Title</h1><p>Description text...</p><ul><li>Key point 1</li><li>Key point 2</li></ul>. Also create a detailed, professional image prompt. Make bullet points substantial (1-2 lines) and keep all text scannable. Base it on: ${baseContent}`;
     
     case 'two-columns':
-      return `Create a two-column slide with balanced content (2-4 items per column). Use bullet points for lists or brief paragraphs for explanations - choose what's most appropriate for each column. Keep content scannable and presentation-ready. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title and table-based two-column layout. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h3>Left Column</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h3>Right Column</h3><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-4 points per column. Base it on: ${baseContent}`;
     
     case 'two-column-with-headings':
-      return `Create a two-column slide with clear headings (3-4 words max) and supporting content. Use bullet points for key points or brief paragraphs for explanations based on what works best. Keep all content scannable. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title and table-based two-column layout with styled headings. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Left Heading</h2><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h2 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Right Heading</h2><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use clear headings (3-4 words max) and 2-4 points per column. Base it on: ${baseContent}`;
     
     case 'three-columns':
-      return `Create a three-column slide with concise content (2-3 items per column). Choose bullet points for lists or short paragraphs for explanations based on content type. Focus on key insights that can be quickly scanned. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title and table-based three-column layout. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h3>Column 1</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h3>Column 2</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h3>Column 3</h3><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-3 points per column. Base it on: ${baseContent}`;
     
     case 'three-column-with-headings':
-      return `Create a three-column slide with short headings (2-3 words max) and supporting content. Use bullets for key points or brief paragraphs for explanations - whatever is most appropriate. Prioritize clarity and readability. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title and table-based three-column layout with styled headings. Use the exact structure from the schema with purple headings and borders. Use short headings (2-3 words max) and 2-3 points per column. Base it on: ${baseContent}`;
     
     case 'four-columns':
-      return `Create a four-column slide with concise content (2-3 items per column). Use bullet points for lists or brief sentences for explanations based on what's most effective for each column. Keep all text scannable. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title and table-based four-column layout. Structure: <h1>Title</h1><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h3>Column 1</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h3>Column 2</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h3>Column 3</h3><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h3>Column 4</h3><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-3 points per column. Base it on: ${baseContent}`;
     
     case 'four-columns-with-headings':
-      return `Create a four-column slide with short, descriptive headings (2-3 words max) and supporting content. Choose between bullet points or brief explanations based on what works best for each section. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title and table-based four-column layout with styled headings. Use the exact structure from the schema with purple headings and borders. Use short headings (2-3 words max) and 2-3 points per column. Base it on: ${baseContent}`;
     
     case 'bullets':
-      return `Create a slide with 4 numbered bullet points in a 2x2 grid. Each bullet needs a short title (3-5 words) and brief description (1-2 lines max). Add a concise conclusion (1-2 sentences). This template specifically uses bullets. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title and table-based 2x2 grid layout for numbered bullet points. Use the exact structure from the schema with numbered circles and conclusion. Each bullet needs a short title (3-5 words) and brief description (1-2 lines max). Add a concise conclusion. Base it on: ${baseContent}`;
     
     case 'paragraph':
-      return `Create a slide with 2-3 sections, each with a short heading (3-4 words) and 1-2 brief paragraphs (2-3 sentences each). This template specifically uses paragraphs for explanations. Include a concise conclusion (1-2 sentences). Base it on: ${baseContent}`;
+      return `Create complete HTML content with h1 title followed by multiple sections with h2 headings and paragraphs. Structure: <h1>Title</h1><h2>Section 1</h2><p>Paragraph 1</p><p>Paragraph 2</p><h2>Section 2</h2><p>Paragraph 1</p><p>Paragraph 2</p><h2>Conclusion</h2><p>Concluding thoughts</p>. Use 2-3 sections with short headings and brief paragraphs. Base it on: ${baseContent}`;
     
     case 'title-with-bullets':
-      return `Create a slide with a strong title and 3-5 clear, substantive bullet points. Each bullet should be 1-2 lines maximum - impactful and comprehensive enough to be meaningful. This template specifically uses bullet points. Base it on: ${baseContent}`;
+      return `Create complete HTML content starting with a heading (h1, h2, or h3) for the title, followed by 3-5 formatted bullet points using <ul> and <li> tags. Each bullet should be 1-2 lines maximum - impactful and comprehensive enough to be meaningful. Use HTML formatting like <strong> for emphasis, <em> for italic, and additional heading tags if needed. Structure as: <h1>Your Title Here</h1><ul><li>First formatted point</li><li>Second point with emphasis</li>...</ul>. Choose appropriate heading level (h1 for main titles, h2 for subtitles). Base it on: ${baseContent}`;
     
     case 'title-with-bullets-and-image':
-      return `Create a slide with a compelling title, 3-4 substantial bullet points (1-2 lines each), and describe a relevant professional image. This template specifically uses bullet points. Make each bullet meaningful and scannable. Base it on: ${baseContent}`;
+      return `Create complete HTML content starting with h1 title followed by formatted bullet points using <ul> and <li> tags (3-4 points, 1-2 lines each), and describe a relevant professional image. Use HTML formatting like <strong> for emphasis. Structure: <h1>Title</h1><ul><li>Point 1</li><li>Point 2</li></ul>. Also create a detailed image prompt. Base it on: ${baseContent}`;
     
     case 'title-with-text':
-      return `Create a slide with a strong title and a concise paragraph of text (3-5 sentences maximum). Use a single, well-written paragraph that captures the key message clearly and concisely. This template is ideal for brief explanations, summaries, or context that's too detailed for bullet points but doesn't need multiple paragraphs. Keep it engaging and focused. Base it on: ${baseContent}`;
+      return `Create complete HTML content starting with h1 title followed by paragraph content (3-5 sentences maximum). Structure: <h1>Title</h1><p>Short paragraph content...</p>. Use a single, well-written paragraph that captures the key message clearly and concisely. Base it on: ${baseContent}`;
     
     case 'accent-left':
-      return `Create a slide with a compelling title and content that works well with a prominent left-side image. Choose between bullet points (3-4 items) or a brief paragraph based on what's most effective. The image will be on the left taking up significant space, so content should be concise and impactful. Create a detailed, professional image prompt that complements and enhances the content. Base it on: ${baseContent}`;
-    
     case 'accent-right':
-      return `Create a slide with a compelling title and content that works well with a prominent right-side image. Choose between bullet points (3-4 items) or a brief paragraph based on what's most effective. The image will be on the right taking up significant space, so content should be concise and impactful. Create a detailed, professional image prompt that complements and enhances the content. Base it on: ${baseContent}`;
-    
     case 'accent-top':
-      return `Create a slide with a compelling title and content that works well with a prominent top image. Choose between bullet points (3-4 items) or a brief paragraph based on what's most effective. The image will be at the top taking up significant space, so content should be concise and impactful. Create a detailed, professional image prompt that complements and enhances the content. Base it on: ${baseContent}`;
+    case 'accent-background':
+      return `Create complete HTML content starting with h1 title followed by paragraphs and/or bullet points. Choose the format that best fits the content. Structure: <h1>Title</h1><p>Content...</p> or <h1>Title</h1><ul><li>Point 1</li><li>Point 2</li></ul>. Also create a detailed, professional image prompt that complements and enhances the content. Content should be concise and impactful (3-4 bullet points or brief paragraph). Base it on: ${baseContent}`;
     
     default:
-      return `Create concise slide content with brief, impactful text. Choose between bullet points or short paragraphs based on what's most appropriate for the content. Ensure all text can be easily read and understood on a presentation slide. Base it on: ${baseContent}`;
+      return `Create complete HTML content starting with a heading for the title, followed by concise, impactful content. Choose between bullet points or short paragraphs based on what's most appropriate for the content. Ensure all text can be easily read and understood on a presentation slide. Base it on: ${baseContent}`;
   }
 }
 

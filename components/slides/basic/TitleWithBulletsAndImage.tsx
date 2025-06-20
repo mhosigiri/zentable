@@ -15,6 +15,7 @@ interface TitleWithBulletsAndImageProps extends SlideData {
 export function TitleWithBulletsAndImage({ 
   title, 
   bulletPoints = [], 
+  content,
   imageUrl, 
   imagePrompt, 
   isGenerating, 
@@ -34,20 +35,9 @@ export function TitleWithBulletsAndImage({
 
   const handleBulletPointsChange = (newContent: string) => {
     if (onUpdate) {
-      // Convert HTML to bullet points array
-      const div = document.createElement('div');
-      div.innerHTML = newContent;
-      const listItems = div.querySelectorAll('li');
-      const points = Array.from(listItems).map(li => li.textContent || '').filter(text => text.trim());
-      
-      // If no list items, split by line breaks
-      if (points.length === 0) {
-        const textContent = div.textContent || '';
-        const lines = textContent.split('\n').filter(line => line.trim());
-        onUpdate({ bulletPoints: lines });
-      } else {
-        onUpdate({ bulletPoints: points });
-      }
+      console.log('💾 TitleWithBulletsAndImage - Content being saved:', newContent);
+      // FIXED: Save rich HTML content instead of converting to plain text
+      onUpdate({ content: newContent });
     }
   };
 
@@ -60,6 +50,36 @@ export function TitleWithBulletsAndImage({
   ];
 
   const displayBulletPoints = bulletPoints.length > 0 ? bulletPoints : defaultBulletPoints;
+  
+  // Helper function to render HTML content or fallback to bullet points
+  const renderContent = () => {
+    // If we have rich HTML content, use that
+    if (content && content.includes('<')) {
+      return <div dangerouslySetInnerHTML={{ __html: content }} className={`prose prose-sm max-w-none ${
+        isDark ? 'prose-invert' : ''
+      } [&_ul]:space-y-3 [&_li]:flex [&_li]:items-start [&_li]:space-x-3 [&_ul]:list-none [&_li]:before:content-[''] [&_li]:before:w-2 [&_li]:before:h-2 [&_li]:before:rounded-full [&_li]:before:mt-2 [&_li]:before:flex-shrink-0 ${
+        isDark ? '[&_li]:before:bg-purple-400 [&_p]:text-gray-300 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white' : '[&_li]:before:bg-purple-500 [&_p]:text-gray-700 [&_h1]:text-gray-900 [&_h2]:text-gray-900 [&_h3]:text-gray-900'
+      }`} />;
+    }
+    
+    // Fallback to legacy bullet points display
+    return (
+      <ul className="space-y-3 list-none">
+        {displayBulletPoints.map((point, index) => (
+          <li key={index} className="flex items-start space-x-3">
+            <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+              isDark ? 'bg-purple-400' : 'bg-purple-500'
+            }`}></div>
+            <p className={`text-sm md:text-base leading-relaxed ${
+              isDark ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              {point}
+            </p>
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
   const isDark = theme === 'dark';
 
@@ -114,7 +134,7 @@ export function TitleWithBulletsAndImage({
             </div>
           ) : isEditable ? (
             <TiptapEditor
-              content={`<ul>${displayBulletPoints.map(point => `<li>${point}</li>`).join('')}</ul>`}
+              content={content || `<ul>${displayBulletPoints.map(point => `<li>${point}</li>`).join('')}</ul>`}
               onChange={handleBulletPointsChange}
               placeholder="• Add your bullet points here..."
               variant="body"
@@ -123,22 +143,7 @@ export function TitleWithBulletsAndImage({
               }`}
             />
           ) : (
-            displayBulletPoints && displayBulletPoints.length > 0 && (
-              <ul className="space-y-3 list-none">
-                {displayBulletPoints.map((point, index) => (
-                  <li key={index} className="flex items-start space-x-3">
-                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                      isDark ? 'bg-purple-400' : 'bg-purple-500'
-                    }`}></div>
-                    <p className={`text-sm md:text-base leading-relaxed ${
-                      isDark ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      {point}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )
+            renderContent()
           )}
         </div>
       </div>

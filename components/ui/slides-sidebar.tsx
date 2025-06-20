@@ -18,6 +18,60 @@ import {
   ChevronUp
 } from 'lucide-react';
 
+// Helper functions to extract text from HTML content
+function getSlideTitle(slide: SlideData): string {
+  // First try the legacy title field
+  if (slide.title) {
+    return slide.title;
+  }
+  
+  // Extract title from HTML content
+  if (slide.content) {
+    // Try to extract h1, h2, or h3 tags
+    const titleMatch = slide.content.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);
+    if (titleMatch) {
+      return titleMatch[1].replace(/<[^>]*>/g, '').trim();
+    }
+    
+    // Fallback to first line of text content
+    const textContent = slide.content.replace(/<[^>]*>/g, '').trim();
+    const firstLine = textContent.split('\n')[0];
+    if (firstLine.length > 0) {
+      return firstLine.length > 50 ? firstLine.substring(0, 47) + '...' : firstLine;
+    }
+  }
+  
+  return 'Untitled Slide';
+}
+
+function getSlidePreview(slide: SlideData): string {
+  // First try the legacy bulletPoints field
+  if (slide.bulletPoints && slide.bulletPoints.length > 0) {
+    return slide.bulletPoints[0];
+  }
+  
+  // Extract preview from HTML content
+  if (slide.content) {
+    // Remove HTML tags and get plain text
+    let textContent = slide.content.replace(/<[^>]*>/g, '').trim();
+    
+    // Remove the title part (first line) to get the content
+    const lines = textContent.split('\n').filter(line => line.trim().length > 0);
+    if (lines.length > 1) {
+      // Skip the first line (title) and get the next meaningful content
+      const contentLines = lines.slice(1);
+      const preview = contentLines.join(' ').trim();
+      return preview.length > 100 ? preview.substring(0, 97) + '...' : preview;
+    } else if (lines.length === 1) {
+      // If only one line, show a portion of it
+      const content = lines[0];
+      return content.length > 50 ? content.substring(0, 47) + '...' : content;
+    }
+  }
+  
+  return 'No content';
+}
+
 // Sortable slide item component
 function SortableSlideItem({ 
   slide, 
@@ -74,13 +128,11 @@ function SortableSlideItem({
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="text-white text-sm font-medium truncate">
-                {slide.title || 'Untitled Slide'}
+                {getSlideTitle(slide)}
               </h4>
-              {slide.bulletPoints && slide.bulletPoints.length > 0 && (
-                <p className="text-white/60 text-xs mt-1 line-clamp-2">
-                  {slide.bulletPoints[0]}
-                </p>
-              )}
+              <p className="text-white/60 text-xs mt-1 line-clamp-2">
+                {getSlidePreview(slide)}
+              </p>
             </div>
           </div>
         </div>
@@ -89,7 +141,7 @@ function SortableSlideItem({
         <div className="p-2">
           <div 
             className="w-full h-full bg-white/5 rounded border border-white/10 overflow-hidden relative"
-            style={{ aspectRatio: '1200/600' }}
+            style={{ aspectRatio: '1200/650' }}
           >
             <div 
               className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-xs font-medium rounded-full w-6 h-6 flex items-center justify-center"

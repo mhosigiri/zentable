@@ -11,259 +11,104 @@ interface TwoColumnsProps extends SlideData {
 }
 
 export function TwoColumns({ 
-  title, 
-  leftContent,
-  leftBullets = [],
-  rightContent,
-  rightBullets = [],
+  content,
   isGenerating, 
   onUpdate, 
   isEditable = false,
   theme = 'light'
 }: TwoColumnsProps) {
-  
-  const handleTitleChange = (newTitle: string) => {
+
+  const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') });
+      console.log('💾 TwoColumns - Content being saved:', newContent);
+      onUpdate({ content: newContent });
     }
   };
 
-  const handleLeftContentChange = (newContent: string) => {
-    if (onUpdate) {
-      const div = document.createElement('div');
-      div.innerHTML = newContent;
-      const listItems = div.querySelectorAll('li');
-      
-      if (listItems.length > 0) {
-        // Content has bullet points
-        const points = Array.from(listItems).map(li => li.textContent || '').filter(text => text.trim());
-        onUpdate({ leftBullets: points, leftContent: undefined });
-      } else {
-        // Content is paragraph format
-        const textContent = div.textContent || newContent.replace(/<[^>]*>/g, '');
-        onUpdate({ leftContent: textContent, leftBullets: [] });
-      }
-    }
-  };
+  const defaultContent = `<h1>Two-Column Layout</h1>
 
-  const handleRightContentChange = (newContent: string) => {
-    if (onUpdate) {
-      const div = document.createElement('div');
-      div.innerHTML = newContent;
-      const listItems = div.querySelectorAll('li');
-      
-      if (listItems.length > 0) {
-        // Content has bullet points
-        const points = Array.from(listItems).map(li => li.textContent || '').filter(text => text.trim());
-        onUpdate({ rightBullets: points, rightContent: undefined });
-      } else {
-        // Content is paragraph format
-        const textContent = div.textContent || newContent.replace(/<[^>]*>/g, '');
-        onUpdate({ rightContent: textContent, rightBullets: [] });
-      }
-    }
-  };
+<table style="width: 100%; border-collapse: collapse; margin-top: 2rem;">
+  <tr>
+    <td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;">
+      <h3>Left Column</h3>
+      <ul>
+        <li>First point in left column</li>
+        <li>Second important detail</li>
+        <li>Third supporting argument</li>
+        <li>Fourth key consideration</li>
+      </ul>
+    </td>
+    <td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;">
+      <h3>Right Column</h3>
+      <ul>
+        <li>First point in right column</li>
+        <li>Second important detail</li>
+        <li>Third supporting argument</li>
+        <li>Fourth key consideration</li>
+      </ul>
+    </td>
+  </tr>
+</table>`;
 
-  // Determine what to display for each column
-  const hasLeftBullets = leftBullets && leftBullets.length > 0;
-  const hasLeftContent = leftContent && leftContent.trim();
-  const hasRightBullets = rightBullets && rightBullets.length > 0;
-  const hasRightContent = rightContent && rightContent.trim();
-
-  // Default content if nothing is provided
-  const defaultLeftContent = 'Your left column content here';
-  const defaultRightContent = 'Your right column content here';
-
+  const displayContent = content || defaultContent;
   const isDark = theme === 'dark';
-
-  const renderLeftColumn = () => {
-    if (isGenerating) {
-      return (
-        <div className="animate-pulse space-y-4">
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-start space-x-2">
-                <div className={`w-1 h-1 rounded-full mt-2 ${
-                  isDark ? 'bg-gray-600' : 'bg-gray-200'
-                }`}></div>
-                <div className={`h-4 rounded flex-1 ${
-                  isDark ? 'bg-gray-700' : 'bg-gray-200'
-                }`}></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (isEditable) {
-      const editorContent = hasLeftBullets 
-        ? `<ul>${leftBullets.map(bullet => `<li>${bullet}</li>`).join('')}</ul>`
-        : hasLeftContent 
-          ? leftContent 
-          : defaultLeftContent;
-
-      return (
-        <TiptapEditor
-          content={editorContent}
-          onChange={handleLeftContentChange}
-          placeholder="Add content here..."
-          variant="body"
-          className={`[&_.ProseMirror_ul]:space-y-2 [&_.ProseMirror_li]:flex [&_.ProseMirror_li]:items-start [&_.ProseMirror_li]:space-x-2 ${
-            isDark ? '[&_.ProseMirror]:text-gray-300' : ''
-          }`}
-        />
-      );
-    }
-
-    // Display mode
-    if (hasLeftBullets) {
-      return (
-        <ul className="space-y-3 list-none">
-          {leftBullets.map((bullet, index) => (
-            <li key={index} className="flex items-start space-x-3">
-              <div className={`w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 ${
-                isDark ? 'bg-white' : 'bg-gray-900'
-              }`}></div>
-              <p className={`text-base leading-relaxed ${
-                isDark ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {bullet}
-              </p>
-            </li>
-          ))}
-        </ul>
-      );
-    }
-
-    // Render as paragraph content
-    const displayContent = hasLeftContent ? leftContent : defaultLeftContent;
-    return (
-      <div className={`text-base leading-relaxed ${
-        isDark ? 'text-gray-300' : 'text-gray-700'
-      }`}>
-        {displayContent.split('\n').map((paragraph, index) => (
-          <p key={index} className="mb-3 last:mb-0">
-            {paragraph}
-          </p>
-        ))}
-      </div>
-    );
-  };
-
-  const renderRightColumn = () => {
-    if (isGenerating) {
-      return (
-        <div className="animate-pulse space-y-4">
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-start space-x-2">
-                <div className={`w-1 h-1 rounded-full mt-2 ${
-                  isDark ? 'bg-gray-600' : 'bg-gray-200'
-                }`}></div>
-                <div className={`h-4 rounded flex-1 ${
-                  isDark ? 'bg-gray-700' : 'bg-gray-200'
-                }`}></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (isEditable) {
-      const editorContent = hasRightBullets 
-        ? `<ul>${rightBullets.map(bullet => `<li>${bullet}</li>`).join('')}</ul>`
-        : hasRightContent 
-          ? rightContent 
-          : defaultRightContent;
-
-      return (
-        <TiptapEditor
-          content={editorContent}
-          onChange={handleRightContentChange}
-          placeholder="Add content here..."
-          variant="body"
-          className={`[&_.ProseMirror_ul]:space-y-2 [&_.ProseMirror_li]:flex [&_.ProseMirror_li]:items-start [&_.ProseMirror_li]:space-x-2 ${
-            isDark ? '[&_.ProseMirror]:text-gray-300' : ''
-          }`}
-        />
-      );
-    }
-
-    // Display mode
-    if (hasRightBullets) {
-      return (
-        <ul className="space-y-3 list-none">
-          {rightBullets.map((bullet, index) => (
-            <li key={index} className="flex items-start space-x-3">
-              <div className={`w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0 ${
-                isDark ? 'bg-white' : 'bg-gray-900'
-              }`}></div>
-              <p className={`text-base leading-relaxed ${
-                isDark ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                {bullet}
-              </p>
-            </li>
-          ))}
-        </ul>
-      );
-    }
-
-    // Render as paragraph content
-    const displayContent = hasRightContent ? rightContent : defaultRightContent;
-    return (
-      <div className={`text-base leading-relaxed ${
-        isDark ? 'text-gray-300' : 'text-gray-700'
-      }`}>
-        {displayContent.split('\n').map((paragraph, index) => (
-          <p key={index} className="mb-3 last:mb-0">
-            {paragraph}
-          </p>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <SlideWrapper>
-      {/* Main Title */}
-      {(title || isEditable) && (
-        <div className="mb-8">
-          {isGenerating ? (
-            <div className={`h-12 rounded w-full animate-pulse ${
+      <div className="flex-1">
+        {isGenerating ? (
+          <div className="animate-pulse space-y-8">
+            <div className={`h-12 rounded w-2/3 mx-auto ${
               isDark ? 'bg-gray-700' : 'bg-gray-200'
             }`}></div>
-          ) : isEditable ? (
-            <TiptapEditor
-              content={title || 'The High Cost of Space Exploration'}
-              onChange={handleTitleChange}
-              placeholder="Enter slide title..."
-              variant="title"
-              className={`text-center ${isDark ? '[&_.ProseMirror]:text-white' : ''}`}
-            />
-          ) : (
-            <h1 className={`text-3xl md:text-4xl font-bold text-center leading-tight ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}>
-              {title}
-            </h1>
-          )}
-        </div>
-      )}
-
-      {/* Two Columns */}
-      <div className="flex-1 grid grid-cols-2 gap-8">
-        {/* Left Column */}
-        <div className="space-y-4">
-          {renderLeftColumn()}
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-4">
-          {renderRightColumn()}
-        </div>
+            <div className="grid grid-cols-2 gap-12">
+              <div className="space-y-4">
+                <div className={`h-6 rounded w-1/2 ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-200'
+                }`}></div>
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center space-x-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        isDark ? 'bg-gray-600' : 'bg-gray-200'
+                      }`}></div>
+                      <div className={`h-4 rounded flex-1 ${
+                        isDark ? 'bg-gray-700' : 'bg-gray-200'
+                      }`}></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className={`h-6 rounded w-1/2 ${
+                  isDark ? 'bg-gray-700' : 'bg-gray-200'
+                }`}></div>
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center space-x-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        isDark ? 'bg-gray-600' : 'bg-gray-200'
+                      }`}></div>
+                      <div className={`h-4 rounded flex-1 ${
+                        isDark ? 'bg-gray-700' : 'bg-gray-200'
+                      }`}></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <TiptapEditor
+            content={displayContent}
+            onChange={handleContentChange}
+            placeholder="Enter slide content with two columns..."
+            className={`w-full ${
+              isDark ? '[&_.ProseMirror]:text-gray-300 [&_.ProseMirror_h1]:text-white [&_.ProseMirror_h2]:text-white [&_.ProseMirror_h3]:text-white' : ''
+            }`}
+            editable={isEditable}
+          />
+        )}
       </div>
     </SlideWrapper>
   );

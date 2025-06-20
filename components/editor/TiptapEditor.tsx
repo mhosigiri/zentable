@@ -10,6 +10,10 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
 import Blockquote from '@tiptap/extension-blockquote';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
 import { Button } from '@/components/ui/button';
 import { 
   Bold, 
@@ -37,6 +41,7 @@ interface TiptapEditorProps {
   placeholder?: string;
   className?: string;
   variant?: 'title' | 'subtitle' | 'body' | 'default';
+  editable?: boolean;
 }
 
 function getEditorClasses(variant: string): string {
@@ -44,17 +49,18 @@ function getEditorClasses(variant: string): string {
   
   switch (variant) {
     case 'title':
-      return `${baseClasses} text-3xl md:text-4xl font-bold text-gray-900 leading-tight`;
+      return `${baseClasses} text-3xl md:text-4xl font-bold leading-tight`;
     case 'subtitle':
-      return `${baseClasses} text-xl md:text-2xl font-semibold text-gray-900 leading-tight`;
+      return `${baseClasses} text-xl md:text-2xl font-semibold leading-tight`;
     case 'body':
-      return `${baseClasses} text-base md:text-lg text-gray-700 leading-relaxed`;
+      return `${baseClasses} text-base md:text-lg leading-relaxed`;
     default:
-      return `${baseClasses} prose prose-sm sm:prose lg:prose-lg max-w-none`;
+      // Enhanced prose styling for slide content using typography plugin
+      return `${baseClasses} prose prose-lg max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h1:md:text-4xl prose-h1:mb-6 prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mb-4 prose-h3:text-xl prose-h3:md:text-2xl prose-h3:mb-3 prose-p:text-base prose-p:md:text-lg prose-p:leading-relaxed prose-ul:space-y-3 prose-li:text-base prose-li:md:text-lg`;
   }
 }
 
-export function TiptapEditor({ content, onChange, placeholder, className, variant = 'default' }: TiptapEditorProps) {
+export function TiptapEditor({ content, onChange, placeholder, className, variant = 'default', editable = true }: TiptapEditorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showTextType, setShowTextType] = useState(false);
@@ -123,12 +129,35 @@ export function TiptapEditor({ content, onChange, placeholder, className, varian
           class: 'max-w-full h-auto rounded-lg',
         },
       }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'tiptap-table border-collapse w-full',
+        },
+      }),
+      TableRow.configure({
+        HTMLAttributes: {
+          class: 'tiptap-table-row',
+        },
+      }),
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'tiptap-table-header',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'tiptap-table-cell',
+        },
+      }),
       Placeholder.configure({
         placeholder: placeholder || 'Start typing...',
       }),
     ],
     content,
+    editable,
     onUpdate: ({ editor }) => {
+      if (!editable) return;
       isUserTypingRef.current = true;
       const newContent = editor.getHTML();
       lastContentRef.current = newContent;
@@ -220,8 +249,8 @@ export function TiptapEditor({ content, onChange, placeholder, className, varian
 
   return (
     <div className={`relative ${className}`}>
-      {/* Enhanced Bubble Menu with AI */}
-      <BubbleMenu
+      {/* Enhanced Bubble Menu with AI - only show when editable */}
+      {editable && <BubbleMenu
         editor={editor}
         tippyOptions={{ 
           duration: 100,
@@ -233,7 +262,7 @@ export function TiptapEditor({ content, onChange, placeholder, className, varian
             setShowEnhancedColor(false);
           },
         }}
-        className="flex w-fit max-w-[90vw] overflow-hidden rounded-md border border-gray-200 bg-white shadow-xl z-[150]"
+        className="flex items-center w-fit max-w-[90vw] overflow-hidden rounded-md border border-gray-200 bg-white shadow-xl z-[150]"
       >
         <GenerativeMenuSwitch
           open={showAI}
@@ -348,7 +377,7 @@ export function TiptapEditor({ content, onChange, placeholder, className, varian
 
           </div>
         </GenerativeMenuSwitch>
-      </BubbleMenu>
+      </BubbleMenu>}
 
       {/* Editor Content */}
       <EditorContent 

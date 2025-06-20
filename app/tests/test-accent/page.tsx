@@ -48,14 +48,14 @@ export default function TestAccentPage() {
   const sampleData = {
     id: 'test-accent',
     templateType: selectedTemplate,
-    title: 'AI-Powered Development Revolution',
-    content: 'Transform your development workflow with cutting-edge AI tools that streamline coding, enhance productivity, and unlock new possibilities for innovation.',
-    bulletPoints: [
-      'Accelerate development with intelligent code generation',
-      'Enhance code quality through AI-powered reviews',
-      'Streamline debugging with smart error detection',
-      'Automate testing and deployment processes'
-    ],
+    content: `<h1>AI-Powered Development Revolution</h1>
+<p>Transform your development workflow with cutting-edge AI tools that streamline coding, enhance productivity, and unlock new possibilities for innovation.</p>
+<ul>
+  <li>Accelerate development with intelligent code generation</li>
+  <li>Enhance code quality through AI-powered reviews</li>
+  <li>Streamline debugging with smart error detection</li>
+  <li>Automate testing and deployment processes</li>
+</ul>`,
     imageUrl: 'https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg?auto=compress&cs=tinysrgb&w=800',
     imagePrompt: 'Modern developer workspace with multiple monitors showing code, AI interface, and futuristic technology elements',
     isEditable: true,
@@ -169,24 +169,18 @@ export default function TestAccentPage() {
             <h3 className="font-semibold mb-4 text-gray-900">Sample Content</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div>
-                <h4 className="font-medium text-gray-700 mb-2">Current Title:</h4>
-                <p className="text-gray-600 italic">"{sampleData.title}"</p>
-              </div>
-              <div>
                 <h4 className="font-medium text-gray-700 mb-2">Image Prompt:</h4>
                 <p className="text-gray-600 italic">"{sampleData.imagePrompt}"</p>
               </div>
               <div>
-                <h4 className="font-medium text-gray-700 mb-2">Content (Paragraph):</h4>
-                <p className="text-gray-600 italic">"{sampleData.content}"</p>
+                <h4 className="font-medium text-gray-700 mb-2">Image URL:</h4>
+                <p className="text-gray-600 italic text-xs break-all">{sampleData.imageUrl}</p>
               </div>
-              <div>
-                <h4 className="font-medium text-gray-700 mb-2">Content (Bullets):</h4>
-                <ul className="text-gray-600 space-y-1">
-                  {sampleData.bulletPoints.map((bullet, index) => (
-                    <li key={index} className="italic">• {bullet}</li>
-                  ))}
-                </ul>
+              <div className="md:col-span-2">
+                <h4 className="font-medium text-gray-700 mb-2">Unified Content (HTML):</h4>
+                <div className="text-gray-600 italic text-xs p-3 bg-gray-100 rounded border overflow-auto max-h-32">
+                  <pre>{sampleData.content}</pre>
+                </div>
               </div>
             </div>
           </div>

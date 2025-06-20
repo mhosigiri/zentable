@@ -12,8 +12,7 @@ interface TextAndImageProps extends SlideData {
 }
 
 export function TextAndImage({ 
-  title, 
-  content, 
+  content,
   imageUrl, 
   imagePrompt, 
   isGenerating, 
@@ -24,17 +23,28 @@ export function TextAndImage({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const handleTitleChange = (newTitle: string) => {
+  const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') });
+      console.log('💾 TextAndImage - Content being saved:', newContent);
+      onUpdate({ content: newContent });
     }
   };
 
-  const handleContentChange = (newContent: string) => {
-    if (onUpdate) {
-      onUpdate({ content: newContent.replace(/<[^>]*>/g, '') });
-    }
-  };
+  const defaultContent = `<h1>Text-Focused Content</h1>
+
+<p>This layout prioritizes text content while providing visual support through the image on the right. It's perfect for detailed explanations, storytelling, or when the text is the primary message.</p>
+
+<h2>Key Benefits</h2>
+<ul>
+  <li>Text-first approach for detailed content</li>
+  <li>Visual support enhances understanding</li>
+  <li>Ideal for explanatory content</li>
+  <li>Maintains reader focus on text</li>
+</ul>
+
+<p>The complementary image helps illustrate your points without overwhelming the textual content, creating a balanced and professional presentation.</p>`;
+
+  const displayContent = content || defaultContent;
 
   return (
     <SlideWrapper layout="horizontal">
@@ -52,42 +62,13 @@ export function TextAndImage({
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            {(title || isEditable) && (
-              <div>
-                {isEditable ? (
-                  <TiptapEditor
-                    content={title || 'Slide Title'}
-                    onChange={handleTitleChange}
-                    placeholder="Enter slide title..."
-                    variant="title"
-                    className="text-left"
-                  />
-                ) : (
-                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
-                    {title}
-                  </h1>
-                )}
-              </div>
-            )}
-            
-            {(content || isEditable) && (
-              <div>
-                {isEditable ? (
-                  <TiptapEditor
-                    content={content || 'Add your content here...'}
-                    onChange={handleContentChange}
-                    placeholder="Enter slide content..."
-                    variant="body"
-                  />
-                ) : (
-                  <p className="text-base md:text-lg text-gray-700 leading-relaxed">
-                    {content}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          <TiptapEditor
+            content={displayContent}
+            onChange={handleContentChange}
+            placeholder="Enter slide content with headings, paragraphs, and lists..."
+            className="w-full"
+            editable={isEditable}
+          />
         )}
       </div>
 

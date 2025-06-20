@@ -2,7 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TiptapEditor List Styles */
+/* TiptapEditor Styles */
+
+/* Headings */
+.tiptap-editor h1,
+.tiptap-editor .ProseMirror h1 {
+  font-size: 2.25rem !important;
+  line-height: 2.5rem !important;
+  font-weight: 700 !important;
+  margin: 1.5rem 0 1rem 0 !important;
+  color: inherit !important;
+}
+
+.tiptap-editor h2,
+.tiptap-editor .ProseMirror h2 {
+  font-size: 1.875rem !important;
+  line-height: 2.25rem !important;
+  font-weight: 600 !important;
+  margin: 1.25rem 0 0.75rem 0 !important;
+  color: inherit !important;
+}
+
+.tiptap-editor h3,
+.tiptap-editor .ProseMirror h3 {
+  font-size: 1.5rem !important;
+  line-height: 2rem !important;
+  font-weight: 600 !important;
+  margin: 1rem 0 0.5rem 0 !important;
+  color: inherit !important;
+}
+
+/* Paragraphs */
+.tiptap-editor p,
+.tiptap-editor .ProseMirror p {
+  margin: 0.75rem 0 !important;
+  line-height: 1.625 !important;
+  color: inherit !important;
+}
+
+/* Lists */
 .tiptap-editor ul,
 .tiptap-editor .ProseMirror ul {
   list-style-type: disc !important;
@@ -24,6 +62,7 @@
   margin: 0.25rem 0 !important;
   padding-left: 0.5rem !important;
   display: list-item !important;
+  line-height: 1.625 !important;
 }
 
 .tiptap-editor ul li::marker,
@@ -34,6 +73,53 @@
 .tiptap-editor ol li::marker,
 .tiptap-editor .ProseMirror ol li::marker {
   color: currentColor !important;
+}
+
+/* Blockquotes */
+.tiptap-editor blockquote,
+.tiptap-editor .ProseMirror blockquote {
+  border-left: 4px solid #e5e7eb !important;
+  padding-left: 1rem !important;
+  margin: 1rem 0 !important;
+  font-style: italic !important;
+  color: #6b7280 !important;
+}
+
+/* Tables */
+.tiptap-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 1rem 0 !important;
+}
+
+.tiptap-table-row {
+  
+}
+
+.tiptap-table-header,
+.tiptap-table-cell {
+  border: none !important;
+  padding: 0.75rem !important;
+  vertical-align: top !important;
+  text-align: left !important;
+}
+
+.tiptap-table-header {
+  font-weight: 600 !important;
+  background-color: transparent !important;
+}
+
+.tiptap-table-cell {
+  background-color: transparent !important;
+}
+
+/* Hide table borders for seamless column layout */
+.tiptap-editor .ProseMirror table,
+.tiptap-editor .ProseMirror table tr,
+.tiptap-editor .ProseMirror table td,
+.tiptap-editor .ProseMirror table th {
+  border: none !important;
+  background: transparent !important;
 }
 
 /* Ensure ProseMirror doesn't override list styles */

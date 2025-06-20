@@ -7,105 +7,44 @@ import { SlideWrapper } from '../SlideWrapper';
 interface ParagraphProps extends SlideData {
   onUpdate?: (updates: Partial<SlideData>) => void;
   isEditable?: boolean;
-  sections?: Array<{
-    heading: string;
-    paragraphs: string[];
-  }>;
-  conclusion?: string;
 }
 
 export function Paragraph({ 
-  title, 
-  sections = [],
-  conclusion,
+  content,
   isGenerating, 
   onUpdate, 
   isEditable = false 
 }: ParagraphProps) {
 
-  const handleTitleChange = (newTitle: string) => {
+  const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') });
+      console.log('💾 Paragraph - Content being saved:', newContent);
+      onUpdate({ content: newContent });
     }
   };
 
-  const handleSectionChange = (sectionIndex: number, field: 'heading' | 'paragraphs', value: string | string[]) => {
-    if (onUpdate && sections) {
-      const updatedSections = [...sections];
-      if (field === 'heading') {
-        updatedSections[sectionIndex] = {
-          ...updatedSections[sectionIndex],
-          heading: (value as string).replace(/<[^>]*>/g, '')
-        };
-      } else {
-        // For paragraphs, convert HTML to array of paragraphs
-        const htmlContent = value as string;
-        const div = document.createElement('div');
-        div.innerHTML = htmlContent;
-        const paragraphs = div.textContent || '';
-        const paragraphArray = paragraphs.split('\n').filter(p => p.trim());
-        updatedSections[sectionIndex] = {
-          ...updatedSections[sectionIndex],
-          paragraphs: paragraphArray
-        };
-      }
-      onUpdate({ sections: updatedSections });
-    }
-  };
+  // Default content with multiple sections
+  const defaultContent = `<h1>Detailed Analysis</h1>
 
-  const handleConclusionChange = (newConclusion: string) => {
-    if (onUpdate) {
-      onUpdate({ conclusion: newConclusion.replace(/<[^>]*>/g, '') });
-    }
-  };
+<h2>Section Heading</h2>
+<p>First paragraph of content goes here with detailed information about the topic.</p>
+<p>Second paragraph with additional details and supporting information.</p>
 
-  // Default sections if none provided
-  const defaultSections = [
-    {
-      heading: "Section Heading",
-      paragraphs: [
-        "First paragraph of content goes here.",
-        "Second paragraph with additional details."
-      ]
-    },
-    {
-      heading: "Another Section",
-      paragraphs: [
-        "More content in this section.",
-        "Additional paragraph with more information."
-      ]
-    }
-  ];
+<h2>Another Section</h2>
+<p>More content in this section with relevant details.</p>
+<p>Additional paragraph with more comprehensive information.</p>
 
-  const displaySections = sections.length > 0 ? sections : defaultSections;
+<h2>Conclusion</h2>
+<p>Concluding thoughts and final insights about the topic discussed above.</p>`;
+
+  const displayContent = content || defaultContent;
 
   return (
     <SlideWrapper>
-      {/* Title */}
-      {(title || isEditable) && (
-        <div className="mb-8">
-          {isGenerating ? (
-            <div className="h-16 bg-gray-200 rounded w-full animate-pulse"></div>
-          ) : isEditable ? (
-            <TiptapEditor
-              content={title || 'Slide Title'}
-              onChange={handleTitleChange}
-              placeholder="Enter slide title..."
-              variant="title"
-              className="text-left"
-            />
-          ) : (
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 drop-shadow-sm text-left leading-tight mb-0">
-              {title}
-            </h1>
-          )}
-        </div>
-      )}
-
-      {/* Sections with Headings and Paragraphs */}
-      <div className="flex-1 space-y-6">
+      <div className="flex-1">
         {isGenerating ? (
           <div className="animate-pulse space-y-6">
+            <div className="h-12 bg-gray-200 rounded w-2/3"></div>
             {[1, 2, 3].map((i) => (
               <div key={i} className="space-y-3">
                 <div className="h-6 bg-gray-200 rounded w-1/3"></div>
@@ -121,70 +60,15 @@ export function Paragraph({
             ))}
           </div>
         ) : (
-          displaySections.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="space-y-4">
-              {/* Section Heading */}
-              {isEditable ? (
-                <TiptapEditor
-                  content={section.heading}
-                  onChange={(value) => handleSectionChange(sectionIndex, 'heading', value)}
-                  placeholder="Enter section heading..."
-                  variant="subtitle"
-                  className="font-semibold text-gray-900"
-                />
-              ) : (
-                <h2 className="text-xl md:text-2xl font-semibold text-gray-900 drop-shadow-sm leading-tight">
-                  {section.heading}
-                </h2>
-              )}
-              
-              {/* Section Paragraphs */}
-              <div className="space-y-3">
-                {isEditable ? (
-                  <TiptapEditor
-                    content={section.paragraphs.join('\n\n')}
-                    onChange={(value) => handleSectionChange(sectionIndex, 'paragraphs', value)}
-                    placeholder="Enter paragraphs for this section..."
-                    variant="body"
-                    className="text-gray-700"
-                  />
-                ) : (
-                  section.paragraphs.map((paragraph, paragraphIndex) => (
-                    <p key={paragraphIndex} className="text-base md:text-lg text-gray-800 drop-shadow-sm leading-relaxed">
-                      {paragraph}
-                    </p>
-                  ))
-                )}
-              </div>
-            </div>
-          ))
+          <TiptapEditor
+            content={displayContent}
+            onChange={handleContentChange}
+            placeholder="Enter slide content with headings and paragraphs..."
+            className="w-full"
+            editable={isEditable}
+          />
         )}
       </div>
-
-      {/* Conclusion Paragraph */}
-      {(conclusion || isEditable) && (
-        <div className="mt-6 pt-4">
-          {isGenerating ? (
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          ) : isEditable ? (
-            <TiptapEditor
-              content={conclusion || 'Concluding thoughts go here...'}
-              onChange={handleConclusionChange}
-              placeholder="Enter concluding paragraph..."
-              variant="body"
-              className="text-gray-700 leading-relaxed"
-            />
-          ) : (
-            <p className="text-base md:text-lg text-gray-700 leading-relaxed">
-              {conclusion}
-            </p>
-          )}
-        </div>
-      )}
     </SlideWrapper>
   );
 } 

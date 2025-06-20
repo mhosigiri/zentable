@@ -18,20 +18,29 @@ export function BlankCard({
   isEditable = false,
   theme = 'light'
 }: BlankCardProps) {
-  
-  const handleTitleChange = (newTitle: string) => {
-    if (onUpdate) {
-      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') }); // Strip HTML tags for title
-    }
-  };
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      onUpdate({ content: newContent.replace(/<[^>]*>/g, '') }); // Strip HTML tags for content
+      console.log('💾 BlankCard - Complete content being saved:', newContent);
+      // UNIFIED: Save complete HTML content (title + body)
+      onUpdate({ content: newContent });
     }
   };
 
   const isDark = theme === 'dark';
+
+  // Default content if none provided (with legacy support)
+  const getDefaultContent = () => {
+    if (content && content.includes('<')) {
+      return content;
+    }
+    
+    // Legacy fallback: combine title and content into HTML
+    const displayTitle = title || 'Slide Title';
+    const displayContent = content || 'Add your content here...';
+    
+    return `<h1>${displayTitle}</h1><p>${displayContent}</p>`;
+  };
   
   return (
     <SlideWrapper className="items-center justify-center">
@@ -44,55 +53,19 @@ export function BlankCard({
             isDark ? 'bg-gray-700' : 'bg-gray-200'
           }`}></div>
         </div>
-      ) : (
-        <div className="text-center space-y-6 max-w-4xl w-full">
-          {(title || isEditable) && (
-            <div>
-              {isEditable ? (
-                <TiptapEditor
-                  content={title || 'Untitled card'}
-                  onChange={handleTitleChange}
-                  placeholder="Enter slide title..."
-                  variant="title"
-                  className={`text-center ${isDark ? '[&_.ProseMirror]:text-white' : ''}`}
-                />
               ) : (
-                <h1 className={`text-3xl md:text-4xl font-bold mb-4 leading-tight ${
-                  isDark ? 'text-white drop-shadow-lg' : 'text-gray-900 drop-shadow-sm'
-                }`}>
-                  {title}
-                </h1>
-              )}
-            </div>
-          )}
-          
-          {(content || isEditable) && (
-            <div>
-              {isEditable ? (
-                <TiptapEditor
-                  content={content || 'Start typing...'}
-                  onChange={handleContentChange}
-                  placeholder="Enter slide content..."
-                  variant="body"
-                  className={`text-center ${isDark ? '[&_.ProseMirror]:text-gray-300' : ''}`}
-                />
-              ) : (
-                <p className={`text-base md:text-lg leading-relaxed ${
-                  isDark ? 'text-white/90 drop-shadow-md' : 'text-gray-700 drop-shadow-sm'
-                }`}>
-                  {content}
-                </p>
-              )}
-            </div>
-          )}
-          
-          {!title && !content && !isEditable && (
-            <div className={`space-y-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              <h3 className="text-xl font-medium">Heading 3</h3>
-              <p className="text-base">Start typing...</p>
-            </div>
-          )}
-        </div>
+          <div className="text-center w-full max-w-4xl">
+            <TiptapEditor
+              content={getDefaultContent()}
+              onChange={handleContentChange}
+              placeholder="# Enter slide title
+
+Add your content here..."
+              variant="default"
+              editable={isEditable}
+              className={`w-full text-center ${isDark ? 'text-white' : 'text-gray-900'}`}
+            />
+          </div>
       )}
     </SlideWrapper>
   );

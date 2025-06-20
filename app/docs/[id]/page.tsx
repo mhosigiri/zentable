@@ -307,6 +307,9 @@ export default function PresentationPage() {
             try {
               const streamData = JSON.parse(line.slice(6));
               
+              // Console log the LLM response for debugging
+              console.log('🤖 LLM Response Data:', JSON.stringify(streamData, null, 2));
+              
               // Only update if we have meaningful data
               if (Object.keys(streamData).length > 0) {
                 latestData = streamData;
