@@ -1,0 +1,121 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# AI Agent Architecture Implementation Guide
+
+## Overview
+This application is evolving from a simple slide generator to a full-featured AI agent copilot system. The architecture supports two complementary approaches:
+
+1. **Enhanced Reasoning** - Adding intelligent reasoning to existing API endpoints ([generate-outline/route.ts](mdc:app/api/generate-outline/route.ts), [generate-slide/route.ts](mdc:app/api/generate-slide/route.ts))
+2. **AI Copilot** - A conversational agent with tools for comprehensive slide/document operations
+
+## Core Data Structures
+
+### SlideData Interface
+The primary data structure is defined in [SlideRenderer.tsx](mdc:components/slides/SlideRenderer.tsx):
+```typescript
+interface SlideData {
+  id: string;
+  templateType: string;
+  title?: string;
+  content?: string;
+  bulletPoints?: string[];
+  // ... extensive properties for different template types
+}
+```
+
+### Template Types
+Available templates are defined in [generate-outline/route.ts](mdc:app/api/generate-outline/route.ts):
+- Basic: `blank-card`, `bullets`, `paragraph`
+- Columns: `two-columns`, `three-columns`, `four-columns` (with heading variants)
+- Content: `image-and-text`, `text-and-image`, `title-with-bullets`
+- Accent: `accent-left`, `accent-right`, `accent-top`
+
+## AI Agent Patterns
+
+### Tool-Based Architecture
+Following the Vercel AI SDK pattern, define tools using Zod schemas:
+```typescript
+const slideTools = {
+  createSlide: {
+    description: "Create a new slide with specified template and content",
+    parameters: z.object({
+      templateType: z.enum([...templateTypes]),
+      title: z.string(),
+      content: z.string().optional(),
+      // ... additional parameters
+    })
+  }
+}
+```
+
+### Agent Prompt Structure
+Use clear, structured prompts with:
+- **Role Definition**: Specify the agent's purpose and capabilities
+- **Tool Calling Rules**: Define how tools should be used
+- **Communication Guidelines**: Format requirements and interaction patterns
+- **Context Awareness**: How to use attached file information
+
+## Implementation Approaches
+
+### Approach 1: Enhanced Reasoning
+Enhance existing endpoints with reasoning capabilities:
+- Add `reasoning` object to API responses
+- Include audience analysis, content strategy, visual approach
+- Maintain backward compatibility with current UI
+- Files to modify: [generate-outline/route.ts](mdc:app/api/generate-outline/route.ts), [generate-slide/route.ts](mdc:app/api/generate-slide/route.ts)
+
+### Approach 2: AI Copilot
+Create conversational agent with comprehensive tools:
+- New API route: `app/api/copilot-chat/route.ts`
+- Tool definitions: `app/api/copilot-chat/slide-tools.ts`
+- UI components for chat interface
+- Integration with existing slide management functions
+
+## Template System Evolution
+
+### Current: Presentation-Based
+Templates are defined by their visual layout (two-columns, title-with-bullets)
+
+### Future: Semantic-Based
+Templates should be defined by content meaning:
+- `comparison` → renders as two-columns or timeline
+- `list` → renders as bullets or numbered list
+- `showcase` → renders with images and descriptions
+
+## Development Guidelines
+
+### File Organization
+- API routes: `app/api/[endpoint]/route.ts`
+- AI tools: `app/api/[endpoint]/[endpoint]-tools.ts`
+- UI components: `components/ui/[component].tsx`
+- Slide templates: `components/slides/basic/[Template].tsx`
+
+### Agent Integration Points
+- Slide creation functions in [page.tsx](mdc:app/docs/[id]/page.tsx) lines 524-696
+- Slide management operations (duplicate, delete, reorder)
+- Template selection modal [template-selection-modal.tsx](mdc:components/ui/template-selection-modal.tsx)
+- AI generation modal [ai-generation-modal.tsx](mdc:components/ui/ai-generation-modal.tsx)
+
+### Future Extensibility
+- **Documents**: Extend SlideData to DocumentData for rich text editing
+- **Database**: Replace local state with persistent storage
+- **Multi-user**: Add collaboration features
+- **Advanced AI**: Include image generation, voice narration, presentation practice
+
+## Dependencies
+Current AI-related dependencies from [package.json](mdc:package.json):
+- `@ai-sdk/openai`: ^0.0.66
+- `ai`: ^4.3.16
+- `zod`: ^3.23.8
+- `@tiptap/*`: Rich text editing capabilities
+
+## Best Practices
+1. **Type Safety**: Use TypeScript interfaces and Zod schemas
+2. **Error Handling**: Implement robust error handling for AI operations
+3. **Streaming**: Use streaming responses for real-time updates
+4. **Caching**: Cache AI responses to improve performance
+5. **Fallbacks**: Provide fallback templates if AI selection fails
+6. **Testing**: Test with various content types and edge cases

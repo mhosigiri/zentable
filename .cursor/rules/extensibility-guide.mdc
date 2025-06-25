@@ -1,0 +1,524 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Extensibility Guide: Adding New Templates and Tools
+
+## Overview
+
+This guide explains how to add new slide templates and copilot tools while maintaining the template-agnostic architecture. All tools are designed to work with the `SlideData` interface, ensuring they automatically support future templates.
+
+## Adding New Slide Templates
+
+### Step 1: Create the Template Component
+
+Create your new template in `components/slides/basic/`:
+
+```typescript
+// components/slides/basic/MyNewTemplate.tsx
+'use client';
+
+import { TiptapEditor } from '@/components/editor/TiptapEditor';
+import { SlideData } from '../SlideRenderer';
+import { SlideWrapper } from '../SlideWrapper';
+
+interface MyNewTemplateProps extends SlideData {
+  onUpdate?: (updates: Partial<SlideData>) => void;
+  isEditable?: boolean;
+  theme?: 'light' | 'dark';
+}
+
+export function MyNewTemplate({ 
+  content,
+  // Add any new properties your template needs
+  customProperty,
+  specialData,
+  isGenerating, 
+  onUpdate, 
+  isEditable = false,
+  theme = 'light'
+}: MyNewTemplateProps) {
+
+  const handleContentChange = (newContent: string) => {
+    if (onUpdate) {
+      onUpdate({ content: newContent });
+    }
+  };
+
+  // Handle updates to new properties
+  const handleCustomPropertyChange = (newValue: any) => {
+    if (onUpdate) {
+      onUpdate({ customProperty: newValue });
+    }
+  };
+
+  const defaultContent = `<h1>My New Template</h1>
+    <p>Default content for the new template...</p>`;
+
+  return (
+    <SlideWrapper>
+      {/* Your template layout */}
+      <div className="my-new-template-layout">
+        {isGenerating ? (
+          <div className="animate-pulse">
+            {/* Loading skeleton */}
+          </div>
+        ) : (
+          <TiptapEditor
+            content={content || defaultContent}
+            onChange={handleContentChange}
+            editable={isEditable}
+          />
+        )}
+        
+        {/* Additional template-specific elements */}
+        {specialData && (
+          <div className="special-section">
+            {/* Render special data */}
+          </div>
+        )}
+      </div>
+    </SlideWrapper>
+  );
+}
+```
+
+### Step 2: Update SlideData Interface
+
+Add new properties to support your template:
+
+```typescript
+// components/slides/SlideRenderer.tsx
+export interface SlideData {
+  // ... existing properties ...
+  
+  // Add new properties for your template
+  customProperty?: string;
+  specialData?: Array<{
+    id: string;
+    value: string;
+    metadata?: any;
+  }>;
+  newArrayProperty?: string[];
+  newObjectProperty?: {
+    key1: string;
+    key2: number;
+  };
+}
+```
+
+### Step 3: Register Template in SlideRenderer
+
+```typescript
+// components/slides/SlideRenderer.tsx
+import { MyNewTemplate } from './basic/MyNewTemplate';
+
+export function SlideRenderer({ slide, onUpdate, isEditable = false }: SlideRendererProps) {
+  const { templateType } = slide;
+
+  const commonProps = {
+    ...slide,
+    onUpdate,
+    isEditable,
+  };
+
+  switch (templateType) {
+    // ... existing cases ...
+    
+    case 'my-new-template':
+      return <MyNewTemplate {...commonProps} />;
+    
+    default:
+      return <BlankCard {...commonProps} />;
+  }
+}
+```
+
+### Step 4: Update Template Lists
+
+Add your template to any template selection lists:
+
+```typescript
+// In generation APIs or template selection components
+const AVAILABLE_TEMPLATES = [
+  // ... existing templates ...
+  'my-new-template'
+];
+```
+
+## Adding New Copilot Tools
+
+### Step 1: Identify Tool Category
+
+Determine if your tool is:
+- **Server-side**: Requires AI processing, data manipulation, or external API calls
+- **Client-side**: Immediate UI updates, theme changes, or simple state updates
+- **Interactive**: Requires user confirmation or input
+
+### Step 2: Create Tool Definition
+
+Add to `lib/ai/slide-tools.ts`:
+
+```typescript
+export const slideTools = {
+  // ... existing tools ...
+
+  // Example: Server-side tool for complex operations
+  myComplexOperation: {
+    description: "Perform a complex operation on slide data",
+    parameters: z.object({
+      slideId: z.string(),
+      operationType: z.enum(['transform', 'analyze', 'generate']),
+      targetProperty: z.string(), // Any SlideData property
+      options: z.object({
+        setting1: z.string().optional(),
+        setting2: z.number().optional()
+      }).optional()
+    }),
+    execute: async ({ slideId, operationType, targetProperty, options }) => {
+      // Perform server-side processing
+      const result = await performComplexOperation(slideId, operationType, targetProperty, options);
+      
+      // Update slide using the universal updateSlideProperty function
+      await updateSlideProperty(slideId, targetProperty, result.newValue);
+      
+      return { 
+        success: true, 
+        message: `${operationType} operation completed on ${targetProperty}`,
+        result: result.summary
+      };
+    }
+  },
+
+  // Example: Client-side tool for immediate UI updates
+  myUIUpdate: {
+    description: "Update UI elements immediately",
+    parameters: z.object({
+      slideId: z.string(),
+      uiElement: z.string(),
+      newValue: z.any()
+    })
+    // No execute function - handled by onToolCall in the chat component
+  },
+
+  // Example: Interactive tool requiring user input
+  myInteractiveTool: {
+    description: "Tool that requires user confirmation or input",
+    parameters: z.object({
+      slideId: z.string(),
+      question: z.string(),
+      options: z.array(z.string())
+    })
+    // Handled by tool invocation UI with addToolResult
+  }
+}
+```
+
+### Step 3: Implement Tool Logic
+
+#### For Server-side Tools:
+Create the implementation functions:
+
+```typescript
+// lib/ai/tool-implementations.ts
+export async function performComplexOperation(
+  slideId: string, 
+  operationType: string, 
+  targetProperty: string, 
+  options?: any
+) {
+  // Your complex logic here
+  const slide = await getSlideById(slideId);
+  
+  switch (operationType) {
+    case 'transform':
+      return await transformSlideProperty(slide, targetProperty, options);
+    case 'analyze':
+      return await analyzeSlideProperty(slide, targetProperty, options);
+    case 'generate':
+      return await generateContentForProperty(slide, targetProperty, options);
+  }
+}
+
+export async function updateSlideProperty(
+  slideId: string,
+  property: string,
+  value: any,
+  index?: number
+) {
+  const slide = await getSlideById(slideId);
+  
+  if (index !== undefined && Array.isArray(slide[property])) {
+    // Handle array operations
+    slide[property][index] = value;
+  } else {
+    // Handle direct property updates
+    slide[property] = value;
+  }
+  
+  await saveSlide(slideId, slide);
+}
+```
+
+#### For Client-side Tools:
+Handle in the chat component:
+
+```typescript
+// components/ui/copilot-chat/chat-interface.tsx
+async onToolCall({ toolCall }) {
+  switch (toolCall.toolName) {
+    case 'myUIUpdate':
+      const { slideId, uiElement, newValue } = toolCall.args;
+      
+      // Update UI immediately
+      updateSlideInUI(slideId, { [uiElement]: newValue });
+      
+      return { success: true, message: `${uiElement} updated` };
+      
+    case 'changeSlideTheme':
+      applyThemeToSlide(toolCall.args.themeId, toolCall.args.slideId);
+      return { success: true, message: 'Theme applied' };
+      
+    // Add more client-side tool handlers
+  }
+}
+```
+
+#### For Interactive Tools:
+Create tool invocation UI:
+
+```typescript
+// components/ui/copilot-chat/tool-invocation.tsx
+export function ToolInvocationComponent({ toolInvocation, onResult }) {
+  switch (toolInvocation.toolName) {
+    case 'myInteractiveTool':
+      return (
+        <div className="interactive-tool">
+          <p>{toolInvocation.args.question}</p>
+          <div className="options">
+            {toolInvocation.args.options.map(option => (
+              <button
+                key={option}
+                onClick={() => onResult(option)}
+                className="option-button"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+      
+    // Add more interactive tool UIs
+  }
+}
+```
+
+## Universal Helper Functions
+
+### Working with SlideData Properties
+
+```typescript
+// lib/ai/slide-helpers.ts
+
+// Get any property from a slide
+export function getSlideProperty(slide: SlideData, property: string): any {
+  return slide[property as keyof SlideData];
+}
+
+// Set any property on a slide
+export function setSlideProperty(slide: SlideData, property: string, value: any): SlideData {
+  return { ...slide, [property]: value };
+}
+
+// Add item to any array property
+export function addToArrayProperty(
+  slide: SlideData, 
+  property: string, 
+  item: any, 
+  position?: number
+): SlideData {
+  const currentArray = getSlideProperty(slide, property) || [];
+  const newArray = [...currentArray];
+  
+  if (position !== undefined) {
+    newArray.splice(position, 0, item);
+  } else {
+    newArray.push(item);
+  }
+  
+  return setSlideProperty(slide, property, newArray);
+}
+
+// Update item in any array property
+export function updateArrayItem(
+  slide: SlideData,
+  property: string,
+  index: number,
+  newValue: any
+): SlideData {
+  const currentArray = getSlideProperty(slide, property) || [];
+  const newArray = [...currentArray];
+  newArray[index] = newValue;
+  
+  return setSlideProperty(slide, property, newArray);
+}
+
+// Remove item from any array property
+export function removeFromArrayProperty(
+  slide: SlideData,
+  property: string,
+  index: number
+): SlideData {
+  const currentArray = getSlideProperty(slide, property) || [];
+  const newArray = currentArray.filter((_, i) => i !== index);
+  
+  return setSlideProperty(slide, property, newArray);
+}
+```
+
+## Template Content Mapping
+
+When changing templates, use smart content mapping:
+
+```typescript
+// lib/ai/template-mapper.ts
+export function mapContentBetweenTemplates(
+  sourceSlide: SlideData,
+  targetTemplateType: string,
+  customMapping?: Record<string, string>
+): Partial<SlideData> {
+  const mappings: Record<string, Record<string, string>> = {
+    // Map from any template to two-columns
+    'two-columns': {
+      'content': 'leftContent',
+      'bulletPoints': 'leftBullets',
+      'title': 'title'
+    },
+    
+    // Map from any template to three-columns
+    'three-columns': {
+      'content': 'column1Content',
+      'bulletPoints': 'column1Bullets',
+      'leftContent': 'column1Content',
+      'rightContent': 'column2Content',
+      'title': 'title'
+    },
+    
+    // Add mappings for your new templates
+    'my-new-template': {
+      'content': 'customProperty',
+      'bulletPoints': 'specialData',
+      'title': 'title'
+    }
+  };
+
+  const mapping = customMapping || mappings[targetTemplateType] || {};
+  const newSlideData: Partial<SlideData> = { templateType: targetTemplateType };
+
+  // Apply mappings
+  Object.entries(mapping).forEach(([source, target]) => {
+    const sourceValue = getSlideProperty(sourceSlide, source);
+    if (sourceValue !== undefined) {
+      newSlideData[target as keyof SlideData] = sourceValue;
+    }
+  });
+
+  return newSlideData;
+}
+```
+
+## Best Practices for Extensions
+
+### 1. **Follow SlideData Interface**
+- Always add new properties to the `SlideData` interface
+- Use optional properties for template-specific data
+- Follow consistent naming conventions
+
+### 2. **Use Universal Tools**
+- Leverage `updateSlideProperty` for all content updates
+- Use array helper functions for bullet points and lists
+- Build on existing tool patterns
+
+### 3. **Maintain Template Agnosticism**
+- Tools should work with property names, not hardcoded templates
+- Use dynamic property access rather than template-specific logic
+- Always consider how tools will work with future templates
+
+### 4. **Error Handling**
+```typescript
+// Always include proper error handling
+execute: async ({ slideId, property, value }) => {
+  try {
+    const slide = await getSlideById(slideId);
+    if (!slide) {
+      return { success: false, message: "Slide not found" };
+    }
+    
+    if (!(property in slide)) {
+      return { success: false, message: `Property ${property} not supported by this template` };
+    }
+    
+    await updateSlideProperty(slideId, property, value);
+    return { success: true, message: `${property} updated successfully` };
+  } catch (error) {
+    return { success: false, message: `Error updating ${property}: ${error.message}` };
+  }
+}
+```
+
+### 5. **Documentation**
+- Document new template properties in the SlideData interface
+- Add tool descriptions that explain what templates they work with
+- Include examples in tool parameter schemas
+
+## Testing New Extensions
+
+### Template Testing
+```typescript
+// Create test pages like existing ones in app/tests/
+// app/tests/test-my-new-template/page.tsx
+export default function TestMyNewTemplatePage() {
+  const slideData = {
+    id: 'test-my-new-template',
+    templateType: 'my-new-template',
+    title: 'Test New Template',
+    customProperty: 'Test custom data',
+    specialData: [
+      { id: '1', value: 'Item 1' },
+      { id: '2', value: 'Item 2' }
+    ]
+  };
+
+  return (
+    <div className="test-container">
+      <MyNewTemplate 
+        {...slideData}
+        isEditable={true}
+        onUpdate={(updates) => console.log('Updates:', updates)}
+      />
+    </div>
+  );
+}
+```
+
+### Tool Testing
+```typescript
+// Test tools with various slide configurations
+const testCases = [
+  { templateType: 'bullets', property: 'bulletPoints' },
+  { templateType: 'two-columns', property: 'leftBullets' },
+  { templateType: 'my-new-template', property: 'specialData' }
+];
+
+testCases.forEach(async ({ templateType, property }) => {
+  const result = await myNewTool({ 
+    slideId: 'test', 
+    targetProperty: property 
+  });
+  console.log(`${templateType} - ${property}:`, result);
+});
+```
+
+This extensibility architecture ensures that all future templates and tools work seamlessly together while maintaining the template-agnostic approach! 🚀

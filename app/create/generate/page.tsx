@@ -21,6 +21,7 @@ import {
   RefreshCw, 
   Loader2
 } from 'lucide-react';
+import { db } from '@/lib/database';
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -68,18 +69,28 @@ export default function GeneratePage() {
     return 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   };
 
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
   const handleGenerateOutline = async () => {
     if (!prompt.trim()) return;
 
     setIsGenerating(true);
     
     try {
-      // Generate a unique document ID
-      const documentId = generateDocumentId();
+      // Generate both IDs - UUID for database, custom for localStorage
+      const documentId = generateDocumentId(); // Keep for localStorage compatibility
+      const databaseId = generateUUID(); // Proper UUID for database
       
-      // Store the initial document data in localStorage
+      // Store the initial document data in localStorage (keep existing)
       const documentData = {
         id: documentId,
+        databaseId: databaseId, // Store the database ID for future reference
         prompt: prompt.trim(),
         cardCount: parseInt(cardCount),
         style,
@@ -90,7 +101,24 @@ export default function GeneratePage() {
       
       localStorage.setItem(`document_${documentId}`, JSON.stringify(documentData));
       
-      // Navigate to the outline page
+      // Also save to database in the background (new addition)
+      try {
+        await db.createPresentation({
+          id: databaseId, // Use proper UUID for database
+          prompt: prompt.trim(),
+          cardCount: parseInt(cardCount),
+          style,
+          language,
+          contentLength: 'medium',
+          themeId: 'default',
+          imageStyle: ''
+        });
+        console.log('✅ Presentation saved to database with UUID:', databaseId);
+      } catch (dbError) {
+        console.warn('⚠️ Database save failed, continuing with localStorage:', dbError);
+      }
+      
+      // Navigate to the outline page using the custom ID (keep existing)
       router.push(`/create/generate/${documentId}`);
       
     } catch (error) {

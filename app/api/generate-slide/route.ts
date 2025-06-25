@@ -1,8 +1,15 @@
-import { openai } from '@ai-sdk/openai';
-import { streamObject } from 'ai';
+import { createGroq } from '@ai-sdk/groq';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+// Configure Groq with Llama 4 Scout
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+const modelName = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
 // Define schemas for different slide templates
 const BlankCardSchema = z.object({
@@ -186,11 +193,23 @@ function getPromptForTemplate(templateType: string, sectionTitle: string, bullet
 
 export async function POST(req: Request) {
   try {
-    const { sectionTitle, bulletPoints, templateType, style = 'default', language = 'en' } = await req.json();
+    console.log('🔄 Generate-slide API called');
+    const { sectionTitle, bulletPoints, templateType, style = 'default', language = 'en', contentLength = 'medium', imageStyle = 'professional' } = await req.json();
+
+    console.log('📥 Request data:', { sectionTitle, bulletPoints, templateType, style, language, contentLength, imageStyle });
 
     if (!sectionTitle || !bulletPoints || !templateType) {
+      console.log('❌ Missing required fields');
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Check if GROQ_API_KEY is available
+    if (!process.env.GROQ_API_KEY) {
+      console.log('❌ GROQ_API_KEY not found');
+      return Response.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 });
+    }
+
+    console.log('✅ GROQ_API_KEY found');
 
     // Map style to writing tone
     const styleMap: Record<string, string> = {
@@ -208,11 +227,21 @@ export async function POST(req: Request) {
       'de': 'German'
     };
 
+    // Map content length to specific guidelines
+    const contentLengthMap: Record<string, string> = {
+      'brief': 'VERY BRIEF - Bullet points: 1 line max (6-12 words). Paragraphs: 1-2 sentences max.',
+      'medium': 'MODERATE - Bullet points: 1-2 lines (12-20 words). Paragraphs: 2-3 sentences max.',
+      'detailed': 'COMPREHENSIVE - Bullet points: 2-3 lines (20-30 words). Paragraphs: 3-4 sentences max.'
+    };
+
     const writingStyle = styleMap[style] || 'professional and clear';
     const targetLanguage = languageMap[language] || 'English';
+    const contentGuidelines = contentLengthMap[contentLength] || contentLengthMap['medium'];
 
     const schema = getSchemaForTemplate(templateType);
     const prompt = getPromptForTemplate(templateType, sectionTitle, bulletPoints);
+
+    console.log('📋 Schema and prompt ready, template:', templateType);
 
     const systemPrompt = `You are an expert presentation designer and content creator. Create compelling slide content that is ${writingStyle} in tone and written in ${targetLanguage}.
 
@@ -221,14 +250,13 @@ CRITICAL INSTRUCTIONS FOR PRESENTATION SLIDES:
 - CREATE concise, presentation-ready content that expands meaningfully on the topic
 - CHOOSE the most appropriate format: bullet points for lists/key points, paragraphs for explanations
 - Keep ALL text brief and scannable - this is for VISUAL presentation slides
-- If using bullet points: 1-2 lines maximum (12-20 words ideal for impactful content)
-- If using paragraphs: 2-3 sentences maximum, not long blocks of text
 - Use active voice, strong verbs, and impactful language
 - Make content immediately understandable when viewed on a slide
 - Prioritize clarity and visual readability over comprehensive detail
-- For image prompts, be specific and professional (include style, mood, composition)
 - Ensure content flows logically and supports the main message
 - Each piece of content should be presentation-ready and appropriately sized for slides
+
+CONTENT LENGTH REQUIREMENTS: ${contentGuidelines}
 
 CONTENT FORMAT FLEXIBILITY:
 - Use bullet points when listing key points, features, benefits, or steps
@@ -236,52 +264,58 @@ CONTENT FORMAT FLEXIBILITY:
 - Choose the format that best serves the content and audience understanding
 - Mix formats within a slide if appropriate (e.g., intro paragraph + bullet list)
 
+IMAGE STYLE REQUIREMENTS:
+- For image prompts, be specific and professional
+- Image style context: ${imageStyle}
+- Include composition, mood, and visual elements that match this style
+- Ensure images complement and enhance the text content
+
 CONTENT LENGTH GUIDELINES:
 - Titles: 3-8 words maximum
-- Bullet points: 1-2 lines, 12-20 words ideal (substantive but scannable)
-- Paragraphs: 2-3 sentences maximum
 - Headings: 2-4 words maximum
-- Descriptions: Brief and impactful, not explanatory essays
+- Content follows the ${contentLength} guidelines above
 
 Template: ${templateType}
 
-Remember: Transform the outline into CONCISE, visually-friendly presentation content that audiences can quickly read and understand! Choose the best format (bullets vs paragraphs) for each piece of content and make bullet points substantial enough to be meaningful.`;
+Remember: Transform the outline into CONCISE, visually-friendly presentation content that audiences can quickly read and understand! Choose the best format (bullets vs paragraphs) for each piece of content and make content substantial enough to be meaningful while respecting the ${contentLength} length requirements.`;
 
-    const { partialObjectStream } = streamObject({
-      model: openai('gpt-4o-mini'),
-      system: systemPrompt,
-      prompt,
-      schema,
-    });
+        console.log('🚀 Starting generateObject call with Groq...');
 
-    // Create a readable stream
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const partialObject of partialObjectStream) {
-            const chunk = encoder.encode(`data: ${JSON.stringify(partialObject)}\n\n`);
-            controller.enqueue(chunk);
-          }
-          
-          controller.close();
-        } catch (error) {
-          controller.error(error);
-        }
-      }
-    });
+    try {
+      const result = await generateObject({
+        model: groq(modelName),
+        system: systemPrompt,
+        prompt,
+        schema,
+        maxTokens: 1000,
+        temperature: 0.7,
+      });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+      console.log('✅ generateObject completed successfully');
+      console.log('📊 Usage:', result.usage);
+
+      return Response.json({
+        success: true,
+        data: result.object,
+        usage: result.usage,
+      });
+
+    } catch (generateError) {
+      console.error('❌ Error with generateObject:', generateError);
+      console.error('Error details:', generateError instanceof Error ? generateError.message : String(generateError));
+      console.error('Error stack:', generateError instanceof Error ? generateError.stack : 'No stack trace');
+      return Response.json(
+        { error: 'Failed to generate slide content', details: generateError instanceof Error ? generateError.message : String(generateError) },
+        { status: 500 }
+      );
+    }
 
   } catch (error) {
+    console.error('❌ General error in generate-slide:', error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return Response.json(
-      { error: 'Failed to generate slide' },
+      { error: 'Failed to generate slide', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

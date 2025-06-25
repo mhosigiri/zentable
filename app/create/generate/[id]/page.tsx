@@ -37,6 +37,8 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { db, DocumentData } from '@/lib/database';
+import { themes, getThemesByCategory, Theme, defaultTheme } from '@/lib/themes';
 
 interface OutlineSection {
   id: string;
@@ -48,18 +50,6 @@ interface OutlineSection {
 interface GeneratedOutline {
   title: string;
   sections: OutlineSection[];
-}
-
-interface DocumentData {
-  id: string;
-  prompt: string;
-  cardCount: number;
-  style: string;
-  language: string;
-  createdAt: string;
-  status: string;
-  outline?: GeneratedOutline;
-  generatedSlides?: any[]; // Add this field to match the docs page
 }
 
 function SortableOutlineCard({ section, index, onEdit }: { 
@@ -198,6 +188,11 @@ export default function OutlinePage() {
   const [style, setStyle] = useState('default');
   const [language, setLanguage] = useState('en');
 
+  // Add new state variables for content configuration
+  const [contentLength, setContentLength] = useState('medium');
+  const [selectedTheme, setSelectedTheme] = useState<Theme>(defaultTheme);
+  const [imageStyle, setImageStyle] = useState('');
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -217,7 +212,16 @@ export default function OutlinePage() {
         setStyle(data.style);
         setLanguage(data.language);
         
-
+        // Load new configuration values
+        setContentLength(data.contentLength || 'medium');
+        
+        // Load theme
+        if (data.theme) {
+          const theme = themes.find(t => t.id === data.theme) || defaultTheme;
+          setSelectedTheme(theme);
+        }
+        
+        setImageStyle(data.imageStyle || '');
         
         if (data.outline) {
           setGeneratedOutline(data.outline);
@@ -240,6 +244,33 @@ export default function OutlinePage() {
     localStorage.setItem(`document_${documentId}`, JSON.stringify(updatedData));
   };
 
+  // New function: Save to database in background
+  const saveToDatabase = async (data: Partial<DocumentData>) => {
+    try {
+      // Use the database ID if available, otherwise skip database sync
+      const databaseId = documentData?.databaseId;
+      if (!databaseId) {
+        console.log('No database ID available, skipping database sync');
+        return;
+      }
+
+      await db.updatePresentation(databaseId, {
+        prompt: data.prompt || documentData?.prompt,
+        card_count: data.cardCount || documentData?.cardCount,
+        style: (data.style || documentData?.style) as any,
+        language: data.language || documentData?.language,
+        content_length: (data.contentLength || documentData?.contentLength) as any,
+        theme_id: data.theme || documentData?.theme || 'default',
+        image_style: data.imageStyle || documentData?.imageStyle || null,
+        status: (data.status || documentData?.status) as any,
+        outline: data.outline || documentData?.outline
+      });
+      console.log('✅ Data synced to database with UUID:', databaseId);
+    } catch (error) {
+      console.warn('⚠️ Database sync failed:', error);
+    }
+  };
+
   const generateOutline = async (docData?: DocumentData) => {
     const data = docData || documentData;
     if (!data) return;
@@ -258,6 +289,7 @@ export default function OutlinePage() {
           cardCount: data.cardCount,
           style: data.style,
           language: data.language,
+          contentLength: contentLength // Include content length
         }),
       });
 
@@ -265,47 +297,24 @@ export default function OutlinePage() {
         throw new Error('Failed to generate outline');
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) break;
-        
-        buffer += decoder.decode(value, { stream: true });
-        
-        // Process complete lines
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const streamData = JSON.parse(line.slice(6));
-              console.log('Received streaming data:', streamData);
-              
-              // Update the outline with the latest partial data
-              if (streamData.title || streamData.sections) {
-                setGeneratedOutline(streamData);
-                
-                // Save to localStorage
-                saveDocumentData({
-                  outline: streamData,
-                  status: 'completed'
-                });
-              }
-            } catch (e) {
-              console.error('Error parsing streaming data:', e);
-            }
-          }
-        }
-      }
+      const generatedData = await response.json();
+      console.log('Received outline data:', generatedData);
+      
+      setGeneratedOutline(generatedData);
+      
+      // Save to localStorage (keep existing)
+      const updatedData = {
+        outline: generatedData,
+        status: 'completed',
+        contentLength,
+        theme: selectedTheme.id,
+        imageStyle
+      };
+      saveDocumentData(updatedData);
+      
+      // Also save to database when LLM response completes (new addition)
+      await saveToDatabase(updatedData);
+      
     } catch (error) {
       console.error('Error generating outline:', error);
       saveDocumentData({ status: 'error' });
@@ -322,6 +331,9 @@ export default function OutlinePage() {
         cardCount: parseInt(cardCount),
         style,
         language,
+        contentLength,
+        theme: selectedTheme.id,
+        imageStyle,
         status: 'generating'
       };
       saveDocumentData(updatedData);
@@ -362,19 +374,63 @@ export default function OutlinePage() {
     saveDocumentData({ outline: newOutline });
   };
 
-  const handleGenerateSlides = () => {
+  const handleGenerateSlides = async () => {
     if (generatedOutline && documentData) {
-      // Save the final outline state and clear any existing generated slides
-      saveDocumentData({ 
+      // Save the final outline state and content configuration
+      const finalData = {
         outline: generatedOutline,
-        status: 'ready-for-slides',
-        generatedSlides: undefined // Clear existing slides to force regeneration
-      });
+        status: 'completed',
+        generatedSlides: undefined,
+        contentLength,
+        theme: selectedTheme.id,
+        imageStyle
+      };
+      
+      // Save to localStorage (keep existing)
+      saveDocumentData(finalData);
+      
+      // Save to database before navigation (new addition)
+      await saveToDatabase(finalData);
       
       // Navigate to the presentation page
       router.push(`/docs/${documentId}`);
     }
   };
+
+  // Add immediate saving when configuration changes
+  const handleContentLengthChange = (value: string) => {
+    setContentLength(value);
+    // Immediately save to localStorage and database
+    const updatedData = { contentLength: value };
+    saveDocumentData(updatedData);
+    saveToDatabase(updatedData);
+  };
+
+  const handleThemeChange = (theme: Theme) => {
+    setSelectedTheme(theme);
+    // Immediately save to localStorage and database
+    const updatedData = { theme: theme.id };
+    saveDocumentData(updatedData);
+    saveToDatabase(updatedData);
+    console.log('✅ Theme changed and saved:', theme.id);
+  };
+
+  const handleImageStyleChange = (value: string) => {
+    setImageStyle(value);
+  };
+
+  // Debounced effect for image style saving
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (imageStyle !== (documentData?.imageStyle || '')) {
+        const updatedData = { imageStyle };
+        saveDocumentData(updatedData);
+        saveToDatabase(updatedData);
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [imageStyle, documentData?.imageStyle]);
 
   if (!documentData) {
     return (
@@ -540,6 +596,86 @@ export default function OutlinePage() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Content Configuration Card */}
+        {generatedOutline && !isGenerating && (
+          <div className="mb-8">
+            <Card className="bg-white/80 backdrop-blur-sm border-gray-200">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Content Configuration</h3>
+                
+                {/* Content Length Selector */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Content Length</label>
+                  <div className="flex gap-3">
+                    {[
+                      { value: 'brief', label: 'Brief', desc: 'Concise points' },
+                      { value: 'medium', label: 'Medium', desc: 'Balanced detail' },
+                      { value: 'detailed', label: 'Detailed', desc: 'Comprehensive' }
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleContentLengthChange(option.value)}
+                        className={`flex-1 p-3 rounded-lg border text-center transition-all ${
+                          contentLength === option.value
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-medium text-sm">{option.label}</div>
+                        <div className="text-xs text-gray-500 mt-1">{option.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Theme Selection Grid */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Theme</label>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                    {themes.map((theme) => (
+                      <button
+                        key={theme.id}
+                        onClick={() => handleThemeChange(theme)}
+                        className={`relative aspect-square rounded-lg border-2 transition-all hover:scale-105 ${
+                          selectedTheme.id === theme.id
+                            ? 'border-blue-500 ring-2 ring-blue-200'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        style={{
+                          background: theme.background
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
+                        <div className="absolute bottom-1 left-1 right-1">
+                          <div className="text-xs font-medium text-white drop-shadow-sm truncate">
+                            {theme.name}
+                          </div>
+                        </div>
+                        {selectedTheme.id === theme.id && (
+                          <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Image Style Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Image Style (Optional)</label>
+                  <Textarea
+                    placeholder="Describe the visual style for generated images (e.g., 'modern minimalist illustrations', 'photorealistic', 'hand-drawn sketches')"
+                    value={imageStyle}
+                    onChange={(e) => handleImageStyleChange(e.target.value)}
+                    className="min-h-[80px] resize-none"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 

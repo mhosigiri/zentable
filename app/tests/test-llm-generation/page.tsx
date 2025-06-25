@@ -79,7 +79,7 @@ export default function TestLLMGenerationPage() {
     };
     
     setSlides(prev => [...prev.filter(s => s.templateType !== templateType), newSlide]);
-    setGeneratingSlides(prev => new Set([...prev, templateType]));
+    setGeneratingSlides(prev => new Set([...Array.from(prev), templateType]));
 
     try {
       // Generate slide content

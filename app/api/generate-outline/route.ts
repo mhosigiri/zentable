@@ -1,8 +1,15 @@
-import { openai } from '@ai-sdk/openai';
-import { streamObject } from 'ai';
+import { createGroq } from '@ai-sdk/groq';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+// Configure Groq with Llama 4 Scout
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+const modelName = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
 const OutlineSchema = z.object({
   title: z.string().describe('A compelling, professional title for the presentation'),
@@ -264,69 +271,41 @@ Remember: This is for SLIDE presentations - content must be scannable and visual
 
 The outline should create a compelling ${cardCount}-slide presentation with maximum visual variety.`;
 
-    const { partialObjectStream } = streamObject({
-      model: openai('gpt-4o-mini'),
+    const { object } = await generateObject({
+      model: groq(modelName),
       system: systemPrompt,
       prompt: `Create a presentation outline for: "${prompt}"`,
       schema: OutlineSchema,
     });
 
-    // Create a readable stream
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const partialObject of partialObjectStream) {
-            // Add template types and IDs to sections if they exist
-            if (partialObject.sections) {
-              const usedTemplates: string[] = [];
-              const sectionsWithTemplates = partialObject.sections.map((section, index) => {
-                if (!section) return section;
-                
-                const templateType = section.templateType || selectTemplateType(
-                  section.title || '', 
-                  (section.bulletPoints || []).filter((bp): bp is string => typeof bp === 'string'), 
-                  index, 
-                  partialObject.sections?.length || 0,
-                  usedTemplates
-                );
-                
-                usedTemplates.push(templateType);
-                
-                return {
-                  ...section,
-                  id: `section-${index + 1}`,
-                  templateType
-                };
-              });
-
-              const processedObject = {
-                ...partialObject,
-                sections: sectionsWithTemplates
-              };
-
-              console.log('Streaming partial object:', JSON.stringify(processedObject, null, 2));
-              
-              const chunk = encoder.encode(`data: ${JSON.stringify(processedObject)}\n\n`);
-              controller.enqueue(chunk);
-            }
-          }
-          
-          controller.close();
-        } catch (error) {
-          console.error('Streaming error:', error);
-          controller.error(error);
-        }
-      }
+    // Add template types and IDs to sections
+    const usedTemplates: string[] = [];
+    const sectionsWithTemplates = object.sections.map((section, index) => {
+      const templateType = section.templateType || selectTemplateType(
+        section.title, 
+        section.bulletPoints, 
+        index, 
+        object.sections.length,
+        usedTemplates
+      );
+      
+      usedTemplates.push(templateType);
+      
+      return {
+        ...section,
+        id: `section-${index + 1}`,
+        templateType
+      };
     });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+    const finalObject = {
+      ...object,
+      sections: sectionsWithTemplates
+    };
+
+    console.log('Generated outline:', JSON.stringify(finalObject, null, 2));
+    
+    return Response.json(finalObject);
 
   } catch (error) {
     console.error('Error generating outline:', error);

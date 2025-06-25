@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { SlideRenderer, SlideData } from '@/components/slides/SlideRenderer';
@@ -23,7 +23,10 @@ import {
   Download,
   Share2,
   Loader2
-} from 'lucide-react';
+  } from 'lucide-react';
+import { db, DocumentData } from '@/lib/database';
+import { supabase } from '@/lib/supabase';
+import { defaultTheme } from '@/lib/themes';
 
 interface OutlineSection {
   id: string;
@@ -37,20 +40,9 @@ interface GeneratedOutline {
   sections: OutlineSection[];
 }
 
-interface DocumentData {
-  id: string;
-  prompt: string;
-  cardCount: number;
-  style: string;
-  language: string;
-  createdAt: string;
-  status: string;
-  outline?: GeneratedOutline;
-  generatedSlides?: SlideData[];
-}
-
 export default function PresentationPage() {
   const params = useParams();
+  const router = useRouter();
   const documentId = params.id as string;
   const { setTheme, getThemeForDocument } = useTheme();
   
@@ -63,6 +55,11 @@ export default function PresentationPage() {
   const [generatingSlides, setGeneratingSlides] = useState(new Set<number>());
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false); // Prevent conflicts during programmatic scroll
+  
+  // Database integration state
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // Phase 3: Modal states for slide addition
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -90,9 +87,28 @@ export default function PresentationPage() {
         const data: DocumentData = JSON.parse(stored);
         setDocumentData(data);
         
-        // Load theme for this document
-        const documentTheme = getThemeForDocument(documentId);
-        setTheme(documentTheme, documentId);
+        // Load theme with priority: database data > localStorage > default
+        let themeToUse = defaultTheme;
+        
+        if (data.theme) {
+          // Use theme from database data (saved from outline configuration) - highest priority
+          const themes = require('@/lib/themes').themes;
+          const dbTheme = themes.find((t: any) => t.id === data.theme);
+          if (dbTheme) {
+            themeToUse = dbTheme;
+            console.log('✅ Loading theme from database data (highest priority):', data.theme);
+          }
+        } else {
+          // Fallback to localStorage theme if no database theme
+          const localStorageTheme = getThemeForDocument(documentId);
+          if (localStorageTheme.id !== defaultTheme.id) {
+            themeToUse = localStorageTheme;
+            console.log('✅ Loading theme from localStorage (fallback):', localStorageTheme.id);
+          }
+        }
+        
+        // Use setTheme for initial load
+        setTheme(themeToUse, documentId);
         
         // First, try to load existing generated slides
         if (data.generatedSlides && data.generatedSlides.length > 0) {
@@ -107,7 +123,18 @@ export default function PresentationPage() {
     };
 
     loadDocumentData();
-  }, [documentId, setTheme, getThemeForDocument]);
+  }, [documentId, getThemeForDocument]);
+
+  // Listen for theme changes from sidebar and update internal state
+  const { currentTheme } = useTheme();
+  useEffect(() => {
+    if (documentData && currentTheme && currentTheme.id !== documentData.theme) {
+      // Update the internal documentData state to reflect the theme change
+      const updatedData = { ...documentData, theme: currentTheme.id };
+      setDocumentData(updatedData);
+      console.log('🔄 Updated internal theme state to:', currentTheme.id);
+    }
+  }, [currentTheme, documentData?.theme]);
 
   // Save slides to localStorage whenever they change
   useEffect(() => {
@@ -119,6 +146,24 @@ export default function PresentationPage() {
       localStorage.setItem(`document_${documentId}`, JSON.stringify(updatedData));
     }
   }, [slides, documentData, documentId]);
+
+  // Update presentation title in database when outline title is available
+  useEffect(() => {
+    const updatePresentationTitle = async () => {
+      if (documentData?.outline?.title && documentData?.databaseId && documentData.outline.title !== 'Untitled Presentation') {
+        try {
+          await db.updatePresentation(documentData.databaseId, {
+            title: documentData.outline.title
+          });
+          console.log('✅ Updated presentation title to:', documentData.outline.title);
+        } catch (error) {
+          console.warn('⚠️ Failed to update presentation title:', error);
+        }
+      }
+    };
+
+    updatePresentationTitle();
+  }, [documentData?.outline?.title, documentData?.databaseId]);
 
   // Phase 2: Auto-detect current slide based on scroll position
   useEffect(() => {
@@ -270,6 +315,8 @@ export default function PresentationPage() {
           templateType: section.templateType,
           style: documentData?.style || 'default',
           language: documentData?.language || 'en',
+          contentLength: documentData?.contentLength || 'medium',
+          imageStyle: documentData?.imageStyle || 'professional',
         }),
       });
 
@@ -277,100 +324,34 @@ export default function PresentationPage() {
         throw new Error('Failed to generate slide');
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let lastUpdate = 0;
-      let latestData: any = null;
-      const UPDATE_THROTTLE = 100; // Throttle updates to every 100ms
-
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) break;
-        
-        buffer += decoder.decode(value, { stream: true });
-        
-        // Process complete lines
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
-        
-        const now = Date.now();
-        let shouldUpdate = false;
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const streamData = JSON.parse(line.slice(6));
-              
-              // Console log the LLM response for debugging
-              console.log('🤖 LLM Response Data:', JSON.stringify(streamData, null, 2));
-              
-              // Only update if we have meaningful data
-              if (Object.keys(streamData).length > 0) {
-                latestData = streamData;
-                shouldUpdate = true;
-              }
-            } catch (e) {
-              // Silently ignore parsing errors to avoid console spam
-            }
-          }
-        }
-        
-        // Throttled update with latest data
-        if (shouldUpdate && latestData && (now - lastUpdate > UPDATE_THROTTLE)) {
-          lastUpdate = now;
-          
-          // Batch updates to reduce re-renders
-          setSlides(prevSlides => {
-            const newSlides = [...prevSlides];
-            const currentSlide = newSlides[slideIndex];
-            
-            // Only update if the data has actually changed
-            const hasChanges = Object.keys(latestData).some(key => 
-              currentSlide[key as keyof SlideData] !== latestData[key]
-            );
-            
-            if (hasChanges) {
-              newSlides[slideIndex] = { 
-                ...currentSlide, 
-                ...latestData,
-                isGenerating: false
-              };
-              return newSlides;
-            }
-            
-            return prevSlides;
-          });
-
-          // Don't generate image during streaming to avoid multiple calls
-          // Image will be generated after streaming completes
-        }
-      }
+      // Parse JSON response instead of streaming
+      const result = await response.json();
       
-      // Final update with any remaining data
-      if (latestData) {
-        setSlides(prevSlides => {
-          const newSlides = [...prevSlides];
-          const currentSlide = newSlides[slideIndex];
-          
-          newSlides[slideIndex] = { 
-            ...currentSlide, 
-            ...latestData,
-            isGenerating: false
-          };
-          return newSlides;
-        });
+      console.log('🤖 LLM Response Data:', JSON.stringify(result, null, 2));
+      
+      if (!result.success || !result.data) {
+        throw new Error('Invalid response format');
+      }
 
-        // Generate image only after streaming is completely finished
-        if (latestData.imagePrompt && !latestData.imageUrl) {
-          console.log('🎯 Streaming complete, generating image for slide:', slideIndex);
-          generateSlideImage(latestData.imagePrompt, slideIndex);
-        }
+      const slideData = result.data;
+      
+      // Update slide with generated content
+      setSlides(prevSlides => {
+        const newSlides = [...prevSlides];
+        const currentSlide = newSlides[slideIndex];
+        
+        newSlides[slideIndex] = { 
+          ...currentSlide, 
+          ...slideData,
+          isGenerating: false
+        };
+        return newSlides;
+      });
+
+      // Generate image if needed
+      if (slideData.imagePrompt && !slideData.imageUrl) {
+        console.log('🎯 Generation complete, generating image for slide:', slideIndex);
+        generateSlideImage(slideData.imagePrompt, slideIndex);
       }
 
       // Remove from generating slides set
@@ -442,7 +423,11 @@ export default function PresentationPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: imagePrompt }),
+        body: JSON.stringify({ 
+          prompt: imagePrompt,
+          theme: documentData?.theme,
+          imageStyle: documentData?.imageStyle
+        }),
       });
 
       if (!response.ok) {
@@ -728,6 +713,8 @@ export default function PresentationPage() {
           templateType: templateType === 'magic' ? 'title-with-bullets' : templateType,
           style: documentData?.style || 'default',
           language: documentData?.language || 'en',
+          contentLength: documentData?.contentLength || 'medium',
+          imageStyle: documentData?.imageStyle || 'professional',
         }),
       });
 
@@ -735,56 +722,31 @@ export default function PresentationPage() {
         throw new Error('Failed to generate slide');
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No response body');
+      // Parse JSON response instead of streaming
+      const result = await response.json();
+      
+      if (!result.success || !result.data) {
+        throw new Error('Invalid response format');
       }
 
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let latestData: any = null;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) break;
-        
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const streamData = JSON.parse(line.slice(6));
-              if (Object.keys(streamData).length > 0) {
-                latestData = streamData;
-              }
-            } catch (e) {
-              // Ignore parsing errors
-            }
-          }
-        }
-      }
-
+      const slideData = result.data;
+      
       // Update slide with generated content
-      if (latestData) {
-        setSlides(prevSlides => 
-          prevSlides.map((slide, index) => 
-            index === targetIndex 
-              ? { 
-                  ...slide, 
-                  ...latestData,
-                  isGenerating: false
-                }
-              : slide
-          )
-        );
+      setSlides(prevSlides => 
+        prevSlides.map((slide, index) => 
+          index === targetIndex 
+            ? { 
+                ...slide, 
+                ...slideData,
+                isGenerating: false
+              }
+            : slide
+        )
+      );
 
-        // Generate image if needed
-        if (latestData.imagePrompt && !latestData.imageUrl) {
-          generateSlideImage(latestData.imagePrompt, targetIndex);
-        }
+      // Generate image if needed
+      if (slideData.imagePrompt && !slideData.imageUrl) {
+        generateSlideImage(slideData.imagePrompt, targetIndex);
       }
 
       setShowAIModal(false);
@@ -805,6 +767,140 @@ export default function PresentationPage() {
       setIsGeneratingNewSlide(false);
     }
   };
+
+  // Database integration functions
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
+  const saveToDatabase = async (forceSync = false) => {
+    if (!documentData?.databaseId || isSyncing) return;
+    
+    // Only sync if there are changes or forced
+    if (!forceSync && lastSavedAt && Date.now() - lastSavedAt.getTime() < 5000) {
+      return; // Don't sync more than once every 5 seconds
+    }
+
+    setIsSyncing(true);
+    try {
+      // Save presentation data
+      await db.updatePresentation(documentData.databaseId, {
+        prompt: documentData.prompt,
+        card_count: documentData.cardCount,
+        style: documentData.style as any,
+        language: documentData.language,
+        content_length: documentData.contentLength as any || 'medium',
+        theme_id: documentData.theme || 'default',
+        image_style: documentData.imageStyle || null,
+        status: 'completed' as any,
+        outline: documentData.outline
+      });
+
+      // Clear existing slides for this presentation to avoid duplicates
+      // Note: This is a simple approach - in production you might want to do a smarter sync
+      try {
+        const { data: existingSlides } = await supabase
+          .from('slides')
+          .select('id')
+          .eq('presentation_id', documentData.databaseId);
+        
+        if (existingSlides && existingSlides.length > 0) {
+          await supabase
+            .from('slides')
+            .delete()
+            .eq('presentation_id', documentData.databaseId);
+        }
+      } catch (error) {
+        console.warn('Failed to clear existing slides:', error);
+      }
+
+      // Save current slides to database with new UUIDs
+      if (slides.length > 0) {
+        for (let i = 0; i < slides.length; i++) {
+          const slide = slides[i];
+          const slideUUID = generateUUID();
+          
+          try {
+            await db.createSlide({
+              id: slideUUID,
+              presentation_id: documentData.databaseId,
+              position: i,
+              template_type: slide.templateType,
+              title: slide.title || null,
+              content: slide.content || null,
+              bullet_points: slide.bulletPoints || null,
+              image_url: slide.imageUrl || null,
+              image_prompt: slide.imagePrompt || null,
+              is_hidden: false,
+              is_generating: slide.isGenerating || false,
+              is_generating_image: slide.isGeneratingImage || false
+            });
+          } catch (error) {
+            console.warn('Failed to save slide to database:', slide.id, error);
+          }
+        }
+      }
+
+      setLastSavedAt(new Date());
+      console.log('✅ Presentation synced to database');
+    } catch (error) {
+      console.warn('⚠️ Database sync failed:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const startAutoSave = () => {
+    if (autoSaveIntervalRef.current) return;
+    
+    autoSaveIntervalRef.current = setInterval(() => {
+      saveToDatabase();
+    }, 30000); // Save every 30 seconds
+  };
+
+  const stopAutoSave = () => {
+    if (autoSaveIntervalRef.current) {
+      clearInterval(autoSaveIntervalRef.current);
+      autoSaveIntervalRef.current = null;
+    }
+  };
+
+  // Save on navigation away
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      saveToDatabase(true); // Force sync on page unload
+    };
+
+    const handleRouteChange = () => {
+      saveToDatabase(true); // Force sync on route change
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Start auto-save when component mounts
+    startAutoSave();
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      stopAutoSave();
+      saveToDatabase(true); // Final sync on cleanup
+    };
+  }, [documentData, slides]);
+
+  // Trigger sync when slides change (debounced)
+  useEffect(() => {
+    if (slides.length > 0 && documentData?.databaseId) {
+      const timeoutId = setTimeout(() => {
+        saveToDatabase();
+      }, 2000); // Debounce slide changes by 2 seconds
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [slides, documentData]);
 
   if (!documentData || slides.length === 0) {
     return (
@@ -846,6 +942,17 @@ export default function PresentationPage() {
               <div className="flex items-center text-blue-600 text-sm mr-4">
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 Generating slides... ({generatingSlideIndex + 1}/{slides.length})
+              </div>
+            )}
+            {isSyncing && (
+              <div className="flex items-center text-green-600 text-sm mr-4">
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Syncing...
+              </div>
+            )}
+            {lastSavedAt && !isSyncing && (
+              <div className="flex items-center text-gray-500 text-sm mr-4">
+                Saved {lastSavedAt.toLocaleTimeString()}
               </div>
             )}
             <Button

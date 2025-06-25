@@ -1,0 +1,758 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Implementation Plan: AI Copilot for Slides with MCP Integration
+
+## Project Overview
+
+Transform Cursor for Slides from a simple slide generator into a comprehensive AI copilot platform with bidirectional MCP (Model Context Protocol) integration, state-of-the-art prompting, and advanced brainstorming capabilities.
+
+## Phase 1: Core Copilot Infrastructure (Week 1-2)
+
+### **Chat Interface Foundation**
+- [ ] Floating chat widget component
+- [ ] Message history and context management
+- [ ] Streaming response handling
+- [ ] Basic tool calling infrastructure
+
+### **API Routes**
+- [ ] `/api/copilot-chat` - Main chat endpoint
+- [ ] Enhanced context management
+- [ ] Integration with existing slide management
+
+### **Basic Tools**
+- [ ] `updateSlideProperty` - Universal slide property updates
+- [ ] `addBulletToProperty` - Bullet point management
+- [ ] `updateSlideImage` - Image operations
+- [ ] `changeSlideTemplate` - Template conversion
+- [ ] `optimizeSlideContent` - Content optimization
+
+### **Deliverables**
+- Working chat interface integrated with slides editor
+- Basic slide manipulation through conversation
+- Context-aware responses about current presentation state
+
+## Phase 2: Advanced Copilot Features (Week 3-4)
+
+### **Enhanced Brainstorming**
+- [ ] Multi-stage brainstorming flow (Discovery → Content → Structure → Generate)
+- [ ] Progress tracking interface
+- [ ] Idea bank with organization tools
+- [ ] Smart suggestion system
+
+### **Advanced Tools**
+- [ ] `analyzeSlide` - Content analysis and suggestions
+- [ ] `createSlide` - New slide generation
+- [ ] `duplicateSlide` - Slide duplication
+- [ ] Multi-slide operations support
+
+### **UI Enhancements**
+- [ ] Inline AI suggestions in editor
+- [ ] Accept/reject workflow for AI recommendations
+- [ ] Tool invocation UI for interactive tools
+- [ ] Progress indicators and loading states
+
+### **Deliverables**
+- Complete brainstorming workflow
+- Advanced slide editing capabilities
+- Proactive AI suggestions and improvements
+
+## Phase 3: Bidirectional MCP Integration + State-of-the-Art Prompting (Week 5-8)
+
+### **Enhanced Brainstorming with Live Data Integration**
+
+#### **MCP Client Implementation (Your App Consuming Data)**
+- [ ] **MCP Manager System**
+  ```typescript
+  // lib/mcp/mcp-manager.ts
+  - Multi-server connection management
+  - Tool discovery and caching
+  - Error handling and reconnection logic
+  - Support for stdio, SSE, and HTTP transports
+  ```
+
+- [ ] **Pre-built MCP Server Integrations**
+  ```typescript
+  // Ready-made integrations
+  - Google Drive MCP (documents, spreadsheets)
+  - Postgres/MySQL MCP (database queries)
+  - GitHub MCP (repository data, issues, commits)
+  - Slack MCP (team communications)
+  - Filesystem MCP (local file access)
+  - Smithery/mcp.so marketplace integration
+  ```
+
+- [ ] **Enhanced Brainstorming Interface**
+  ```
+  ┌─────────────────────┬─────────────────┬──────────────────┐
+  │   Chat with AI      │   Progress      │   Quick Actions  │
+  │   + Data Sources    │   Tracker       │   & Preview      │
+  │                     │                 │                  │
+  │ • Real-time data    │ ┌─────────────┐ │ • Add MCP server │
+  │ • Context aware     │ │ Discovery   │ │ • Export options │
+  │ • Multi-modal       │ │ Content     │ │ • Theme apply    │
+  │                     │ │ Structure   │ │ • Generate       │
+  │                     │ │ Generate    │ │                  │
+  ├─────────────────────┤ └─────────────┘ ├──────────────────┤
+  │   Enhanced          │   Data Sources  │   Presentation   │
+  │   Idea Bank         │   Panel         │   Preview        │
+  │                     │                 │                  │
+  │ • Real data tags    │ • Connected     │ • Live preview   │
+  │ • Source tracking   │ • Available     │ • Structure view │
+  │ • Auto-refresh      │ • Add new       │ • Export ready   │
+  └─────────────────────┴─────────────────┴──────────────────┘
+  ```
+
+#### **MCP Server Implementation (Your App Providing Services)**
+- [ ] **Presentation Generation MCP Server**
+  ```typescript
+  // lib/mcp/presentation-server.ts
+  Tools for external MCP clients:
+  - create_presentation: Full presentation generation
+  - generate_slide: Single slide creation
+  - brainstorm_presentation: Interactive brainstorming
+  - apply_theme: Theme application
+  - export_presentation: Multi-format export
+  - analyze_content: Content analysis and suggestions
+  ```
+
+- [ ] **Distribution & Integration**
+  ```bash
+  # NPM package for easy installation
+  npx cursor-for-slides mcp-server
+  
+  # Integration examples for major MCP clients:
+  - Claude Desktop configuration
+  - VS Code GitHub Copilot integration  
+  - JetBrains AI Assistant setup
+  - Cursor IDE integration
+  - Custom client examples
+  ```
+
+### **State-of-the-Art Prompting Strategy Implementation**
+
+#### **1. Hyper-Specific & Detailed Prompts (Manager Approach)**
+```typescript
+// lib/prompts/master-prompts.ts
+export const BRAINSTORMING_MASTER_PROMPT = `
+You are a Senior Presentation Strategy Consultant and AI Brainstorming Specialist with 15+ years of experience helping executives, educators, and thought leaders create compelling, data-driven presentations.
+
+## YOUR ROLE & EXPERTISE
+You specialize in:
+- Strategic presentation planning and narrative architecture
+- Audience analysis and message crafting  
+- Data integration and visual storytelling
+- Cross-functional collaboration and stakeholder alignment
+- Real-time content optimization based on live data sources
+
+## YOUR CURRENT TASK
+Your primary responsibility is to guide users through a comprehensive brainstorming process that transforms vague ideas into structured, compelling presentation concepts. You will:
+
+1. DISCOVERY PHASE (2-3 interactions)
+   - Understand presentation goals and success metrics
+   - Identify target audience and their pain points/interests
+   - Determine constraints (time, format, resources)
+   - Assess available data sources and content assets
+
+2. CONTENT EXPLORATION PHASE (3-4 interactions)
+   - Generate and refine key message pillars
+   - Identify supporting evidence and data points
+   - Suggest relevant examples, case studies, and stories
+   - Map content to audience interests and business objectives
+
+3. STRUCTURE REFINEMENT PHASE (2-3 interactions)
+   - Organize ideas into logical narrative flow
+   - Design opening hooks and memorable conclusions
+   - Balance information density with engagement
+   - Recommend optimal templates and visual approaches
+
+4. OPTIMIZATION PHASE (1-2 interactions)
+   - Generate refined presentation prompt for slide creation
+   - Suggest appropriate themes, styles, and slide count
+   - Provide content quality assessment and recommendations
+
+## CONNECTED DATA SOURCES
+You have access to real-time data through MCP servers:
+{connectedSources}
+
+When relevant, proactively suggest using these data sources to:
+- Validate assumptions with real metrics
+- Include current, accurate information
+- Support arguments with concrete evidence
+- Personalize content to user's actual context
+
+## INTERACTION GUIDELINES
+
+### Communication Style
+- Be conversational yet professional
+- Ask thoughtful, open-ended questions that spark thinking
+- Provide specific, actionable suggestions
+- Balance guidance with user autonomy
+
+### Question Strategy
+- Start broad, then narrow focus
+- Build on previous responses to maintain continuity
+- Use data insights to prompt deeper exploration
+- Validate understanding before moving to next phase
+
+### Output Structure
+Always structure your responses using:
+
+**🎯 Current Focus:** [What we're working on]
+**💡 Key Insight:** [Main takeaway from user's input]
+**❓ Next Question:** [Specific question to advance discussion]
+**🔗 Data Opportunity:** [Relevant data sources to explore]
+**📋 Running Notes:** [Summary of collected insights]
+
+## ESCAPE HATCHES & QUALITY CONTROL
+If at any point you encounter:
+- Unclear or contradictory user input → Ask for clarification
+- Missing critical information → Explicitly state what's needed
+- Technical limitations → Clearly explain constraints
+- Data access issues → Suggest alternative approaches
+
+Always prioritize accuracy over assumption. Say "I don't have enough information about [specific aspect]" rather than making unsupported suggestions.
+
+## SUCCESS METRICS
+A successful brainstorming session results in:
+- Clear presentation objective and success metrics
+- Well-defined target audience profile
+- 3-5 key message pillars with supporting evidence
+- Logical narrative structure with opening/closing strategies
+- Actionable next steps for slide creation
+- Data-informed content recommendations
+
+## CURRENT SESSION STATUS
+Session Stage: {currentStage}
+Ideas Collected: {ideasCount}
+Data Sources Used: {dataSourcesUsed}
+User Context: {userContext}
+
+Begin each interaction by acknowledging the current stage and smoothly continuing the conversation flow.
+`;
+
+#### **2. Role-Based Persona Prompting**
+```typescript
+// lib/prompts/persona-prompts.ts
+export const PERSONAS = {
+  brainstormingConsultant: {
+    role: "Senior Presentation Strategy Consultant",
+    expertise: ["Strategic planning", "Audience analysis", "Data storytelling"],
+    tone: "Professional, insightful, collaborative"
+  },
+  
+  contentOptimizer: {
+    role: "AI Content Optimization Specialist", 
+    expertise: ["Content analysis", "Writing improvement", "Message clarity"],
+    tone: "Analytical, precise, helpful"
+  },
+  
+  designAdvisor: {
+    role: "Presentation Design Expert",
+    expertise: ["Visual hierarchy", "Template selection", "Theme optimization"],
+    tone: "Creative, user-focused, practical"
+  }
+};
+
+#### **3. Structured Prompts with XML-like Tags**
+```typescript
+// lib/prompts/structured-prompts.ts
+export const TOOL_EXECUTION_PROMPT = `
+<task_definition>
+You are executing a tool call to modify presentation content. Analyze the request and execute the appropriate action.
+</task_definition>
+
+<available_tools>
+{availableTools}
+</available_tools>
+
+<current_context>
+Presentation: {presentationTitle}
+Current Slide: {currentSlideId}
+Template: {templateType}
+Recent Changes: {recentChanges}
+</current_context>
+
+<execution_guidelines>
+1. Validate that the requested action is possible with current slide template
+2. Check for potential conflicts with existing content
+3. Execute the tool call with appropriate parameters
+4. Provide clear feedback about what was changed
+5. Suggest complementary improvements if relevant
+</execution_guidelines>
+
+<output_format>
+<action_taken>{toolName} executed successfully</action_taken>
+<changes_made>{detailedDescription}</changes_made>
+<suggestions>{optionalImprovements}</suggestions>
+<next_steps>{recommendedActions}</next_steps>
+</output_format>
+
+<quality_check>
+If the tool execution fails or produces unexpected results:
+- Explain what went wrong in detail
+- Suggest alternative approaches
+- Ask for clarification if needed
+</quality_check>
+`;
+
+#### **4. Few-Shot Learning with High-Quality Examples**
+```typescript
+// lib/prompts/few-shot-examples.ts
+export const BRAINSTORMING_EXAMPLES = [
+  {
+    userInput: "I need to present our app to investors",
+    assistantResponse: `🎯 **Current Focus:** Understanding your investor pitch goals
+
+💡 **Key Insight:** Investor presentations need to clearly communicate market opportunity, unique value proposition, and growth potential.
+
+❓ **Next Question:** What stage of funding are you seeking, and who specifically will be in the room? (Seed VCs, Series A, strategic investors, etc.)
+
+🔗 **Data Opportunity:** I can help pull real metrics from your app analytics, user data, or financial systems to strengthen your pitch with concrete numbers.
+
+📋 **Running Notes:**
+- Presentation type: Investor pitch
+- Target: Need to identify specific investor audience
+- Goal: Secure funding (stage TBD)
+- Assets: App with potential data sources available`
+  }
+];
+
+#### **5. Meta-Prompting for Continuous Improvement**
+```typescript
+// lib/prompts/meta-prompting.ts
+export const META_PROMPT_ANALYZER = `
+You are a prompt engineering expert. Analyze the following prompt and interaction outcomes to suggest improvements.
+
+CURRENT PROMPT: {currentPrompt}
+RECENT INTERACTIONS: {interactionHistory}
+PERFORMANCE METRICS:
+- User satisfaction: {satisfactionScore}
+- Task completion rate: {completionRate}  
+- Error frequency: {errorRate}
+- Response relevance: {relevanceScore}
+
+ANALYSIS FRAMEWORK:
+1. **Clarity**: Are instructions clear and unambiguous?
+2. **Specificity**: Is the prompt detailed enough for consistent outputs?
+3. **Structure**: Is the format easy for the LLM to parse and follow?
+4. **Adaptability**: Does it handle edge cases and variations well?
+5. **Efficiency**: Could the prompt be more concise without losing effectiveness?
+
+OUTPUT FORMAT:
+{
+  "analysis": "Detailed assessment of current prompt",
+  "strengths": ["What works well"],
+  "weaknesses": ["Areas for improvement"], 
+  "recommendations": ["Specific changes to make"],
+  "revisedPrompt": "Improved version of the prompt"
+}
+`;
+
+#### **6. Evaluation Suite Implementation**
+```typescript
+// lib/evaluation/prompt-evals.ts
+export const EVALUATION_CRITERIA = {
+  brainstorming_effectiveness: {
+    metrics: ['ideas_generated_count', 'idea_quality_score', 'user_engagement_level'],
+    benchmarks: {
+      excellent: { ideas_count: '>8', quality: '>4.5', engagement: '>4.0' },
+      good: { ideas_count: '5-8', quality: '3.5-4.5', engagement: '3.0-4.0' },
+      needs_improvement: { ideas_count: '<5', quality: '<3.5', engagement: '<3.0' }
+    }
+  }
+};
+**🔗 Data Opportunity:** [Relevant data sources to explore]
+**📋 Running Notes:** [Summary of collected insights]
+
+## ESCAPE HATCHES & QUALITY CONTROL
+
+If at any point you encounter:
+- Unclear or contradictory user input → Ask for clarification
+- Missing critical information → Explicitly state what's needed
+- Technical limitations → Clearly explain constraints
+- Data access issues → Suggest alternative approaches
+
+Always prioritize accuracy over assumption. Say "I don't have enough information about [specific aspect]" rather than making unsupported suggestions.
+
+## SUCCESS METRICS
+A successful brainstorming session results in:
+- Clear presentation objective and success metrics
+- Well-defined target audience profile
+- 3-5 key message pillars with supporting evidence
+- Logical narrative structure with opening/closing strategies
+- Actionable next steps for slide creation
+- Data-informed content recommendations
+
+## CURRENT SESSION STATUS
+Session Stage: {currentStage}
+Ideas Collected: {ideasCount}
+Data Sources Used: {dataSourcesUsed}
+User Context: {userContext}
+
+Begin each interaction by acknowledging the current stage and smoothly continuing the conversation flow.
+`;
+```
+
+#### **2. Role-Based Persona Prompting**
+```typescript
+// lib/prompts/persona-prompts.ts
+export const PERSONAS = {
+  brainstormingConsultant: {
+    role: "Senior Presentation Strategy Consultant",
+    expertise: ["Strategic planning", "Audience analysis", "Data storytelling"],
+    tone: "Professional, insightful, collaborative"
+  },
+  
+  contentOptimizer: {
+    role: "AI Content Optimization Specialist", 
+    expertise: ["Content analysis", "Writing improvement", "Message clarity"],
+    tone: "Analytical, precise, helpful"
+  },
+  
+  designAdvisor: {
+    role: "Presentation Design Expert",
+    expertise: ["Visual hierarchy", "Template selection", "Theme optimization"],
+    tone: "Creative, user-focused, practical"
+  }
+};
+```
+
+#### **3. Structured Prompts with XML-like Tags**
+```typescript
+// lib/prompts/structured-prompts.ts
+export const TOOL_EXECUTION_PROMPT = `
+<task_definition>
+You are executing a tool call to modify presentation content. Analyze the request and execute the appropriate action.
+</task_definition>
+
+<available_tools>
+{availableTools}
+</available_tools>
+
+<current_context>
+Presentation: {presentationTitle}
+Current Slide: {currentSlideId}
+Template: {templateType}
+Recent Changes: {recentChanges}
+</current_context>
+
+<execution_guidelines>
+1. Validate that the requested action is possible with current slide template
+2. Check for potential conflicts with existing content
+3. Execute the tool call with appropriate parameters
+4. Provide clear feedback about what was changed
+5. Suggest complementary improvements if relevant
+</execution_guidelines>
+
+<output_format>
+<action_taken>{toolName} executed successfully</action_taken>
+<changes_made>{detailedDescription}</changes_made>
+<suggestions>{optionalImprovements}</suggestions>
+<next_steps>{recommendedActions}</next_steps>
+</output_format>
+
+<quality_check>
+If the tool execution fails or produces unexpected results:
+- Explain what went wrong in detail
+- Suggest alternative approaches
+- Ask for clarification if needed
+</quality_check>
+`;
+```
+
+#### **4. Meta-Prompting for Continuous Improvement**
+```typescript
+// lib/prompts/meta-prompting.ts
+export const META_PROMPT_ANALYZER = `
+You are a prompt engineering expert. Analyze the following prompt and interaction outcomes to suggest improvements.
+
+CURRENT PROMPT:
+{currentPrompt}
+
+RECENT INTERACTIONS:
+{interactionHistory}
+
+PERFORMANCE METRICS:
+- User satisfaction: {satisfactionScore}
+- Task completion rate: {completionRate}  
+- Error frequency: {errorRate}
+- Response relevance: {relevanceScore}
+
+ANALYSIS FRAMEWORK:
+1. **Clarity**: Are instructions clear and unambiguous?
+2. **Specificity**: Is the prompt detailed enough for consistent outputs?
+3. **Structure**: Is the format easy for the LLM to parse and follow?
+4. **Adaptability**: Does it handle edge cases and variations well?
+5. **Efficiency**: Could the prompt be more concise without losing effectiveness?
+
+IMPROVEMENT SUGGESTIONS:
+Provide specific recommendations for:
+- Wording improvements
+- Structural changes
+- Additional examples or constraints
+- Better error handling instructions
+
+OUTPUT FORMAT:
+{
+  "analysis": "Detailed assessment of current prompt",
+  "strengths": ["What works well"],
+  "weaknesses": ["Areas for improvement"], 
+  "recommendations": ["Specific changes to make"],
+  "revisedPrompt": "Improved version of the prompt"
+}
+`;
+```
+
+#### **5. Few-Shot Learning with High-Quality Examples**
+```typescript
+// lib/prompts/few-shot-examples.ts
+export const BRAINSTORMING_EXAMPLES = [
+  {
+    userInput: "I need to present our app to investors",
+    assistantResponse: `🎯 **Current Focus:** Understanding your investor pitch goals
+
+💡 **Key Insight:** Investor presentations need to clearly communicate market opportunity, unique value proposition, and growth potential.
+
+❓ **Next Question:** What stage of funding are you seeking, and who specifically will be in the room? (Seed VCs, Series A, strategic investors, etc.)
+
+🔗 **Data Opportunity:** I can help pull real metrics from your app analytics, user data, or financial systems to strengthen your pitch with concrete numbers.
+
+📋 **Running Notes:**
+- Presentation type: Investor pitch
+- Target: Need to identify specific investor audience
+- Goal: Secure funding (stage TBD)
+- Assets: App with potential data sources available`
+  },
+  
+  {
+    userInput: "Series A VCs, mostly tech-focused, we have 10k users and $50k MRR",
+    assistantResponse: `🎯 **Current Focus:** Crafting a compelling Series A narrative
+
+💡 **Key Insight:** Strong traction metrics! $50k MRR with 10k users shows solid unit economics. Tech VCs will want to see growth trajectory and market size.
+
+❓ **Next Question:** What's your growth rate month-over-month, and what specific problem does your app solve that existing solutions don't address well?
+
+🔗 **Data Opportunity:** Let's pull your actual growth data, user engagement metrics, and revenue trends to create data-driven slides that showcase your momentum.
+
+📋 **Running Notes:**
+- Audience: Series A tech VCs
+- Traction: 10k users, $50k MRR
+- Strengths: Proven product-market fit indicators
+- Next: Need growth story and differentiation narrative`
+  }
+];
+```
+
+#### **6. Dynamic Prompt Generation & Folding**
+```typescript
+// lib/prompts/dynamic-generation.ts
+export class DynamicPromptGenerator {
+  generateContextualPrompt(context: BrainstormingContext): string {
+    const basePrompt = this.getBasePrompt(context.stage);
+    const dataContext = this.buildDataContext(context.connectedSources);
+    const userHistory = this.buildUserHistory(context.messageHistory);
+    const stageSpecificGuidance = this.getStageGuidance(context.stage);
+    
+    return `
+${basePrompt}
+
+${dataContext}
+
+${userHistory}
+
+${stageSpecificGuidance}
+
+## CURRENT INTERACTION CONTEXT
+Stage: ${context.stage}
+Previous Topics: ${context.previousTopics.join(', ')}
+Available Data: ${context.availableDataSources.join(', ')}
+User Preferences: ${JSON.stringify(context.userPreferences)}
+
+## DYNAMIC INSTRUCTIONS
+Based on current context:
+${this.generateContextualInstructions(context)}
+`;
+  }
+
+  private generateContextualInstructions(context: BrainstormingContext): string {
+    if (context.stage === 'discovery') {
+      return "Focus on understanding goals and audience. Ask 2-3 key questions to establish foundation.";
+    } else if (context.stage === 'content_exploration') {
+      return "Build on established goals. Suggest specific content ideas and data sources.";
+    } else if (context.stage === 'structure_refinement') {
+      return "Organize collected ideas into logical flow. Recommend templates and presentation structure.";
+    }
+    return "Prepare final recommendations and transition to slide generation.";
+  }
+}
+```
+
+#### **7. Debug Info & Reasoning Traces**
+```typescript
+// lib/prompts/debug-prompts.ts
+export const DEBUG_ENHANCED_PROMPT = `
+{basePrompt}
+
+## DEBUG INFORMATION REQUIREMENTS
+In addition to your main response, always include a <debug_info> section with:
+
+<debug_info>
+**Reasoning Process:**
+- Why I chose this approach: [explanation]
+- Key factors I considered: [list]
+- Alternative approaches considered: [options]
+- Confidence level: [high/medium/low] because [reason]
+
+**Context Analysis:**
+- User's current stage: [stage] 
+- Available data sources: [sources]
+- Previous conversation themes: [themes]
+- Detected user preferences: [preferences]
+
+**Decision Points:**
+- Tools I considered using: [tools]
+- Why I chose/didn't choose specific tools: [reasoning]
+- Assumptions I'm making: [assumptions]
+- Information I still need: [gaps]
+
+**Quality Checks:**
+- Response relevance to user query: [assessment]
+- Completeness of answer: [assessment]  
+- Potential improvements: [suggestions]
+</debug_info>
+`;
+```
+
+#### **8. Evaluation Suite Implementation**
+```typescript
+// lib/evaluation/prompt-evals.ts
+export const EVALUATION_CRITERIA = {
+  brainstorming_effectiveness: {
+    metrics: [
+      'ideas_generated_count',
+      'idea_quality_score', 
+      'user_engagement_level',
+      'progression_through_stages',
+      'data_integration_success'
+    ],
+    benchmarks: {
+      excellent: { ideas_count: '>8', quality: '>4.5', engagement: '>4.0' },
+      good: { ideas_count: '5-8', quality: '3.5-4.5', engagement: '3.0-4.0' },
+      needs_improvement: { ideas_count: '<5', quality: '<3.5', engagement: '<3.0' }
+    }
+  },
+  
+  tool_execution_accuracy: {
+    metrics: [
+      'successful_tool_calls',
+      'appropriate_tool_selection',
+      'parameter_accuracy',
+      'error_handling_quality'
+    ]
+  },
+  
+  response_quality: {
+    metrics: [
+      'relevance_to_context',
+      'clarity_and_structure', 
+      'actionability',
+      'user_satisfaction'
+    ]
+  }
+};
+
+export class PromptEvaluationSuite {
+  async evaluateInteraction(
+    prompt: string,
+    userInput: string, 
+    assistantResponse: string,
+    context: any
+  ): Promise<EvaluationResult> {
+    // Implementation of comprehensive evaluation logic
+    return {
+      overall_score: 4.2,
+      category_scores: {
+        brainstorming_effectiveness: 4.5,
+        tool_execution_accuracy: 4.0,
+        response_quality: 4.1
+      },
+      improvement_suggestions: [
+        "Consider asking more specific follow-up questions",
+        "Integrate data sources more proactively"
+      ],
+      prompt_optimization_recommendations: [
+        "Add more specific examples for edge cases",
+        "Enhance error handling instructions"
+      ]
+    };
+  }
+}
+```
+
+### **Enhanced API Routes with Advanced Prompting**
+- [ ] **`/api/brainstorm-with-data`** - MCP-enhanced brainstorming
+- [ ] **`/api/optimize-prompt`** - Meta-prompting for improvement
+- [ ] **`/api/evaluate-interaction`** - Quality assessment
+- [ ] **`/api/mcp-server`** - Your app as MCP server endpoint
+
+### **Integration Examples & Documentation**
+- [ ] Claude Desktop integration guide
+- [ ] VS Code GitHub Copilot setup
+- [ ] JetBrains AI Assistant configuration
+- [ ] Custom MCP client examples
+- [ ] Self-hosted deployment instructions
+
+### **Deliverables Phase 3**
+- Complete bidirectional MCP ecosystem integration
+- Live data-driven brainstorming with real business data
+- Your app available as MCP server for 40+ external clients
+- State-of-the-art prompting with continuous improvement
+- Comprehensive evaluation and optimization framework
+- Enterprise-ready with self-hosted MCP server support
+
+## Success Metrics
+
+### **Phase 1 Success Criteria**
+- [ ] Users can modify slides through conversation
+- [ ] Context-aware responses about presentation state
+- [ ] Basic tool execution working reliably
+
+### **Phase 2 Success Criteria**  
+- [ ] Complete brainstorming sessions from idea to slides
+- [ ] Proactive AI suggestions improving user workflow
+- [ ] Advanced editing through natural language
+
+### **Phase 3 Success Criteria**
+- [ ] Real data integration enhancing presentation quality
+- [ ] External MCP clients successfully using your presentation tools
+- [ ] Measurable improvement in prompt effectiveness through evaluation
+- [ ] Enterprise deployment with custom MCP server configurations
+
+## Technology Stack
+
+### **Core Framework**
+- Next.js 13+ with App Router
+- TypeScript for type safety
+- Vercel AI SDK for LLM integration
+- Tailwind CSS + shadcn/ui for interface
+
+### **MCP Integration**
+- `@modelcontextprotocol/sdk` for server/client implementation
+- Support for stdio, SSE, and HTTP transports
+- NPM package distribution for MCP server
+
+### **AI & Prompting**
+- OpenAI GPT-4o for reasoning and tool calling
+- Dynamic prompt generation system
+- Comprehensive evaluation framework
+- Meta-prompting for continuous improvement
+
+### **Data Integration**
+- Multiple MCP server support (Google Drive, Postgres, GitHub, Slack)
+- Real-time data fetching and processing
+- Secure credential management for data sources
+
+This enhanced implementation plan positions Cursor for Slides as the **premier AI copilot platform** with cutting-edge prompting strategies and comprehensive MCP ecosystem integration! 🚀

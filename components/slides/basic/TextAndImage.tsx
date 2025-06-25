@@ -34,7 +34,7 @@ export function TextAndImage({
 
 <p>This layout prioritizes text content while providing visual support through the image on the right. It's perfect for detailed explanations, storytelling, or when the text is the primary message.</p>
 
-<h2>Key Benefits</h2>
+<p>Key Benefits</p>
 <ul>
   <li>Text-first approach for detailed content</li>
   <li>Visual support enhances understanding</li>

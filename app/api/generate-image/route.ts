@@ -7,9 +7,11 @@ export async function POST(req: Request) {
   try {
     console.log('🎨 Image generation request received');
     
-    const { prompt, templateType } = await req.json();
+    const { prompt, templateType, theme, imageStyle } = await req.json();
     console.log('📝 Prompt:', prompt);
     console.log('🎯 Template Type:', templateType);
+    console.log('🎨 Theme:', theme);
+    console.log('🖌️ Image Style:', imageStyle);
 
     if (!prompt) {
       console.log('❌ No prompt provided');
@@ -40,7 +42,60 @@ export async function POST(req: Request) {
     
     console.log('📐 Using aspect ratio:', aspectRatio);
 
-    const enhancedPrompt = `${prompt}, professional presentation style, clean, modern, high quality`;
+    // Generate theme-based style description
+    let themeStylePrompt = '';
+    if (theme) {
+      const themeColorMap: Record<string, string> = {
+        'gradient-sunset': 'warm sunset colors, orange pink red yellow gradients, vibrant warm tones',
+        'gradient-ocean': 'ocean blue teal colors, cool blue cyan gradients, oceanic tones',
+        'gradient-forest': 'forest green teal colors, natural green gradients, earthy tones',
+        'gradient-fire': 'fire orange red colors, hot pink orange gradients, energetic warm tones',
+        'gradient-aurora': 'aurora purple pink colors, mystical purple gradients, ethereal tones',
+        'gradient-cosmic': 'cosmic deep blue purple colors, space-like dark gradients, mysterious tones',
+        'gradient-tropical': 'tropical pink blue colors, vibrant tropical gradients, bright cheerful tones',
+        'gradient-neon': 'neon green cyan colors, electric bright gradients, high-energy tones',
+        'gradient-volcano': 'volcano red orange colors, lava-like red gradients, intense warm tones',
+        'gradient-electric': 'electric purple blue colors, lightning-like gradients, dynamic tones',
+        'gradient-rainbow': 'rainbow multicolor, all spectrum colors, vibrant diverse tones',
+        'solid-midnight': 'dark midnight navy colors, deep blue black tones, elegant dark colors',
+        'solid-snow': 'clean white light colors, minimal bright tones, pure fresh colors',
+        'solid-emerald': 'emerald green colors, rich forest green tones, luxurious green colors',
+        'solid-ruby': 'ruby red colors, deep crimson red tones, rich red colors',
+        'solid-amber': 'amber orange colors, warm golden orange tones, rich amber colors'
+      };
+      
+      themeStylePrompt = themeColorMap[theme] || 'modern contemporary colors';
+    }
+
+    // Build enhanced prompt with theme and style
+    let enhancedPrompt = '';
+    
+    // Always start with the original prompt
+    if (prompt && prompt.trim()) {
+      enhancedPrompt = prompt.trim();
+    }
+    
+    // Always add theme styling if available - make it prominent
+    if (themeStylePrompt) {
+      if (enhancedPrompt) {
+        enhancedPrompt += `, styled with ${themeStylePrompt}`;
+      } else {
+        enhancedPrompt = `Image styled with ${themeStylePrompt}`;
+      }
+    }
+    
+    // Add custom image style if provided
+    if (imageStyle && imageStyle.trim()) {
+      if (enhancedPrompt) {
+        enhancedPrompt += `, ${imageStyle.trim()}`;
+      } else {
+        enhancedPrompt = imageStyle.trim();
+      }
+    }
+    
+    // Add base styling - always include
+    enhancedPrompt += ', professional presentation style, clean, modern, high quality';
+    
     console.log('🚀 Enhanced prompt:', enhancedPrompt);
 
     // Generate image using Replicate Flux Schnell

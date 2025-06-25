@@ -8,6 +8,7 @@ import { ScrollArea } from './scroll-area';
 import { Badge } from './badge';
 import { useTheme } from '@/contexts/ThemeContext';
 import { themes, getThemesByCategory, Theme } from '@/lib/themes';
+import { db } from '@/lib/database';
 
 export function ThemesSidebar() {
   const { currentTheme, setTheme, isThemesSidebarOpen, setIsThemesSidebarOpen } = useTheme();
@@ -21,10 +22,39 @@ export function ThemesSidebar() {
   const patternThemes = getThemesByCategory('pattern');
   const glassThemes = getThemesByCategory('glass');
 
-  const handleThemeSelect = (theme: Theme) => {
+  const handleThemeSelect = async (theme: Theme) => {
     // Check if we're on a document/slides page and have a document ID
     const documentId = pathname.includes('/docs/') ? params.id as string : undefined;
+    
+    // Always update the theme context first
     setTheme(theme, documentId);
+    console.log('🎨 User selected theme:', theme.id);
+    
+    // If we're on a slides page, directly update the database and localStorage
+    if (documentId && pathname.includes('/docs/')) {
+      try {
+        // Get current document data from localStorage
+        const stored = localStorage.getItem(`document_${documentId}`);
+        if (stored) {
+          const documentData = JSON.parse(stored);
+          
+          // Update localStorage immediately
+          const updatedData = { ...documentData, theme: theme.id };
+          localStorage.setItem(`document_${documentId}`, JSON.stringify(updatedData));
+          console.log('✅ Updated theme in localStorage:', theme.id);
+          
+          // Update database if we have a database ID
+          if (documentData.databaseId) {
+            await db.updatePresentation(documentData.databaseId, {
+              theme_id: theme.id
+            });
+            console.log('✅ Updated theme in database:', theme.id);
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to update theme in database:', error);
+      }
+    }
   };
 
   const getCategoryIcon = (category: Theme['category']) => {
