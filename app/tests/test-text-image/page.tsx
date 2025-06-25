@@ -40,7 +40,10 @@ export default function TestTextImagePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: imagePrompt }),
+        body: JSON.stringify({ 
+          prompt: imagePrompt,
+          templateType: slide.templateType
+        }),
       });
 
       console.log('📡 API Response status:', response.status);

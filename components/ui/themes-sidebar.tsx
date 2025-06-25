@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useParams, usePathname } from 'next/navigation';
-import { X, Palette, Circle, Grid, Sparkles } from 'lucide-react';
+import { X, Palette, Circle, Grid, Sparkles, Waves } from 'lucide-react';
 import { Button } from './button';
 import { ScrollArea } from './scroll-area';
 import { Badge } from './badge';
@@ -19,7 +19,7 @@ export function ThemesSidebar() {
 
   const gradientThemes = getThemesByCategory('gradient');
   const solidThemes = getThemesByCategory('solid');
-  const patternThemes = getThemesByCategory('pattern');
+  const wavesThemes = getThemesByCategory('waves');
   const glassThemes = getThemesByCategory('glass');
 
   const handleThemeSelect = async (theme: Theme) => {
@@ -63,8 +63,8 @@ export function ThemesSidebar() {
         return <Palette className="w-4 h-4" />;
       case 'solid':
         return <Circle className="w-4 h-4" />;
-      case 'pattern':
-        return <Grid className="w-4 h-4" />;
+      case 'waves':
+        return <Waves className="w-4 h-4" />;
       case 'glass':
         return <Sparkles className="w-4 h-4" />;
     }
@@ -102,7 +102,7 @@ export function ThemesSidebar() {
                 background: theme.background.includes('gradient') || theme.background.includes('radial') || theme.background.includes('repeating')
                   ? theme.background 
                   : theme.background,
-                backgroundSize: theme.category === 'pattern' ? '20px 20px' : 'cover'
+                backgroundSize: theme.category === 'waves' ? '20px 20px' : 'cover'
               }}
             >
               {theme.category === 'glass' && (
@@ -179,9 +179,9 @@ export function ThemesSidebar() {
                 category="solid" 
               />
               <ThemeGrid 
-                themes={patternThemes} 
-                title="Patterns" 
-                category="pattern" 
+                themes={wavesThemes} 
+                title="Waves" 
+                category="waves" 
               />
               <ThemeGrid 
                 themes={glassThemes} 

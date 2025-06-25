@@ -185,11 +185,11 @@ export default function OutlinePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [cardCount, setCardCount] = useState('8');
-  const [style, setStyle] = useState('default');
+  const [style, setStyle] = useState('professional');
   const [language, setLanguage] = useState('en');
 
   // Add new state variables for content configuration
-  const [contentLength, setContentLength] = useState('medium');
+  const [contentLength, setContentLength] = useState('brief');
   const [selectedTheme, setSelectedTheme] = useState<Theme>(defaultTheme);
   const [imageStyle, setImageStyle] = useState('');
 
@@ -213,7 +213,7 @@ export default function OutlinePage() {
         setLanguage(data.language);
         
         // Load new configuration values
-        setContentLength(data.contentLength || 'medium');
+        setContentLength(data.contentLength || 'brief');
         
         // Load theme
         if (data.theme) {
@@ -455,12 +455,13 @@ export default function OutlinePage() {
         <div className="text-center mb-8">
           <div className="inline-block mb-6">
             <div className="text-sm text-gray-600 mb-2">Prompt</div>
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-4">
               <Select value={cardCount} onValueChange={setCardCount}>
-                <SelectTrigger className="w-32 bg-white/80 backdrop-blur-sm border-gray-200">
+                <SelectTrigger className="w-full sm:w-32 bg-white/80 backdrop-blur-sm border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="3">3 cards</SelectItem>
                   <SelectItem value="5">5 cards</SelectItem>
                   <SelectItem value="8">8 cards</SelectItem>
                   <SelectItem value="10">10 cards</SelectItem>
@@ -469,19 +470,20 @@ export default function OutlinePage() {
               </Select>
 
               <Select value={style} onValueChange={setStyle}>
-                <SelectTrigger className="w-32 bg-white/80 backdrop-blur-sm border-gray-200">
+                <SelectTrigger className="w-full sm:w-40 bg-white/80 backdrop-blur-sm border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="modern">Modern</SelectItem>
-                  <SelectItem value="minimal">Minimal</SelectItem>
-                  <SelectItem value="creative">Creative</SelectItem>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="friendly">Friendly</SelectItem>
+                  <SelectItem value="fun">Fun</SelectItem>
+                  <SelectItem value="casual">Casual</SelectItem>
+                  <SelectItem value="formal">Formal</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="w-40 bg-white/80 backdrop-blur-sm border-gray-200">
+                <SelectTrigger className="w-full sm:w-40 bg-white/80 backdrop-blur-sm border-gray-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -495,8 +497,8 @@ export default function OutlinePage() {
           </div>
 
           <Card className="bg-white/80 backdrop-blur-sm border-gray-200 mb-6">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <Input
                   placeholder="Describe what you'd like to make"
                   value={prompt}
@@ -540,7 +542,7 @@ export default function OutlinePage() {
                   items={generatedOutline.sections.map(s => s.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="space-y-4 max-w-3xl mx-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-col gap-4 md:gap-6 max-w-3xl mx-auto">
                     {generatedOutline.sections
                       .filter(section => section && section.title) // Only render sections with titles
                       .map((section, index) => (
@@ -599,17 +601,24 @@ export default function OutlinePage() {
           </div>
         )}
 
+        {/* Separator */}
+        {generatedOutline && !isGenerating && (
+          <div className="w-full flex justify-center my-10">
+            <div className="h-0.5 w-64 bg-gray-200 rounded-full" />
+          </div>
+        )}
+
         {/* Content Configuration Card */}
         {generatedOutline && !isGenerating && (
           <div className="mb-8">
             <Card className="bg-white/80 backdrop-blur-sm border-gray-200">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">Content Configuration</h3>
                 
                 {/* Content Length Selector */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-3">Content Length</label>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     {[
                       { value: 'brief', label: 'Brief', desc: 'Concise points' },
                       { value: 'medium', label: 'Medium', desc: 'Balanced detail' },
@@ -634,7 +643,7 @@ export default function OutlinePage() {
                 {/* Theme Selection Grid */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-3">Theme</label>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                     {themes.map((theme) => (
                       <button
                         key={theme.id}
@@ -655,8 +664,8 @@ export default function OutlinePage() {
                           </div>
                         </div>
                         {selectedTheme.id === theme.id && (
-                          <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          <div className="absolute top-1 right-1 w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                           </div>
                         )}
                       </button>
@@ -671,7 +680,7 @@ export default function OutlinePage() {
                     placeholder="Describe the visual style for generated images (e.g., 'modern minimalist illustrations', 'photorealistic', 'hand-drawn sketches')"
                     value={imageStyle}
                     onChange={(e) => handleImageStyleChange(e.target.value)}
-                    className="min-h-[80px] resize-none"
+                    className="min-h-[80px] resize-none text-sm"
                   />
                 </div>
               </CardContent>

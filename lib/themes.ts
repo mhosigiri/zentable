@@ -1,7 +1,7 @@
 export interface Theme {
   id: string;
   name: string;
-  category: 'gradient' | 'solid' | 'pattern' | 'glass';
+  category: 'gradient' | 'solid' | 'waves' | 'glass';
   background: string;
   preview: string;
   textColor: string;
@@ -157,48 +157,72 @@ export const themes: Theme[] = [
     accentColor: '#f59e0b'
   },
 
-  // Pattern Themes
+  // Wave Themes with static wave patterns
   {
-    id: 'pattern-geometric',
-    name: 'Geometric',
-    category: 'pattern',
+    id: 'waves-ocean',
+    name: 'Ocean Waves',
+    category: 'waves',
     background: `
-      radial-gradient(circle at 25% 25%, #667eea 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, #764ba2 0%, transparent 50%),
-      linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)
+      linear-gradient(135deg, #006994 0%, #0ea5e9 100%),
+      radial-gradient(ellipse at top, rgba(120,220,220,0.4) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom, rgba(120,220,220,0.3) 0%, transparent 50%)
     `,
-    preview: 'bg-gradient-to-br from-blue-500 to-purple-600',
+    preview: 'bg-gradient-to-br from-blue-600 to-blue-800',
+    textColor: '#ffffff',
+    accentColor: '#0ea5e9'
+  },
+  {
+    id: 'waves-sunset',
+    name: 'Sunset Waves',
+    category: 'waves',
+    background: `
+      linear-gradient(135deg, #ff6b6b 0%, #feca57 100%),
+      radial-gradient(ellipse 800px 400px at 25% 40%, rgba(255,255,255,0.2) 0%, transparent 50%),
+      radial-gradient(ellipse 600px 300px at 75% 60%, rgba(255,255,255,0.15) 0%, transparent 50%)
+    `,
+    preview: 'bg-gradient-to-br from-red-500 to-yellow-400',
+    textColor: '#ffffff',
+    accentColor: '#f59e0b'
+  },
+  {
+    id: 'waves-purple',
+    name: 'Purple Waves',
+    category: 'waves',
+    background: `
+      linear-gradient(135deg, #667eea 0%, #764ba2 100%),
+      radial-gradient(ellipse 900px 200px at 20% 70%, rgba(255,255,255,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 700px 150px at 80% 30%, rgba(255,255,255,0.1) 0%, transparent 50%)
+    `,
+    preview: 'bg-gradient-to-br from-indigo-500 to-purple-600',
     textColor: '#ffffff',
     accentColor: '#8b5cf6'
   },
   {
-    id: 'pattern-waves',
-    name: 'Waves',
-    category: 'pattern',
+    id: 'waves-emerald',
+    name: 'Emerald Waves',
+    category: 'waves',
     background: `
-      repeating-linear-gradient(
-        45deg,
-        #667eea,
-        #667eea 2px,
-        #764ba2 2px,
-        #764ba2 10px
-      )
+      linear-gradient(135deg, #10b981 0%, #065f46 100%),
+      radial-gradient(ellipse 1000px 300px at 30% 60%, rgba(255,255,255,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 800px 250px at 70% 40%, rgba(255,255,255,0.08) 0%, transparent 50%)
     `,
-    preview: 'bg-gradient-to-br from-indigo-500 to-purple-600',
+    preview: 'bg-gradient-to-br from-emerald-500 to-emerald-800',
     textColor: '#ffffff',
-    accentColor: '#a855f7'
+    accentColor: '#10b981'
   },
   {
-    id: 'pattern-dots',
-    name: 'Dots',
-    category: 'pattern',
+    id: 'waves-cosmic',
+    name: 'Cosmic Waves',
+    category: 'waves',
     background: `
-      radial-gradient(circle, #667eea 1px, transparent 1px),
-      linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)
+      linear-gradient(135deg, #1e3c72 0%, #2a5298 100%),
+      radial-gradient(ellipse 600px 400px at 40% 20%, rgba(118,75,162,0.3) 0%, transparent 50%),
+      radial-gradient(ellipse 800px 300px at 80% 80%, rgba(118,75,162,0.2) 0%, transparent 50%),
+      radial-gradient(ellipse 500px 200px at 20% 80%, rgba(118,75,162,0.15) 0%, transparent 50%)
     `,
-    preview: 'bg-gradient-to-br from-blue-400 to-blue-600',
+    preview: 'bg-gradient-to-br from-blue-900 to-blue-700',
     textColor: '#ffffff',
-    accentColor: '#3b82f6'
+    accentColor: '#6366f1'
   },
 
   // Glass Themes

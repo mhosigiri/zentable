@@ -1,5 +1,477 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Development Standards: AI Agent System
+
+## Code Architecture Standards
+
+### 1. File Organization
+
+```
+app/api/
+├── generate-outline/       # Enhanced reasoning endpoint
+│   └── route.ts           # Single route file per endpoint
+├── generate-slide/         # Enhanced slide generation
+│   └── route.ts           # Single route file per endpoint
+└── copilot-chat/          # AI copilot system
+    └── route.ts           # Main chat endpoint (imports tools from lib/)
+
+lib/
+├── ai/                    # AI-related utilities and tools
+│   ├── slide-tools.ts     # Slide operation tool definitions
+│   ├── document-tools.ts  # Document operation tools (future)
+│   ├── prompts.ts         # AI prompt templates
+│   └── context.ts         # Context management utilities
+└── utils.ts               # General utility functions
+
+components/
+├── ui/
+│   ├── copilot-chat/      # Chat interface components
+│   ├── reasoning-display.tsx
+│   └── enhanced-generation-modal.tsx
+├── slides/                # Existing slide templates
+└── documents/             # Future document components
+```
+
+### 2. TypeScript Standards
+
+**Strict Type Safety**:
+```typescript
+// Always use strict interfaces
+interface SlideData {
+  id: string;
+  templateType: TemplateType; // Use enums, not strings
+  content: string;
+  // ... other properties
+}
+
+// Use discriminated unions for different content types
+type ContentItem = SlideContent | DocumentContent;
+
+interface SlideContent {
+  type: 'slide';
+  templateType: SlideTemplateType;
+  // slide-specific properties
+}
+
+interface DocumentContent {
+  type: 'document';
+  format: DocumentFormat;
+  // document-specific properties
+}
+```
+
+**Zod Schema Consistency**:
+```typescript
+// Always define Zod schemas for AI tool parameters
+const CreateSlideSchema = z.object({
+  templateType: z.enum(['bullets', 'two-columns', /* ... */]),
+  title: z.string().min(1).max(100),
+  content: z.string().optional(),
+  position: z.number().int().min(0).optional()
+});
+
+// Export types from schemas
+export type CreateSlideParams = z.infer<typeof CreateSlideSchema>;
+```
+
+### 3. AI Tool Standards
+
+**Tool Definition Structure**:
+```typescript
+export const slideTools = {
+  toolName: {
+    description: "Clear, detailed description of what the tool does and when to use it",
+    parameters: ZodSchema, // Always use Zod schemas
+    // Optional: examples, constraints, dependencies
+  }
+};
+```
+
+**Tool Implementation Pattern**:
+```typescript
+// Each tool should have a dedicated implementation function
+async function executeCreateSlide(params: CreateSlideParams): Promise<ToolResult> {
+  try {
+    // 1. Validate parameters (Zod handles this)
+    // 2. Execute core logic
+    // 3. Return structured result
+    return {
+      success: true,
+      data: newSlide,
+      message: "Slide created successfully"
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      suggestion: "Try with different parameters"
+    };
+  }
+}
+```
+
+---
+
+## AI Integration Standards
+
+### 1. Prompt Engineering
+
+**Prompt Structure**:
+```typescript
+const SYSTEM_PROMPT = `
+[ROLE DEFINITION - Clear, specific role assignment]
+
+[CAPABILITIES - List of available tools and actions]
+
+[CONSTRAINTS - Limitations and guidelines]
+
+[RESPONSE FORMAT - Expected output structure]
+
+[QUALITY STANDARDS - Requirements for output quality]
+`;
+```
+
+**Context Injection**:
+```typescript
+// Always provide relevant context to AI
+interface AIContext {
+  currentSlide?: number;
+  totalSlides: number;
+  presentationTopic: string;
+  targetAudience: string;
+  recentActions: string[];
+  availableTemplates: string[];
+}
+```
+
+### 2. Streaming Response Handling
+
+**Standard Streaming Pattern** (following AI SDK best practices):
+```typescript
+// app/api/copilot-chat/route.ts
+import { openai } from '@ai-sdk/openai';
+import { streamText } from 'ai';
+import { slideTools } from '@/lib/ai/slide-tools';
+
+export const maxDuration = 30; // Allow streaming responses up to 30 seconds
+
+export async function POST(req: Request) {
+  const { messages } = await req.json();
+
+  const result = streamText({
+    model: openai('gpt-4o'),
+    messages,
+    tools: slideTools,
+    maxSteps: 5, // Enable multi-step tool usage
+  });
+
+  return result.toDataStreamResponse();
+}
+```
+
+### 3. Error Handling
+
+**AI Error Categories**:
+```typescript
+enum AIErrorType {
+  RATE_LIMIT = 'rate_limit',
+  INVALID_RESPONSE = 'invalid_response', 
+  TOOL_EXECUTION_FAILED = 'tool_execution_failed',
+  CONTEXT_TOO_LARGE = 'context_too_large'
+}
+
+interface AIError {
+  type: AIErrorType;
+  message: string;
+  suggestion: string;
+  retryable: boolean;
+}
+```
+
+---
+
+## UI/UX Standards
+
+### 1. AI Interaction Patterns
+
+**Loading States**:
+```typescript
+interface AIOperationState {
+  status: 'idle' | 'thinking' | 'generating' | 'complete' | 'error';
+  progress?: number;
+  currentAction?: string;
+  estimatedTime?: number;
+}
+```
+
+**User Feedback**:
+- Always show what the AI is doing ("Analyzing content structure...")
+- Provide progress indicators for long operations
+- Show reasoning/explanation when requested
+- Include undo/redo for AI-generated changes
+
+### 2. Component Standards
+
+**AI-Enabled Component Pattern**:
+```typescript
+interface AIEnabledComponentProps {
+  data: ContentData;
+  onUpdate: (updates: Partial<ContentData>) => void;
+  aiEnabled?: boolean;
+  showReasoning?: boolean;
+  contextualSuggestions?: boolean;
+}
+
+function AIEnabledComponent({
+  data,
+  onUpdate,
+  aiEnabled = true,
+  showReasoning = false,
+  contextualSuggestions = true
+}: AIEnabledComponentProps) {
+  // Component implementation with AI integration
+}
+```
+
+### 3. Accessibility Standards
+
+**AI Feature Accessibility**:
+- Screen reader announcements for AI operations
+- Keyboard shortcuts for common AI actions
+- High contrast mode support for AI UI elements
+- Clear labeling of AI-generated vs user-created content
+
+---
+
+## Performance Standards
+
+### 1. Response Time Targets
+
+- **Initial AI Response**: < 2 seconds
+- **Streaming Updates**: < 200ms between chunks
+- **Tool Execution**: < 1 second for most operations
+- **Complex Generation**: < 10 seconds with progress indicators
+
+### 2. Caching Strategy
+
+**AI Response Caching**:
+```typescript
+interface CacheKey {
+  operation: string;
+  parameters: string; // JSON stringified and hashed
+  context: string;    // Relevant context hash
+}
+
+// Cache similar requests to reduce AI API calls
+const cacheResponse = (key: CacheKey, response: any, ttl: number) => {
+  // Implementation
+};
+```
+
+### 3. Resource Management
+
+**Token Usage Optimization**:
+- Truncate long context when necessary
+- Use efficient prompt templates
+- Implement request batching where possible
+- Monitor and alert on high token usage
+
+---
+
+## Testing Standards
+
+### 1. AI Tool Testing
+
+**Unit Tests for Tools**:
+```typescript
+describe('createSlide tool', () => {
+  it('should create slide with valid parameters', async () => {
+    const params = {
+      templateType: 'bullets',
+      title: 'Test Slide',
+      content: 'Test content'
+    };
+    
+    const result = await executeCreateSlide(params);
+    
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({
+      templateType: 'bullets',
+      title: 'Test Slide'
+    });
+  });
+  
+  it('should handle invalid parameters gracefully', async () => {
+    const params = { invalidParam: 'test' };
+    
+    const result = await executeCreateSlide(params as any);
+    
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+});
+```
+
+### 2. AI Integration Testing
+
+**Mock AI Responses**:
+```typescript
+// Create consistent mock responses for testing
+const mockAIResponses = {
+  createSlide: {
+    reasoning: { /* ... */ },
+    slide: { /* ... */ }
+  },
+  analyzeContent: {
+    insights: [/* ... */],
+    recommendations: [/* ... */]
+  }
+};
+```
+
+### 3. End-to-End Testing
+
+**AI Workflow Tests**:
+- Test complete user journeys with AI assistance
+- Verify error handling in AI operations
+- Test performance under various loads
+- Validate AI output quality with sample content
+
+---
+
+## Security Standards
+
+### 1. API Key Management
+
+```typescript
+// Never expose API keys in client-side code
+const apiKey = process.env.OPENAI_API_KEY;
+if (!apiKey) {
+  throw new Error('OPENAI_API_KEY environment variable is required');
+}
+```
+
+### 2. Input Validation
+
+**User Input Sanitization**:
+```typescript
+// Always validate and sanitize user input before sending to AI
+const sanitizePrompt = (prompt: string): string => {
+  // Remove potential prompt injection attempts
+  // Limit input length
+  // Escape special characters
+  return cleanPrompt;
+};
+```
+
+### 3. Rate Limiting
+
+**API Rate Limiting**:
+```typescript
+// Implement rate limiting to prevent abuse
+const rateLimiter = new RateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each user to 100 requests per windowMs
+  skipSuccessfulRequests: false
+});
+```
+
+---
+
+## Documentation Standards
+
+### 1. Code Documentation
+
+**AI Tool Documentation**:
+```typescript
+/**
+ * Creates a new slide with specified content and template
+ * 
+ * @param params - Slide creation parameters
+ * @param params.templateType - The template to use for the slide
+ * @param params.title - The slide title
+ * @param params.content - Optional slide content
+ * @param params.position - Optional position to insert slide
+ * 
+ * @returns Promise<ToolResult> - Operation result with created slide data
+ * 
+ * @example
+ * ```typescript
+ * const result = await executeCreateSlide({
+ *   templateType: 'bullets',
+ *   title: 'Key Points',
+ *   content: 'Important information to present'
+ * });
+ * ```
+ */
+async function executeCreateSlide(params: CreateSlideParams): Promise<ToolResult>
+```
+
+### 2. API Documentation
+
+**Endpoint Documentation**:
+- Document all AI endpoint parameters and responses
+- Include example requests and responses
+- Document error scenarios and handling
+- Provide integration examples
+
+### 3. User Documentation
+
+**AI Feature Documentation**:
+- Clear explanations of AI capabilities
+- Examples of effective prompts
+- Troubleshooting guides
+- Best practices for AI-assisted content creation
+
+---
+
+## Deployment Standards
+
+### 1. Environment Configuration
+
+```typescript
+// Environment-specific AI configuration
+interface AIConfig {
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  timeout: number;
+  retryAttempts: number;
+}
+
+const aiConfig: Record<string, AIConfig> = {
+  development: {
+    model: 'gpt-3.5-turbo',
+    temperature: 0.7,
+    maxTokens: 1000,
+    timeout: 30000,
+    retryAttempts: 2
+  },
+  production: {
+    model: 'gpt-4',
+    temperature: 0.5,
+    maxTokens: 2000,
+    timeout: 60000,
+    retryAttempts: 3
+  }
+};
+```
+
+### 2. Monitoring
+
+**AI Operation Monitoring**:
+- Track AI response times and success rates
+- Monitor token usage and costs
+- Alert on high error rates or unusual patterns
+- Log AI decisions for audit purposes
+
+### 3. Rollback Strategy
+
+**AI Feature Rollback**:
+- Feature flags for AI functionality
+- Graceful degradation when AI is unavailable
+- Fallback to non-AI alternatives
+- Quick rollback procedures for problematic AI behavior

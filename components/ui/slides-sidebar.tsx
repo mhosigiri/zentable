@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlideRenderer, SlideData } from '@/components/slides/SlideRenderer';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -205,7 +205,14 @@ export function SlidesSidebar({
   onHideSlide,
   onExportSlide
 }: SlidesSidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Initialize collapsed state based on screen size
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768; // Default to collapsed on mobile (md breakpoint)
+    }
+    return false;
+  });
+  
   const [showTextView, setShowTextView] = useState(false);
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
@@ -217,6 +224,19 @@ export function SlidesSidebar({
     position: { x: 0, y: 0 },
     slideIndex: -1
   });
+
+  // Handle window resize to update collapsed state
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768 && !isCollapsed) {
+        // Auto-collapse on small screens
+        setIsCollapsed(true);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isCollapsed]);
 
   // Drag and drop sensors
   const sensors = useSensors(

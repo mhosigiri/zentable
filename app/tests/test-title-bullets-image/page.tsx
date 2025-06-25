@@ -45,7 +45,10 @@ export default function TestTitleBulletsImagePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: imagePrompt }),
+        body: JSON.stringify({ 
+          prompt: imagePrompt,
+          templateType: slideData.templateType
+        }),
       });
 
       console.log('📡 API Response status:', response.status);

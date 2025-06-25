@@ -22,11 +22,14 @@ import {
   RotateCcw,
   Download,
   Share2,
-  Loader2
+  Loader2,
+  X
   } from 'lucide-react';
 import { db, DocumentData } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
 import { defaultTheme } from '@/lib/themes';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface OutlineSection {
   id: string;
@@ -45,16 +48,32 @@ export default function PresentationPage() {
   const router = useRouter();
   const documentId = params.id as string;
   const { setTheme, getThemeForDocument } = useTheme();
+  const initRef = useRef(false);
+
+  // Helper function to estimate data size
+  const getDataSize = (data: any): string => {
+    try {
+      const jsonString = JSON.stringify(data);
+      const sizeInBytes = new Blob([jsonString]).size;
+      const sizeInKB = (sizeInBytes / 1024).toFixed(2);
+      const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+      return sizeInBytes > 1024 * 1024 ? `${sizeInMB} MB` : `${sizeInKB} KB`;
+    } catch {
+      return 'Unknown size';
+    }
+  };
   
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [slides, setSlides] = useState<SlideData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlideIndex, setGeneratingSlideIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [generatingImages, setGeneratingImages] = useState(new Set<number>());
   const [generatingSlides, setGeneratingSlides] = useState(new Set<number>());
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false); // Prevent conflicts during programmatic scroll
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   
   // Database integration state
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
@@ -116,8 +135,11 @@ export default function PresentationPage() {
           setSlides(data.generatedSlides);
         } else if (data.outline) {
           // Only generate slides if none exist
-          console.log('🔄 No existing slides found, initializing new slides');
-          initializeSlides(data.outline, data.cardCount);
+          if (!initRef.current) {
+            initRef.current = true;
+            console.log('🔄 No existing slides found, initializing new slides');
+            initializeSlides(data.outline, data.cardCount);
+          }
         }
       }
     };
@@ -136,6 +158,17 @@ export default function PresentationPage() {
     }
   }, [currentTheme, documentData?.theme]);
 
+  // Effect to automatically generate images when needed
+  useEffect(() => {
+    slides.forEach((slide, index) => {
+      // If a slide has an image prompt, no image URL, and we're not already generating an image for it...
+      if (slide.imagePrompt && !slide.imageUrl && !generatingImages.has(index) && !slide.isGeneratingImage) {
+        console.log(`useEffect trigger: Generating image for slide ${index}`);
+        generateSlideImage(slide.imagePrompt, index);
+      }
+    });
+  }, [slides, generatingImages]);
+
   // Save slides to localStorage whenever they change
   useEffect(() => {
     if (documentData && slides.length > 0) {
@@ -143,7 +176,65 @@ export default function PresentationPage() {
         ...documentData,
         generatedSlides: slides
       };
-      localStorage.setItem(`document_${documentId}`, JSON.stringify(updatedData));
+      
+      const dataString = JSON.stringify(updatedData);
+      const dataSize = getDataSize(updatedData);
+      
+      // Check if data is too large (over 5MB)
+      const sizeInBytes = new Blob([dataString]).size;
+      if (sizeInBytes > 5 * 1024 * 1024) {
+        console.warn(`⚠️ Data size (${dataSize}) exceeds 5MB limit. Skipping localStorage save to prevent quota errors.`);
+        return;
+      }
+      
+      try {
+        localStorage.setItem(`document_${documentId}`, dataString);
+        console.log(`💾 Saved document to localStorage (${dataSize})`);
+      } catch (error: any) {
+        console.error(`❌ Failed to save to localStorage (attempted size: ${dataSize}):`, error);
+        
+        // Handle different types of localStorage errors
+        if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+          console.warn('📦 localStorage quota exceeded. Attempting to clean up old data...');
+          
+          // Try to free up space by removing old documents
+          try {
+            const keysToRemove: string[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('document_') && key !== `document_${documentId}`) {
+                keysToRemove.push(key);
+              }
+            }
+            
+            // Remove oldest documents first (simple cleanup strategy)
+            keysToRemove.slice(0, Math.min(5, keysToRemove.length)).forEach(key => {
+              localStorage.removeItem(key);
+              console.log('🗑️ Removed old document:', key);
+            });
+            
+            // Try saving again after cleanup
+            localStorage.setItem(`document_${documentId}`, dataString);
+            console.log('✅ Successfully saved after cleanup');
+          } catch (cleanupError) {
+            console.error('❌ Failed to save even after cleanup:', cleanupError);
+            
+            // Last resort: save only essential data without generated slides
+            try {
+              const essentialData = {
+                ...documentData,
+                generatedSlides: [] // Remove slides to save space
+              };
+              localStorage.setItem(`document_${documentId}`, JSON.stringify(essentialData));
+              console.warn('⚠️ Saved essential data only (without slides) due to storage constraints');
+            } catch (finalError) {
+              console.error('❌ Complete localStorage failure:', finalError);
+            }
+          }
+        } else {
+          console.error('❌ Non-quota localStorage error:', error);
+        }
+      }
     }
   }, [slides, documentData, documentId]);
 
@@ -350,8 +441,7 @@ export default function PresentationPage() {
 
       // Generate image if needed
       if (slideData.imagePrompt && !slideData.imageUrl) {
-        console.log('🎯 Generation complete, generating image for slide:', slideIndex);
-        generateSlideImage(slideData.imagePrompt, slideIndex);
+        console.log('🎯 Generation complete, image will be generated by effect for slide:', slideIndex);
       }
 
       // Remove from generating slides set
@@ -397,13 +487,6 @@ export default function PresentationPage() {
         return;
       }
 
-      // Check if slide already has an image
-      const currentSlide = slides[slideIndex];
-      if (currentSlide?.imageUrl) {
-        console.log('🚫 Slide already has image:', slideIndex);
-        return;
-      }
-
       console.log('✅ Proceeding with image generation for slide:', slideIndex);
       
       // Add to generating set
@@ -425,6 +508,7 @@ export default function PresentationPage() {
         },
         body: JSON.stringify({ 
           prompt: imagePrompt,
+          templateType: slides[slideIndex]?.templateType,
           theme: documentData?.theme,
           imageStyle: documentData?.imageStyle
         }),
@@ -746,7 +830,7 @@ export default function PresentationPage() {
 
       // Generate image if needed
       if (slideData.imagePrompt && !slideData.imageUrl) {
-        generateSlideImage(slideData.imagePrompt, targetIndex);
+        console.log('🎯 Generation complete, image will be generated by effect for slide:', targetIndex);
       }
 
       setShowAIModal(false);
@@ -902,6 +986,148 @@ export default function PresentationPage() {
     }
   }, [slides, documentData]);
 
+  // Add state for mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // PDF Download functionality
+  const handleDownloadPDF = async () => {
+    if (slides.length === 0 || isPdfGenerating) return;
+
+    setIsPdfGenerating(true);
+    
+    try {
+      // Create PDF with 16:9 aspect ratio
+      const pdf = new jsPDF({
+        orientation: 'landscape', // Landscape for presentation slides
+        unit: 'px',
+        format: [1600, 900] // 16:9 aspect ratio at high resolution
+      });
+      
+      const slideElements = document.querySelectorAll('.slide-for-pdf');
+      
+      if (slideElements.length === 0) {
+        // If no slides with the specific class are found, try rendering to canvas manually
+        for (let i = 0; i < slides.length; i++) {
+          // Create temporary slide renderer
+          const slideContainer = document.createElement('div');
+          slideContainer.style.width = '1600px';
+          slideContainer.style.height = '900px';
+          slideContainer.style.position = 'absolute';
+          slideContainer.style.left = '-9999px';
+          slideContainer.className = 'slide-temp-render';
+          document.body.appendChild(slideContainer);
+          
+          // Render slide
+          const slide = slides[i];
+          const slideElement = document.createElement('div');
+          slideElement.className = 'bg-white w-full h-full';
+          slideContainer.appendChild(slideElement);
+          
+          // Wait for the next frame to ensure the slide is rendered
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          
+          // Capture as canvas and add to PDF
+          const canvas = await html2canvas(slideContainer, {
+            scale: 1,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff'
+          });
+          
+          const imgData = canvas.toDataURL('image/jpeg', 0.92);
+          
+          if (i > 0) {
+            pdf.addPage();
+          }
+          pdf.addImage(imgData, 'JPEG', 0, 0, 1600, 900);
+          
+          // Clean up
+          document.body.removeChild(slideContainer);
+        }
+      } else {
+        // Use existing slide elements
+        for (let i = 0; i < slideElements.length; i++) {
+          const slideElement = slideElements[i] as HTMLElement;
+          
+          const canvas = await html2canvas(slideElement, {
+            scale: 1,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff'
+          });
+          
+          const imgData = canvas.toDataURL('image/jpeg', 0.92);
+          
+          if (i > 0) {
+            pdf.addPage();
+          }
+          pdf.addImage(imgData, 'JPEG', 0, 0, 1600, 900);
+        }
+      }
+      
+      // Save the PDF
+      const title = documentData?.outline?.title || 'presentation';
+      const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      pdf.save(`${safeTitle}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
+
+  // Presentation mode functionality
+  useEffect(() => {
+    if (!isPlaying) return;
+    
+    // Handle full screen presentation mode
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isPlaying) return;
+      
+      switch(e.key) {
+        case 'Escape':
+          setIsPlaying(false);
+          setIsFullScreen(false);
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case ' ':
+          // Next slide
+          if (currentSlideIndex < slides.length - 1) {
+            setCurrentSlideIndex(prev => prev + 1);
+          }
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+        case 'Backspace':
+          // Previous slide
+          if (currentSlideIndex > 0) {
+            setCurrentSlideIndex(prev => prev - 1);
+          }
+          break;
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    setIsFullScreen(true);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPlaying, currentSlideIndex, slides.length]);
+
   if (!documentData || slides.length === 0) {
     return (
       <ThemedLayout>
@@ -909,6 +1135,59 @@ export default function PresentationPage() {
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
             <p className="text-white/80">Loading presentation...</p>
+          </div>
+        </div>
+      </ThemedLayout>
+    );
+  }
+
+  // Presentation mode full screen view
+  if (isPlaying && isFullScreen) {
+    return (
+      <ThemedLayout>
+        <div className="fixed inset-0 bg-black z-50 flex flex-col">
+          <div className="bg-black/40 p-2 flex justify-between items-center">
+            <h2 className="text-white">
+              {documentData?.outline?.title || 'Presentation'} ({currentSlideIndex + 1}/{slides.length})
+            </h2>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => {
+                setIsPlaying(false);
+                setIsFullScreen(false);
+              }}
+              className="text-white"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center">
+            <div className="w-full max-w-6xl aspect-[16/9] mx-auto">
+              <SlideRenderer
+                slide={slides[currentSlideIndex]}
+                isEditable={false}
+              />
+            </div>
+          </div>
+          
+          <div className="bg-black/40 p-3 flex justify-center items-center space-x-4">
+            <Button
+              variant="ghost"
+              disabled={currentSlideIndex === 0}
+              onClick={() => setCurrentSlideIndex(prev => Math.max(0, prev - 1))}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <span className="text-white">{currentSlideIndex + 1} / {slides.length}</span>
+            <Button
+              variant="ghost"
+              disabled={currentSlideIndex === slides.length - 1}
+              onClick={() => setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       </ThemedLayout>
@@ -960,15 +1239,19 @@ export default function PresentationPage() {
               size="sm"
               onClick={() => setIsPlaying(!isPlaying)}
               className="text-gray-600 hover:text-gray-900"
+              title="Present Slides"
             >
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </Button>
             <Button
               variant="ghost"
               size="sm"
+              onClick={handleDownloadPDF}
+              disabled={isPdfGenerating}
               className="text-gray-600 hover:text-gray-900"
+              title="Download as PDF"
             >
-              <Download className="w-4 h-4" />
+              {isPdfGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             </Button>
             <Button
               variant="ghost"
@@ -982,81 +1265,133 @@ export default function PresentationPage() {
       />
 
       {/* Main Content - Vertical Slide Layout */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="space-y-0">
-            {/* Add button before first slide */}
-            <InterSlideAddButtons
-              onAddSlide={() => handleInterSlideAdd(0)}
-              onAddFromTemplate={() => handleInterSlideAddFromTemplate(0)}
-              onAddWithAI={() => handleInterSlideAddWithAI(0)}
-              insertIndex={0}
-            />
-            
-            <SortableContext
-              items={slides.map(slide => slide.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {slides.map((slide, index) => (
-                <div key={slide.id}>
-                  {/* Slide Container with Drag Handle */}
-                  <SlideDragHandle 
-                    slideId={slide.id}
-                    slideIndex={index}
-                    totalSlides={slides.length}
-                    onDuplicate={handleDuplicateSlide}
-                    onDelete={handleDeleteSlide}
-                    onMoveUp={handleMoveSlideUp}
-                    onMoveDown={handleMoveSlideDown}
-                    onHide={handleHideSlide}
-                    onExport={handleExportSlide}
+      <main className={`${isMobile ? 'max-w-sm' : 'max-w-4xl'} mx-auto px-4 sm:px-6 py-4 sm:py-8`}>
+        {isMobile ? (
+          // Mobile: Static scaled slides without editing
+          <div className="space-y-4">
+            {slides.map((slide, index) => (
+              <div key={slide.id} className="relative">
+                {/* Slide Number */}
+                <div className="absolute -left-8 top-2 text-xs text-white/60 font-medium z-10">
+                  {index + 1}
+                </div>
+                
+                {/* Mobile Slide Container */}
+                <div className="relative bg-white/10 rounded-lg overflow-hidden shadow-lg">
+                  <div 
+                    className="relative w-full"
+                    style={{
+                      aspectRatio: '16/9',
+                      minHeight: '140px'
+                    }}
                   >
                     <div 
-                      className="relative mb-8"
-                      data-slide-index={index} // For scroll targeting
+                      className="absolute inset-0 w-full h-full overflow-hidden"
+                      style={{
+                        transform: 'scale(0.35)',
+                        transformOrigin: 'center',
+                        width: '285%',
+                        height: '285%',
+                        left: '-92.5%',
+                        top: '-92.5%'
+                      }}
                     >
-                      {/* Slide Number */}
-                      <div className="absolute -left-12 top-4 text-sm text-white/60 font-medium">
-                        {index + 1}
-                      </div>
-                      
-                      {/* Slide Content */}
-                      <div className="relative">
+                      <div className="w-full h-full pointer-events-none">
                         <SlideRenderer 
                           slide={slide} 
-                          onUpdate={(updates) => updateSlideContent(index, updates)}
-                          isEditable={!slide.isGenerating}
+                          isEditable={false}
                         />
-                        
-                        {/* Generation Status Overlay */}
-                        {slide.isGenerating && (
-                          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                            <div className="text-center">
-                              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-                              <p className="text-gray-600">Generating slide content...</p>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
-                  </SlideDragHandle>
+                  </div>
                   
-                  {/* Add button after each slide */}
-                  <InterSlideAddButtons
-                    onAddSlide={() => handleInterSlideAdd(index + 1)}
-                    onAddFromTemplate={() => handleInterSlideAddFromTemplate(index + 1)}
-                    onAddWithAI={() => handleInterSlideAddWithAI(index + 1)}
-                    insertIndex={index + 1}
-                  />
+                  {/* Mobile slide indicator */}
+                  <div className="absolute bottom-2 right-2 bg-black/20 backdrop-blur-sm rounded-full px-2 py-1">
+                    <span className="text-xs text-white/80">
+                      {index + 1} / {slides.length}
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </SortableContext>
+              </div>
+            ))}
           </div>
-        </DndContext>
+        ) : (
+          // Desktop: Full editing experience
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="space-y-0">
+              {/* Add button before first slide */}
+              <InterSlideAddButtons
+                onAddSlide={() => handleInterSlideAdd(0)}
+                onAddFromTemplate={() => handleInterSlideAddFromTemplate(0)}
+                onAddWithAI={() => handleInterSlideAddWithAI(0)}
+                insertIndex={0}
+              />
+              
+              <SortableContext
+                items={slides.map(slide => slide.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {slides.map((slide, index) => (
+                  <div key={slide.id}>
+                    {/* Slide Container with Drag Handle */}
+                    <SlideDragHandle 
+                      slideId={slide.id}
+                      slideIndex={index}
+                      totalSlides={slides.length}
+                      onDuplicate={handleDuplicateSlide}
+                      onDelete={handleDeleteSlide}
+                      onMoveUp={handleMoveSlideUp}
+                      onMoveDown={handleMoveSlideDown}
+                      onHide={handleHideSlide}
+                      onExport={handleExportSlide}
+                    >
+                      <div 
+                        className="relative mb-8"
+                        data-slide-index={index} // For scroll targeting
+                      >
+                        {/* Slide Number */}
+                        <div className="absolute -left-12 top-4 text-sm text-white/60 font-medium">
+                          {index + 1}
+                        </div>
+                        
+                        {/* Slide Content */}
+                        <div className="relative">
+                          <SlideRenderer 
+                            slide={slide} 
+                            onUpdate={(updates) => updateSlideContent(index, updates)}
+                            isEditable={!slide.isGenerating}
+                          />
+                          
+                          {/* Generation Status Overlay */}
+                          {slide.isGenerating && (
+                            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                              <div className="text-center">
+                                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+                                <p className="text-gray-600">Generating slide content...</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </SlideDragHandle>
+                    
+                    {/* Add button after each slide */}
+                    <InterSlideAddButtons
+                      onAddSlide={() => handleInterSlideAdd(index + 1)}
+                      onAddFromTemplate={() => handleInterSlideAddFromTemplate(index + 1)}
+                      onAddWithAI={() => handleInterSlideAddWithAI(index + 1)}
+                      insertIndex={index + 1}
+                    />
+                  </div>
+                ))}
+              </SortableContext>
+            </div>
+          </DndContext>
+        )}
       </main>
 
       {/* Phase 3: Modals for slide addition */}

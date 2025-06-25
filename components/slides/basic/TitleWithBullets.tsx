@@ -11,8 +11,6 @@ interface TitleWithBulletsProps extends SlideData {
 }
 
 export function TitleWithBullets({ 
-  title, 
-  bulletPoints = [], 
   content,
   isGenerating, 
   onUpdate, 
@@ -22,35 +20,25 @@ export function TitleWithBullets({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 TitleWithBullets - Complete content being saved:', newContent);
-      // UNIFIED: Save complete HTML content (title + body)
+      console.log('💾 TitleWithBullets - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };
 
-  // Default content if none provided (with legacy support)
-  const getDefaultContent = () => {
-    if (content && content.includes('<')) {
-      return content;
-    }
-    
-    // Legacy fallback: combine title and bulletPoints into HTML
-    const displayTitle = title || 'Slide Title';
-    const displayBulletPoints = bulletPoints.length > 0 ? bulletPoints : [
-      'First key point about your topic',
-      'Second important consideration or detail', 
-      'Third supporting argument or example',
-      'Fourth conclusion or call to action'
-    ];
-    
-    return `<h1>${displayTitle}</h1><ul>${displayBulletPoints.map(point => `<li><p>${point}</p></li>`).join('')}</ul>`;
-  };
+  // Default content with title and bullet points
+  const defaultContent = `<h1>Slide Title</h1>
+<ul>
+  <li>First key point about your topic</li>
+  <li>Second important consideration or detail</li>
+  <li>Third supporting argument or example</li>
+  <li>Fourth conclusion or call to action</li>
+</ul>`;
 
+  const displayContent = content || defaultContent;
   const isDark = theme === 'dark';
 
   return (
     <SlideWrapper>
-      {/* Unified Content */}
       <div className="w-full h-full flex flex-col">
         {isGenerating ? (
           <div className="animate-pulse space-y-6">
@@ -77,7 +65,7 @@ export function TitleWithBullets({
           </div>
         ) : (
                       <TiptapEditor
-              content={getDefaultContent()}
+            content={displayContent}
               onChange={handleContentChange}
               placeholder="# Enter slide title
 

@@ -32,7 +32,7 @@ export function AccentLeft({
     }
   };
 
-  const defaultContent = `<h1>Compelling Title</h1>
+  const defaultContent = `<h2>Compelling Title</h2>
 <p>This content area provides space for detailed information, bullet points, or any other content you want to highlight alongside the colorful accent panel.</p>
 <ul>
   <li>First key point or benefit</li>
@@ -43,12 +43,12 @@ export function AccentLeft({
   const displayContent = content || defaultContent;
 
   return (
-    <SlideWrapper>
-      <div className="flex-1 flex">
-        {/* Left Image Panel */}
-        <div className="w-1/2 h-full min-h-[400px] relative">
+    <SlideWrapper className="!p-0 !border-0 relative overflow-hidden">
+      <div className="flex h-full w-full">
+        {/* Left Image Panel - Full Height */}
+        <div className="w-1/2 h-full relative">
           {isGenerating || isGeneratingImage || imageLoading ? (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-white/80 rounded-xl mx-auto flex items-center justify-center shadow-sm">
                   <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
@@ -64,7 +64,7 @@ export function AccentLeft({
               </div>
             </div>
           ) : imageError || !imageUrl ? (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-white rounded-lg border border-slate-200">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-white">
               <div className="text-center space-y-3">
                 <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl mx-auto flex items-center justify-center shadow-sm border border-slate-200">
                   <span className="text-3xl opacity-60">🖼️</span>
@@ -79,7 +79,7 @@ export function AccentLeft({
             <img
               src={imageUrl}
               alt={imagePrompt || 'Slide image'}
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-cover"
               onLoad={() => setImageLoading(false)}
               onError={() => {
                 setImageError(true);

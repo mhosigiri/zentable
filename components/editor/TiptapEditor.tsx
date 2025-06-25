@@ -56,7 +56,7 @@ function getEditorClasses(variant: string): string {
       return `${baseClasses} text-base md:text-lg leading-relaxed`;
     default:
       // Enhanced prose styling for slide content using typography plugin
-      return `${baseClasses} prose prose-lg max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h1:md:text-4xl prose-h1:mb-6 prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mb-4 prose-h3:text-xl prose-h3:md:text-2xl prose-h3:mb-3 prose-p:text-base prose-p:md:text-lg prose-p:leading-relaxed prose-ul:space-y-3 prose-li:text-base prose-li:md:text-lg`;
+      return `${baseClasses} prose prose-lg max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h1:md:text-4xl prose-h1:mb-6 prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mb-4 prose-h3:text-xl prose-h3:md:text-2xl prose-h3:mb-3 prose-h4:text-lg prose-h4:md:text-xl prose-h4:mb-2 prose-h4:font-semibold prose-p:text-base prose-p:md:text-lg prose-p:leading-relaxed prose-ul:space-y-3 prose-li:text-base prose-li:md:text-lg`;
   }
 }
 
@@ -96,7 +96,7 @@ export function TiptapEditor({ content, onChange, placeholder, className, varian
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [1, 2, 3],
+          levels: [1, 2, 3, 4],
         },
         bulletList: {
           HTMLAttributes: {

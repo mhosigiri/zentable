@@ -13,8 +13,6 @@ interface TitleWithBulletsAndImageProps extends SlideData {
 }
 
 export function TitleWithBulletsAndImage({ 
-  title, 
-  bulletPoints = [], 
   content,
   imageUrl, 
   imagePrompt, 
@@ -27,95 +25,36 @@ export function TitleWithBulletsAndImage({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const handleTitleChange = (newTitle: string) => {
-    if (onUpdate) {
-      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') });
-    }
-  };
-
-  const handleBulletPointsChange = (newContent: string) => {
+  const handleContentChange = (newContent: string) => {
     if (onUpdate) {
       console.log('💾 TitleWithBulletsAndImage - Content being saved:', newContent);
-      // FIXED: Save rich HTML content instead of converting to plain text
       onUpdate({ content: newContent });
     }
   };
 
-  // Default bullet points if none provided
-  const defaultBulletPoints = [
-    'Key benefit or feature of your solution',
-    'Important detail or supporting evidence',
-    'Additional value proposition or example',
-    'Call to action or next steps'
-  ];
+  // Default content with title and bullet points
+  const defaultContent = `<h1>Slide Title</h1>
+<ul>
+  <li>Key benefit or feature of your solution</li>
+  <li>Important detail or supporting evidence</li>
+  <li>Additional value proposition or example</li>
+  <li>Call to action or next steps</li>
+</ul>`;
 
-  const displayBulletPoints = bulletPoints.length > 0 ? bulletPoints : defaultBulletPoints;
-  
-  // Helper function to render HTML content or fallback to bullet points
-  const renderContent = () => {
-    // If we have rich HTML content, use that
-    if (content && content.includes('<')) {
-      return <div dangerouslySetInnerHTML={{ __html: content }} className={`prose prose-sm max-w-none ${
-        isDark ? 'prose-invert' : ''
-      } [&_ul]:space-y-3 [&_li]:flex [&_li]:items-start [&_li]:space-x-3 [&_ul]:list-none [&_li]:before:content-[''] [&_li]:before:w-2 [&_li]:before:h-2 [&_li]:before:rounded-full [&_li]:before:mt-2 [&_li]:before:flex-shrink-0 ${
-        isDark ? '[&_li]:before:bg-purple-400 [&_p]:text-gray-300 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white' : '[&_li]:before:bg-purple-500 [&_p]:text-gray-700 [&_h1]:text-gray-900 [&_h2]:text-gray-900 [&_h3]:text-gray-900'
-      }`} />;
-    }
-    
-    // Fallback to legacy bullet points display
-    return (
-      <ul className="space-y-3 list-none">
-        {displayBulletPoints.map((point, index) => (
-          <li key={index} className="flex items-start space-x-3">
-            <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-              isDark ? 'bg-purple-400' : 'bg-purple-500'
-            }`}></div>
-            <p className={`text-sm md:text-base leading-relaxed ${
-              isDark ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              {point}
-            </p>
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
+  const displayContent = content || defaultContent;
   const isDark = theme === 'dark';
 
   return (
     <SlideWrapper layout="horizontal">
       {/* Content Section */}
       <div className="w-2/3 h-full min-h-[500px] flex flex-col justify-center p-8">
-        {/* Title */}
-        {(title || isEditable) && (
-          <div className="mb-6">
             {isGenerating ? (
-              <div className={`h-10 rounded w-3/4 animate-pulse ${
+          <div className="animate-pulse space-y-6">
+            {/* Title placeholder */}
+            <div className={`h-10 rounded w-3/4 ${
                 isDark ? 'bg-gray-700' : 'bg-gray-200'
               }`}></div>
-            ) : isEditable ? (
-              <TiptapEditor
-                content={title || 'Slide Title'}
-                onChange={handleTitleChange}
-                placeholder="Enter slide title..."
-                variant="subtitle"
-                className={`text-left ${isDark ? '[&_.ProseMirror]:text-white' : ''}`}
-              />
-            ) : (
-              <h1 className={`text-xl md:text-2xl font-bold leading-tight ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>
-                {title}
-              </h1>
-            )}
-          </div>
-        )}
-
-        {/* Bullet Points */}
-        <div className="flex-1">
-          {isGenerating ? (
-            <div className="animate-pulse space-y-3">
+            {/* Bullet points placeholder */}
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="flex items-start space-x-3">
                   <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
@@ -132,20 +71,20 @@ export function TitleWithBulletsAndImage({
                 </div>
               ))}
             </div>
-          ) : isEditable ? (
+        ) : (
             <TiptapEditor
-              content={content || `<ul>${displayBulletPoints.map(point => `<li>${point}</li>`).join('')}</ul>`}
-              onChange={handleBulletPointsChange}
-              placeholder="• Add your bullet points here..."
-              variant="body"
-              className={`[&_.ProseMirror_ul]:space-y-3 [&_.ProseMirror_li]:flex [&_.ProseMirror_li]:items-start [&_.ProseMirror_li]:space-x-3 ${
-                isDark ? '[&_.ProseMirror]:text-gray-300' : ''
+            content={displayContent}
+            onChange={handleContentChange}
+            placeholder="# Enter slide title
+
+• Add your bullet points here..."
+            variant="default"
+            editable={isEditable}
+            className={`w-full ${
+              isDark ? '[&_.ProseMirror]:text-gray-300 [&_.ProseMirror_h1]:text-white [&_.ProseMirror_h2]:text-white [&_.ProseMirror_h3]:text-white' : ''
               }`}
             />
-          ) : (
-            renderContent()
           )}
-        </div>
       </div>
 
       {/* Image Section */}

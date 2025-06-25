@@ -6,6 +6,7 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Heading4,
   Type,
   List,
   ListOrdered,
@@ -58,6 +59,12 @@ export function TextTypeSelector({ open, onOpenChange, editor }: TextTypeSelecto
       icon: Heading3,
       command: () => editor.chain().focus().clearNodes().toggleHeading({ level: 3 }).run(),
       isActive: () => editor.isActive("heading", { level: 3 })
+    },
+    {
+      name: "Heading 4",
+      icon: Heading4,
+      command: () => editor.chain().focus().clearNodes().toggleHeading({ level: 4 }).run(),
+      isActive: () => editor.isActive("heading", { level: 4 })
     },
     {
       name: "Bullet List",

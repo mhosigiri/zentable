@@ -178,7 +178,7 @@ function selectTemplateType(title: string, bulletPoints: string[], index: number
   if (index === 0) {
     // First slide - prefer visually striking templates
     const firstSlidePreferred = finalTemplates.filter(t => 
-      ['title-with-bullets-and-image', 'image-and-text', 'text-and-image', 'bullets', 'accent-left', 'accent-right', 'accent-top'].includes(t)
+      [ 'accent-left', 'accent-right'].includes(t)
     );
     if (firstSlidePreferred.length > 0) {
       return firstSlidePreferred[Math.floor(Math.random() * firstSlidePreferred.length)];
@@ -229,10 +229,11 @@ export async function POST(req: Request) {
 
     // Map style to writing tone
     const styleMap: Record<string, string> = {
-      'default': 'professional and clear',
-      'modern': 'contemporary and engaging',
-      'minimal': 'concise and focused',
-      'creative': 'innovative and inspiring'
+      'professional': 'professional and clear',
+      'friendly': 'warm and approachable',
+      'fun': 'playful and engaging',
+      'casual': 'relaxed and conversational',
+      'formal': 'precise and authoritative'
     };
 
     // Map language to instruction

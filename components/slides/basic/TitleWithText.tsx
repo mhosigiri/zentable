@@ -11,19 +11,12 @@ interface TitleWithTextProps extends SlideData {
 }
 
 export function TitleWithText({ 
-  title, 
   content,
   isGenerating, 
   onUpdate, 
   isEditable = false,
   theme = 'light'
 }: TitleWithTextProps) {
-
-  const handleTitleChange = (newTitle: string) => {
-    if (onUpdate) {
-      onUpdate({ title: newTitle.replace(/<[^>]*>/g, '') });
-    }
-  };
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {

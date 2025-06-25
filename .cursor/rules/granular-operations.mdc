@@ -1,5 +1,252 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Granular Slide Operations Guide
+
+## Overview
+
+The AI Copilot must support **every UI operation** that users can perform manually through conversational commands. This includes precise element-level modifications, column-specific updates, theme changes, and multi-slide operations.
+
+## Core Principle
+
+**Everything clickable, editable, or changeable in the UI must be accessible via chat commands.**
+
+## Template-Specific Operations
+
+### Multi-Column Templates (`two-columns`, `three-columns`, `four-columns`)
+
+Based on [TwoColumns.tsx](mdc:components/slides/basic/TwoColumns.tsx), these templates use table-based layouts with specific column targeting:
+
+**User Requests to Handle**:
+- "Add content to the left column"
+- "Update the heading in column 2" 
+- "Remove the third bullet point from the right column"
+- "Make the second column more concise"
+- "Add a heading to column 3"
+
+**Technical Implementation**:
+```typescript
+// Column identification in HTML structure
+<td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;">
+  <h3>Left Column</h3>  // Column heading
+  <ul>                  // Column content
+    <li>First point in left column</li>
+    <li>Second important detail</li>
+  </ul>
+</td>
+```
+
+**Template-Agnostic Tools**:
+- `updateSlideProperty({ slideId, property: 'leftHeading', value: newHeading })`
+- `updateSlideProperty({ slideId, property: 'column2Content', value: content })`
+- `updateBulletInProperty({ slideId, bulletProperty: 'column3Bullets', bulletIndex, newText })`
+
+### Image Templates (`image-and-text`, `text-and-image`, `title-with-bullets-and-image`)
+
+Based on [ImageAndText.tsx](mdc:components/slides/basic/ImageAndText.tsx), these templates have distinct image and text sections:
+
+**User Requests to Handle**:
+- "Replace the image with something more modern"
+- "Generate an image showing [specific concept]"
+- "Remove the image from this slide"
+- "Make the image smaller/larger"
+- "Move the image to the right side"
+
+**Technical Implementation**:
+```typescript
+// Image section structure
+<div className="w-1/2 h-full min-h-[400px] relative">
+  <img src={imageUrl} alt={imagePrompt} />
+</div>
+
+// Text section structure  
+<div className="w-1/2 h-full min-h-[400px] flex flex-col justify-center">
+  <TiptapEditor content={displayContent} />
+</div>
+```
+
+**Template-Agnostic Tools**:
+- `updateSlideImage({ slideId, action: 'generate', imagePrompt, replaceExisting })`
+- `updateSlideImage({ slideId, action: 'remove' })`
+- `changeSlideTemplate({ slideId, newTemplateType: 'text-and-image', preserveContent: true })`
+
+### Bullet Point Templates (`bullets`, `title-with-bullets`)
+
+**User Requests to Handle**:
+- "Add a bullet point about [topic]"
+- "Remove the second bullet point"
+- "Make all bullet points shorter"
+- "Change the third bullet to say [new text]"
+- "Reorder the bullet points"
+
+**Template-Agnostic Tools**:
+- `addBulletToProperty({ slideId, bulletProperty: 'bulletPoints', bulletText, position })`
+- `updateBulletInProperty({ slideId, bulletProperty: 'bulletPoints', bulletIndex, newText })`
+- `removeBulletFromProperty({ slideId, bulletProperty: 'bulletPoints', bulletIndex })`
+
+## Theme Operations
+
+Based on [ThemeContext.tsx](mdc:contexts/ThemeContext.tsx) and [themes.ts](mdc:lib/themes.ts):
+
+**User Requests to Handle**:
+- "Make the theme more techy" → Apply tech-appropriate theme
+- "Change to a dark theme" → Apply dark color scheme
+- "Use a more professional look" → Apply business theme
+- "Make it more colorful" → Apply gradient themes
+- "Apply the same theme to all slides" → Presentation-wide theme change
+
+**Available Themes**:
+- **Gradient**: sunset, ocean, forest, fire, aurora, cosmic, tropical, neon, volcano, electric, rainbow
+- **Solid**: midnight, snow, emerald, ruby, amber  
+- **Pattern**: geometric, waves, dots
+- **Glass**: frosted, tinted, emerald-glass
+
+**Required Tools**:
+- `changeSlideTheme({ themeId, slideId?, scope: 'slide'|'presentation' })`
+
+## Multi-Slide Operations
+
+**User Requests to Handle**:
+- "Apply this change to all slides"
+- "Update slides 2 through 5"
+- "Make all bullet points shorter across the presentation"
+- "Change all image slides to use a consistent style"
+- "Apply the same theme to slides with images"
+
+**Implementation Strategy**:
+- Iterate through specified slide ranges
+- Apply operations in sequence or parallel
+- Provide progress feedback for bulk operations
+- Handle errors gracefully (continue with remaining slides)
+
+## Content Optimization
+
+**User Requests to Handle**:
+- "Make this slide less text-heavy"
+- "Add more detail to this content"
+- "Make the tone more professional"
+- "Simplify the language for a general audience"
+- "Add examples to support the points"
+
+**Template-Agnostic Tools**:
+- `optimizeSlideContent({ slideId, optimization: 'reduce-text', target: 'content', options: { targetLength } })`
+- `optimizeSlideContent({ slideId, optimization: 'enhance-content', target: 'content', options: { targetAudience } })`
+- `analyzeSlide({ slideId, analysisType })`
+
+## Template-Agnostic Operation Examples
+
+**Universal User Requests and Their Tool Mappings**:
+
+| User Intent | Template-Agnostic Tool | Parameters |
+|-------------|------------------------|------------|
+| "Add a bullet to column 3" | `addBulletToProperty` | `slideId`, `bulletProperty: 'column3Bullets'`, `bulletText` |
+| "Replace the image in slide 2" | `updateSlideImage` | `slideId`, `action: 'generate'`, `imagePrompt`, `replaceExisting: true` |
+| "Make slide 5 text shorter" | `optimizeSlideContent` | `slideId`, `optimization: 'reduce-text'`, `target: 'content'` |
+| "Change slide 3 to two columns" | `changeSlideTemplate` | `slideId`, `newTemplateType: 'two-columns'`, `preserveContent: true` |
+| "Update the title of slide 1" | `updateSlideProperty` | `slideId`, `property: 'title'`, `value: 'New Title'` |
+| "Remove second bullet from main list" | `removeBulletFromProperty` | `slideId`, `bulletProperty: 'bulletPoints'`, `bulletIndex: 1` |
+| "Change left column heading" | `updateSlideProperty` | `slideId`, `property: 'leftHeading'`, `value: 'New Heading'` |
+| "Add content to right column" | `updateSlideProperty` | `slideId`, `property: 'rightContent'`, `value: 'New content here'` |
+| "Update conclusion text" | `updateSlideProperty` | `slideId`, `property: 'conclusion'`, `value: 'Updated conclusion'` |
+
+**Benefits of Template-Agnostic Approach**:
+- ✅ Works with any current or future template
+- ✅ Consistent tool interface across all templates
+- ✅ Easy to add new templates without changing tools
+- ✅ AI can reason about any SlideData property
+- ✅ Reduces tool complexity and maintenance
+
+## Element-Specific References
+
+### Teaching the AI to Understand References:
+
+**Positional References**:
+- "slide 3" → slideId lookup by position
+- "this slide" → current active slide
+- "the next slide" → currentPosition + 1
+- "previous slide" → currentPosition - 1
+- "last slide" → slides.length - 1
+
+**Layout-Specific References**:
+- "left column" → column1 (in multi-column layouts)
+- "right column" → column2 (in two-column), column4 (in four-column)
+- "middle column" → column2 (in three-column)
+- "third column" → column3
+- "the image" → image element in image-containing templates
+
+**Content References**:
+- "the title" → h1 element or slide title
+- "first bullet point" → bulletIndex: 0
+- "second bullet" → bulletIndex: 1
+- "last bullet point" → bullets.length - 1
+
+## Error Handling for Granular Operations
+
+**Invalid References**:
+```
+User: "Add content to column 3"
+Current Slide: two-columns template (only has 2 columns)
+Response: "This slide uses a two-column layout and doesn't have a third column. Would you like me to:
+1. Add the content to the right column (column 2)
+2. Change this slide to a three-column layout
+3. Create a new three-column slide with this content"
+```
+
+**Template Mismatches**:
+```
+User: "Replace the image"
+Current Slide: bullets template (no image)
+Response: "This slide doesn't currently have an image. Would you like me to:
+1. Change this slide to an image-and-text template
+2. Add an image while keeping the current bullet points
+3. Generate a new image slide with this content"
+```
+
+**Context Clarification**:
+```
+User: "Make it more professional"
+Response: "I can help make this more professional. Would you like me to:
+- Apply a business-appropriate theme (visual styling)
+- Refine the text tone and language (content)
+- Optimize the layout and formatting (structure)
+- All of the above"
+```
+
+## Implementation Checklist
+
+### ✅ **Must Support These User Patterns**:
+- [x] Column-specific operations ("add to column 3")
+- [x] Element-specific changes ("replace the image")
+- [x] Position-based references ("slide 3", "next slide")
+- [x] Template conversions ("change to two-column layout")
+- [x] Theme applications ("make it more techy")
+- [x] Content optimization ("less text", "more engaging")
+- [x] Multi-slide operations ("apply to all slides")
+- [x] Bullet point management ("add/edit/remove bullets")
+- [x] Image operations ("generate/replace/remove images")
+
+### 🎯 **Key Success Metrics**:
+- **Coverage**: Every UI button/action has a conversational equivalent
+- **Precision**: Users can target specific elements exactly
+- **Context Awareness**: AI understands current state and references
+- **Error Recovery**: Graceful handling of impossible operations
+- **Feedback Quality**: Clear confirmation of what was changed
+
+## Integration with Existing UI
+
+The copilot tools must integrate with existing functions in [app/docs/[id]/page.tsx](mdc:app/docs/[id]/page.tsx):
+
+**Slide Management Functions (lines 524-696)**:
+- `addSlide()` → `createSlide` tool
+- `deleteSlide()` → `deleteSlide` tool  
+- `duplicateSlide()` → `duplicateSlide` tool
+- `moveSlide()` → `moveSlide` tool
+
+**Content Update Functions**:
+- Slide content updates → `updateSlideContent` tool
+- Image generation → `generateSlideImage` tool
+- Template changes → `changeSlideTemplate` tool
+
+This ensures that copilot operations maintain consistency with the existing UI and don't create divergent state management.

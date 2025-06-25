@@ -28,7 +28,7 @@ export default function GeneratePage() {
   const [selectedType, setSelectedType] = useState('presentation');
   const [prompt, setPrompt] = useState('');
   const [cardCount, setCardCount] = useState('8');
-  const [style, setStyle] = useState('default');
+  const [style, setStyle] = useState('professional');
   const [language, setLanguage] = useState('en');
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -183,14 +183,15 @@ export default function GeneratePage() {
           </Select>
 
           <Select value={style} onValueChange={setStyle}>
-            <SelectTrigger className="w-32 bg-white/60 backdrop-blur-sm border-white/20">
+            <SelectTrigger className="w-40 bg-white/60 backdrop-blur-sm border-white/20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="modern">Modern</SelectItem>
-              <SelectItem value="minimal">Minimal</SelectItem>
-              <SelectItem value="creative">Creative</SelectItem>
+              <SelectItem value="professional">Professional</SelectItem>
+              <SelectItem value="friendly">Friendly</SelectItem>
+              <SelectItem value="fun">Fun</SelectItem>
+              <SelectItem value="casual">Casual</SelectItem>
+              <SelectItem value="formal">Formal</SelectItem>
             </SelectContent>
           </Select>
 
