@@ -25,11 +25,12 @@ import {
   Loader2,
   X
   } from 'lucide-react';
-import { db, DocumentData } from '@/lib/database';
+import { db, DocumentData, PresentationUpdate } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
 import { defaultTheme } from '@/lib/themes';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { generateUUID } from '@/lib/uuid';
 
 interface OutlineSection {
   id: string;
@@ -237,6 +238,41 @@ export default function PresentationPage() {
       }
     }
   }, [slides, documentData, documentId]);
+
+  // Auto-save to database
+  useEffect(() => {
+    const databaseId = documentData?.databaseId;
+    // Don't save if there's no database ID yet.
+    if (!databaseId) {
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      setIsSyncing(true);
+      console.log('🔄 Auto-saving to database...');
+      try {
+        const presentationUpdates: PresentationUpdate = {
+          title: documentData.outline?.title,
+          theme_id: documentData.theme,
+          outline: documentData.outline,
+        };
+
+        await db.updatePresentation(databaseId, presentationUpdates);
+        await db.saveSlides(databaseId, slides);
+
+        setLastSavedAt(new Date());
+        console.log('✅ Successfully saved to database.');
+      } catch (error) {
+        console.error('❌ Failed to save to database:', error);
+      } finally {
+        setIsSyncing(false);
+      }
+    }, 5000); // Debounce saves by 5 seconds
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [slides, documentData]);
 
   // Update presentation title in database when outline title is available
   useEffect(() => {
@@ -595,7 +631,7 @@ export default function PresentationPage() {
   // Phase 3: Slide addition functions
   const addNewSlide = (templateType: string, slideData: Partial<SlideData> = {}, insertIndex?: number) => {
     const newSlide: SlideData = {
-      id: `slide-${Date.now()}`,
+      id: generateUUID(),
       templateType,
       title: slideData.title || 'New Slide',
       content: slideData.content || '',
@@ -853,13 +889,7 @@ export default function PresentationPage() {
   };
 
   // Database integration functions
-  const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
+  // Removed local generateUUID function in favor of the centralized utility from lib/uuid.ts
 
   const saveToDatabase = async (forceSync = false) => {
     if (!documentData?.databaseId || isSyncing) return;
@@ -902,11 +932,12 @@ export default function PresentationPage() {
         console.warn('Failed to clear existing slides:', error);
       }
 
-      // Save current slides to database with new UUIDs
+      // Save current slides to database using their existing UUIDs
       if (slides.length > 0) {
         for (let i = 0; i < slides.length; i++) {
           const slide = slides[i];
-          const slideUUID = generateUUID();
+          // Ensure slide ID is a valid UUID before saving
+          const slideUUID = slide.id;
           
           try {
             await db.createSlide({

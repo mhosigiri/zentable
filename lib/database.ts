@@ -1,13 +1,5 @@
 import { supabase, Database } from './supabase'
-
-// UUID generation utility
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+import { generateUUID, isValidUUID, ensureUUID } from './uuid'
 
 // Type aliases for easier use
 export type Presentation = Database['public']['Tables']['presentations']['Row']
@@ -165,6 +157,60 @@ class DatabaseService {
     return null
   }
 
+  async saveSlides(presentationId: string, slides: any[]): Promise<boolean> {
+    if (!slides || slides.length === 0) {
+      console.log('No slides to save for presentation:', presentationId)
+      return true
+    }
+
+    // Filter out slides with non-UUID IDs and assign new UUIDs where needed
+    const validSlides = slides.filter(slide => {
+      // Keep slides that have content or other important properties
+      return slide.content || slide.title || slide.bulletPoints || slide.imageUrl;
+    });
+
+    const slideDataToUpsert = validSlides.map((slide, index) => {
+      // Ensure ID is a valid UUID, generate a new one if not
+      const slideId = ensureUUID(slide.id);
+      
+      return {
+        id: slideId,
+        presentation_id: presentationId,
+        content: slide.content || null,
+        template_type: slide.templateType || 'default',
+        position: index,
+        title: slide.title || null,
+        bullet_points: slide.bulletPoints || null,
+        image_prompt: slide.imagePrompt || null,
+        image_url: slide.imageUrl || null,
+        is_generating_image: slide.isGeneratingImage || false,
+        is_hidden: slide.isHidden || false,
+        is_generating: slide.isGenerating || false,
+        has_multiple_images: slide.hasMultipleImages || false,
+        images_metadata: slide.imagesMetadata || null,
+        primary_image_id: slide.primaryImageId || null
+      };
+    })
+
+    try {
+      const { error } = await supabase.from('slides').upsert(slideDataToUpsert, {
+        onConflict: 'id',
+      })
+
+      if (error) {
+        console.error('❌ Supabase slide upsert error:', error)
+        throw error
+      }
+
+      console.log('✅ Successfully saved', slideDataToUpsert.length, 'slides for presentation:', presentationId)
+      return true
+    } catch (error) {
+      console.warn('Failed to save slides to Supabase:', error)
+      this.markForSync(presentationId)
+      return false
+    }
+  }
+
   async updatePresentation(id: string, updates: PresentationUpdate): Promise<Presentation | null> {
     try {
       const { data: presentation, error } = await supabase
@@ -179,10 +225,8 @@ class DatabaseService {
 
       if (error) throw error
 
-      // Update localStorage
-      this.saveToLocalStorage(id, this.convertToDocumentData(presentation))
-      
-      return presentation
+      // Re-fetch to get full data with slides and update localStorage correctly
+      return this.getPresentation(id)
     } catch (error) {
       console.warn('Failed to update in Supabase, updating locally:', error)
       
@@ -294,20 +338,40 @@ class DatabaseService {
   }
 
   async syncPresentation(id: string): Promise<boolean> {
-    if (this.pendingSyncs.has(id)) {
-      const localData = this.getFromLocalStorage(id)
-      if (localData) {
-        try {
-          await this.updatePresentation(id, this.convertFromDocumentData(localData))
-          this.removeSyncMark(id)
-          return true
-        } catch (error) {
-          console.warn('Sync failed for presentation:', id, error)
-          return false
-        }
-      }
+    if (!this.pendingSyncs.has(id)) {
+      return true
     }
-    return true
+
+    const localData = this.getFromLocalStorage(id)
+    if (!localData) {
+      this.removeSyncMark(id)
+      return true
+    }
+
+    console.log('🔄 Starting sync for presentation:', id)
+
+    try {
+      // 1. Sync presentation metadata
+      await this.updatePresentation(id, this.convertFromDocumentData(localData))
+      console.log('✅ Synced presentation metadata for:', id)
+
+      // 2. Sync slides
+      if (localData.generatedSlides) {
+        await this.saveSlides(id, localData.generatedSlides)
+        console.log('✅ Synced slides for:', id)
+      }
+
+      // 3. Fetch latest state to refresh localStorage
+      await this.getPresentation(id)
+      console.log('✅ Refreshed local data for:', id)
+
+      this.removeSyncMark(id)
+      console.log('🎉 Sync completed for presentation:', id)
+      return true
+    } catch (error) {
+      console.error('❌ Sync failed for presentation:', id, error)
+      return false
+    }
   }
 
   async syncAllPresentations(): Promise<void> {
@@ -335,7 +399,7 @@ class DatabaseService {
     }
   }
 
-  private convertToDocumentData(presentation: Presentation): DocumentData {
+  private convertToDocumentData(presentation: Presentation & { slides?: Slide[] }): DocumentData {
     return {
       id: presentation.id,
       prompt: presentation.prompt,
@@ -345,6 +409,22 @@ class DatabaseService {
       createdAt: presentation.created_at,
       status: presentation.status,
       outline: presentation.outline,
+      generatedSlides: presentation.slides ? presentation.slides.map(s => ({
+        id: s.id,
+        templateType: s.template_type,
+        title: s.title,
+        content: s.content,
+        bulletPoints: s.bullet_points,
+        imagePrompt: s.image_prompt,
+        imageUrl: s.image_url,
+        isGeneratingImage: s.is_generating_image,
+        isHidden: s.is_hidden,
+        isGenerating: s.is_generating,
+        hasMultipleImages: s.has_multiple_images,
+        imagesMetadata: s.images_metadata,
+        primaryImageId: s.primary_image_id,
+        position: s.position
+      })).sort((a, b) => (a.position ?? 0) - (b.position ?? 0)) : [],
       contentLength: presentation.content_length,
       theme: presentation.theme_id,
       imageStyle: presentation.image_style || undefined

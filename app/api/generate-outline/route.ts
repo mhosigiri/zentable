@@ -1,6 +1,7 @@
 import { createGroq } from '@ai-sdk/groq';
 import { generateObject } from 'ai';
 import { z } from 'zod';
+import { generateUUID } from '@/lib/uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -294,7 +295,7 @@ The outline should create a compelling ${cardCount}-slide presentation with maxi
       
       return {
         ...section,
-        id: `section-${index + 1}`,
+        id: generateUUID(),
         templateType
       };
     });
