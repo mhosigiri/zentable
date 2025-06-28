@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { SlideRenderer, SlideData } from '@/components/slides/SlideRenderer';
 import { ThemedLayout } from '@/components/ui/themed-layout';
+import { AssistantSidebar } from '@/components/assistant-ui/sidebar';
 import { SlidesHeader } from '@/components/ui/slides-header';
 import { SlidesSidebar } from '@/components/ui/slides-sidebar';
 import { TemplateSelectionModal } from '@/components/ui/template-selection-modal';
@@ -28,6 +29,7 @@ import {
 import { db, DocumentData, PresentationUpdate } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
 import { defaultTheme } from '@/lib/themes';
+import { getSlideById } from '@/lib/slides';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { generateUUID } from '@/lib/uuid';
@@ -596,6 +598,7 @@ export default function PresentationPage() {
 
   // Update slide content
   const updateSlideContent = (slideIndex: number, updates: Partial<SlideData>) => {
+    console.log(`🔄 Updating slide at index ${slideIndex} with local updates`, updates);
     setSlides(prevSlides => 
       prevSlides.map((slide, index) => 
         index === slideIndex 
@@ -603,6 +606,72 @@ export default function PresentationPage() {
           : slide
       )
     );
+  };
+  
+  // New function to update slide content by ID (for AI assistant updates)
+  const updateSlideContentById = async (slideId: string, newContent: string) => {
+    console.log(`🤖 AI assistant updating slide with ID ${slideId}`);
+    
+    try {
+      // Find the slide index by ID
+      const slideIndex = slides.findIndex(slide => slide.id === slideId);
+      
+      if (slideIndex === -1) {
+        console.error(`❌ Could not find slide with ID ${slideId} in local state`);
+        return false;
+      }
+      
+      console.log(`✅ Found slide at index ${slideIndex}, updating content`);
+      
+      // Update local state
+      updateSlideContent(slideIndex, { content: newContent });
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Error updating slide by ID:', error);
+      return false;
+    }
+  };
+
+  // Refresh a single slide from database after approval
+  const refreshSlideById = async (slideId: string): Promise<boolean> => {
+    try {
+      console.log(`🔄 Refreshing slide from database: ${slideId}`);
+      
+      // Get the updated slide from database
+      const updatedSlide = await getSlideById(slideId);
+      
+      if (!updatedSlide) {
+        console.error('❌ Slide not found in database:', slideId);
+        return false;
+      }
+      
+      // Find the slide in local state
+      const slideIndex = slides.findIndex(slide => slide.id === slideId);
+      
+      if (slideIndex === -1) {
+        console.error('❌ Slide not found in local state:', slideId);
+        return false;
+      }
+      
+      console.log(`✅ Found slide at index ${slideIndex}, refreshing from database`);
+      
+      // Update local state with fresh data from database
+      setSlides(prevSlides => 
+        prevSlides.map(slide => 
+          slide.id === slideId ? {
+            ...slide,
+            content: updatedSlide.content || slide.content,
+            title: updatedSlide.title || slide.title
+          } : slide
+        )
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Error refreshing slide by ID:', error);
+      return false;
+    }
   };
 
   // Sidebar handlers - Phase 2: Navigation & Selection
@@ -914,50 +983,63 @@ export default function PresentationPage() {
         outline: documentData.outline
       });
 
-      // Clear existing slides for this presentation to avoid duplicates
-      // Note: This is a simple approach - in production you might want to do a smarter sync
+      // First fetch existing slides to identify which ones to update vs. create
       try {
         const { data: existingSlides } = await supabase
           .from('slides')
-          .select('id')
+          .select('id, updated_at')
           .eq('presentation_id', documentData.databaseId);
         
+        const existingSlideMap = new Map();
         if (existingSlides && existingSlides.length > 0) {
+          existingSlides.forEach(slide => {
+            existingSlideMap.set(slide.id, slide.updated_at);
+          });
+        }
+        
+        // Find slides that are in database but not in current state (need to be deleted)
+        const currentSlideIds = new Set(slides.map(slide => slide.id));
+        const slidesToDelete = existingSlides?.filter(slide => !currentSlideIds.has(slide.id)) || [];
+        
+        // Delete slides that no longer exist in current state
+        if (slidesToDelete.length > 0) {
+          const idsToDelete = slidesToDelete.map(slide => slide.id);
+          console.log('🗑️ Deleting removed slides:', idsToDelete);
           await supabase
             .from('slides')
             .delete()
-            .eq('presentation_id', documentData.databaseId);
+            .in('id', idsToDelete);
         }
-      } catch (error) {
-        console.warn('Failed to clear existing slides:', error);
-      }
 
-      // Save current slides to database using their existing UUIDs
-      if (slides.length > 0) {
-        for (let i = 0; i < slides.length; i++) {
-          const slide = slides[i];
-          // Ensure slide ID is a valid UUID before saving
-          const slideUUID = slide.id;
+        // Save current slides to database using upsert operation
+        if (slides.length > 0) {
+          console.log('💾 Saving slides with upsert operation');
+          const slidesBatch = slides.map((slide, i) => ({
+            id: slide.id,
+            presentation_id: documentData.databaseId,
+            position: i,
+            template_type: slide.templateType,
+            title: slide.title || null,
+            content: slide.content || null,
+            bullet_points: slide.bulletPoints || null,
+            image_url: slide.imageUrl || null,
+            image_prompt: slide.imagePrompt || null,
+            is_hidden: false,
+            is_generating: slide.isGenerating || false,
+            is_generating_image: slide.isGeneratingImage || false
+          }));
           
-          try {
-            await db.createSlide({
-              id: slideUUID,
-              presentation_id: documentData.databaseId,
-              position: i,
-              template_type: slide.templateType,
-              title: slide.title || null,
-              content: slide.content || null,
-              bullet_points: slide.bulletPoints || null,
-              image_url: slide.imageUrl || null,
-              image_prompt: slide.imagePrompt || null,
-              is_hidden: false,
-              is_generating: slide.isGenerating || false,
-              is_generating_image: slide.isGeneratingImage || false
-            });
-          } catch (error) {
-            console.warn('Failed to save slide to database:', slide.id, error);
+          // Use upsert operation to update existing slides and create new ones
+          const { error } = await supabase
+            .from('slides')
+            .upsert(slidesBatch, { onConflict: 'id' });
+            
+          if (error) {
+            throw error;
           }
         }
+      } catch (error) {
+        console.warn('Failed to sync slides to database:', error);
       }
 
       setLastSavedAt(new Date());
@@ -1424,6 +1506,61 @@ export default function PresentationPage() {
           </DndContext>
         )}
       </main>
+
+      {/* Assistant UI Sidebar - only shown on desktop with a valid database ID */}
+      {!isMobile && documentData?.databaseId && (
+        <AssistantSidebar 
+          presentationId={documentData.databaseId}
+          className="max-w-xs"
+          onSlideUpdate={(slideId: string, newContent: string | null) => {
+            console.log(`🤖 AI Assistant requested update for slide ${slideId}`);
+            
+            if (!slideId) {
+              console.error("❌ Invalid slideId for slide update");
+              return;
+            }
+            
+            // If newContent is null, this is a refresh request after approval
+            if (newContent === null) {
+              console.log("✅ Refreshing slide after approved update:", slideId);
+              
+              // Refresh the slide from database
+              refreshSlideById(slideId).then(() => {
+                // Find the slide index to scroll to it
+                const slideIndex = slides.findIndex(slide => slide.id === slideId);
+                if (slideIndex !== -1) {
+                  console.log(`📌 Scroll to refreshed slide at index ${slideIndex}`);
+                  handleSlideSelect(slideIndex);
+                }
+              });
+              return;
+            }
+            
+            // Otherwise, this is a direct content update (legacy support)
+            if (!newContent) {
+              console.error("❌ Invalid content for slide update");
+              return;
+            }
+            
+            // Use the new atomic update function to update a single slide's content
+            updateSlideContentById(slideId, newContent)
+              .then(success => {
+                if (success) {
+                  console.log("✅ Successfully updated slide content in UI for slide ID:", slideId);
+                  
+                  // Find the slide index to potentially scroll to it
+                  const slideIndex = slides.findIndex(slide => slide.id === slideId);
+                  if (slideIndex !== -1) {
+                    console.log(`📌 Scroll to updated slide at index ${slideIndex}`);
+                    handleSlideSelect(slideIndex);
+                  }
+                } else {
+                  console.error("❌ Failed to update slide content in UI");
+                }
+              });
+          }}
+        />
+      )}
 
       {/* Phase 3: Modals for slide addition */}
       <TemplateSelectionModal

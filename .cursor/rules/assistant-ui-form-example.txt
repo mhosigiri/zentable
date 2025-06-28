@@ -1,0 +1,1773 @@
+└── examples
+    └── with-react-hook-form
+        ├── app
+            ├── MyRuntimeProvider.tsx
+            ├── api
+            │   └── chat
+            │   │   └── route.ts
+            ├── globals.css
+            ├── layout.tsx
+            └── page.tsx
+        ├── components.json
+        ├── components
+            ├── SignupForm.tsx
+            ├── assistant-ui
+            │   ├── assistant-sidebar.tsx
+            │   ├── markdown-text.tsx
+            │   ├── thread.tsx
+            │   └── tooltip-icon-button.tsx
+            └── ui
+            │   ├── button.tsx
+            │   ├── form.tsx
+            │   ├── input.tsx
+            │   ├── label.tsx
+            │   ├── resizable.tsx
+            │   ├── tabs.tsx
+            │   └── tooltip.tsx
+        ├── eslint.config.ts
+        ├── lib
+            ├── submitSignup.tsx
+            └── utils.ts
+        ├── next-env.d.ts
+        ├── next.config.ts
+        ├── package.json
+        ├── postcss.config.mjs
+        └── tsconfig.json
+
+
+/examples/with-react-hook-form/app/MyRuntimeProvider.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use client";
+ 2 | 
+ 3 | import { AssistantRuntimeProvider } from "@assistant-ui/react";
+ 4 | import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
+ 5 | 
+ 6 | export function MyRuntimeProvider({
+ 7 |   children,
+ 8 | }: Readonly<{
+ 9 |   children: React.ReactNode;
+10 | }>) {
+11 |   const runtime = useChatRuntime({
+12 |     api: "/api/chat",
+13 |   });
+14 | 
+15 |   return (
+16 |     <AssistantRuntimeProvider runtime={runtime}>
+17 |       {children}
+18 |     </AssistantRuntimeProvider>
+19 |   );
+20 | }
+21 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/app/api/chat/route.ts:
+--------------------------------------------------------------------------------
+ 1 | import { openai } from "@ai-sdk/openai";
+ 2 | import { frontendTools } from "@assistant-ui/react-ai-sdk";
+ 3 | import { streamText } from "ai";
+ 4 | 
+ 5 | export const runtime = "edge";
+ 6 | export const maxDuration = 30;
+ 7 | 
+ 8 | export async function POST(req: Request) {
+ 9 |   const { messages, system, tools } = await req.json();
+10 | 
+11 |   const result = streamText({
+12 |     model: openai("gpt-4o"),
+13 |     messages,
+14 |     toolCallStreaming: true,
+15 |     system,
+16 |     tools: {
+17 |       ...frontendTools(tools),
+18 |     },
+19 |   });
+20 | 
+21 |   return result.toDataStreamResponse();
+22 | }
+23 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/app/globals.css:
+--------------------------------------------------------------------------------
+  1 | @import "tailwindcss";
+  2 | @import "tw-animate-css";
+  3 | 
+  4 | @custom-variant dark (&:is(.dark *));
+  5 | 
+  6 | @theme inline {
+  7 |   --color-background: var(--background);
+  8 |   --color-foreground: var(--foreground);
+  9 |   --font-sans: var(--font-geist-sans);
+ 10 |   --font-mono: var(--font-geist-mono);
+ 11 |   --color-sidebar-ring: var(--sidebar-ring);
+ 12 |   --color-sidebar-border: var(--sidebar-border);
+ 13 |   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+ 14 |   --color-sidebar-accent: var(--sidebar-accent);
+ 15 |   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+ 16 |   --color-sidebar-primary: var(--sidebar-primary);
+ 17 |   --color-sidebar-foreground: var(--sidebar-foreground);
+ 18 |   --color-sidebar: var(--sidebar);
+ 19 |   --color-chart-5: var(--chart-5);
+ 20 |   --color-chart-4: var(--chart-4);
+ 21 |   --color-chart-3: var(--chart-3);
+ 22 |   --color-chart-2: var(--chart-2);
+ 23 |   --color-chart-1: var(--chart-1);
+ 24 |   --color-ring: var(--ring);
+ 25 |   --color-input: var(--input);
+ 26 |   --color-border: var(--border);
+ 27 |   --color-destructive: var(--destructive);
+ 28 |   --color-accent-foreground: var(--accent-foreground);
+ 29 |   --color-accent: var(--accent);
+ 30 |   --color-muted-foreground: var(--muted-foreground);
+ 31 |   --color-muted: var(--muted);
+ 32 |   --color-secondary-foreground: var(--secondary-foreground);
+ 33 |   --color-secondary: var(--secondary);
+ 34 |   --color-primary-foreground: var(--primary-foreground);
+ 35 |   --color-primary: var(--primary);
+ 36 |   --color-popover-foreground: var(--popover-foreground);
+ 37 |   --color-popover: var(--popover);
+ 38 |   --color-card-foreground: var(--card-foreground);
+ 39 |   --color-card: var(--card);
+ 40 |   --radius-sm: calc(var(--radius) - 4px);
+ 41 |   --radius-md: calc(var(--radius) - 2px);
+ 42 |   --radius-lg: var(--radius);
+ 43 |   --radius-xl: calc(var(--radius) + 4px);
+ 44 | }
+ 45 | 
+ 46 | :root {
+ 47 |   --radius: 0.625rem;
+ 48 |   --background: oklch(1 0 0);
+ 49 |   --foreground: oklch(0.141 0.005 285.823);
+ 50 |   --card: oklch(1 0 0);
+ 51 |   --card-foreground: oklch(0.141 0.005 285.823);
+ 52 |   --popover: oklch(1 0 0);
+ 53 |   --popover-foreground: oklch(0.141 0.005 285.823);
+ 54 |   --primary: oklch(0.21 0.006 285.885);
+ 55 |   --primary-foreground: oklch(0.985 0 0);
+ 56 |   --secondary: oklch(0.967 0.001 286.375);
+ 57 |   --secondary-foreground: oklch(0.21 0.006 285.885);
+ 58 |   --muted: oklch(0.967 0.001 286.375);
+ 59 |   --muted-foreground: oklch(0.552 0.016 285.938);
+ 60 |   --accent: oklch(0.967 0.001 286.375);
+ 61 |   --accent-foreground: oklch(0.21 0.006 285.885);
+ 62 |   --destructive: oklch(0.577 0.245 27.325);
+ 63 |   --border: oklch(0.92 0.004 286.32);
+ 64 |   --input: oklch(0.92 0.004 286.32);
+ 65 |   --ring: oklch(0.705 0.015 286.067);
+ 66 |   --chart-1: oklch(0.646 0.222 41.116);
+ 67 |   --chart-2: oklch(0.6 0.118 184.704);
+ 68 |   --chart-3: oklch(0.398 0.07 227.392);
+ 69 |   --chart-4: oklch(0.828 0.189 84.429);
+ 70 |   --chart-5: oklch(0.769 0.188 70.08);
+ 71 |   --sidebar: oklch(0.985 0 0);
+ 72 |   --sidebar-foreground: oklch(0.141 0.005 285.823);
+ 73 |   --sidebar-primary: oklch(0.21 0.006 285.885);
+ 74 |   --sidebar-primary-foreground: oklch(0.985 0 0);
+ 75 |   --sidebar-accent: oklch(0.967 0.001 286.375);
+ 76 |   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+ 77 |   --sidebar-border: oklch(0.92 0.004 286.32);
+ 78 |   --sidebar-ring: oklch(0.705 0.015 286.067);
+ 79 | }
+ 80 | 
+ 81 | .dark {
+ 82 |   --background: oklch(0.141 0.005 285.823);
+ 83 |   --foreground: oklch(0.985 0 0);
+ 84 |   --card: oklch(0.21 0.006 285.885);
+ 85 |   --card-foreground: oklch(0.985 0 0);
+ 86 |   --popover: oklch(0.21 0.006 285.885);
+ 87 |   --popover-foreground: oklch(0.985 0 0);
+ 88 |   --primary: oklch(0.92 0.004 286.32);
+ 89 |   --primary-foreground: oklch(0.21 0.006 285.885);
+ 90 |   --secondary: oklch(0.274 0.006 286.033);
+ 91 |   --secondary-foreground: oklch(0.985 0 0);
+ 92 |   --muted: oklch(0.274 0.006 286.033);
+ 93 |   --muted-foreground: oklch(0.705 0.015 286.067);
+ 94 |   --accent: oklch(0.274 0.006 286.033);
+ 95 |   --accent-foreground: oklch(0.985 0 0);
+ 96 |   --destructive: oklch(0.704 0.191 22.216);
+ 97 |   --border: oklch(1 0 0 / 10%);
+ 98 |   --input: oklch(1 0 0 / 15%);
+ 99 |   --ring: oklch(0.552 0.016 285.938);
+100 |   --chart-1: oklch(0.488 0.243 264.376);
+101 |   --chart-2: oklch(0.696 0.17 162.48);
+102 |   --chart-3: oklch(0.769 0.188 70.08);
+103 |   --chart-4: oklch(0.627 0.265 303.9);
+104 |   --chart-5: oklch(0.645 0.246 16.439);
+105 |   --sidebar: oklch(0.21 0.006 285.885);
+106 |   --sidebar-foreground: oklch(0.985 0 0);
+107 |   --sidebar-primary: oklch(0.488 0.243 264.376);
+108 |   --sidebar-primary-foreground: oklch(0.985 0 0);
+109 |   --sidebar-accent: oklch(0.274 0.006 286.033);
+110 |   --sidebar-accent-foreground: oklch(0.985 0 0);
+111 |   --sidebar-border: oklch(1 0 0 / 10%);
+112 |   --sidebar-ring: oklch(0.552 0.016 285.938);
+113 | }
+114 | 
+115 | @layer base {
+116 |   * {
+117 |     @apply border-border outline-ring/50;
+118 |   }
+119 |   body {
+120 |     @apply bg-background text-foreground;
+121 |   }
+122 | }
+123 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/app/layout.tsx:
+--------------------------------------------------------------------------------
+ 1 | import "./globals.css";
+ 2 | 
+ 3 | import { cn } from "@/lib/utils";
+ 4 | import { Montserrat } from "next/font/google";
+ 5 | import { MyRuntimeProvider } from "./MyRuntimeProvider";
+ 6 | 
+ 7 | const montserrat = Montserrat({ subsets: ["latin"] });
+ 8 | 
+ 9 | export default function RootLayout({
+10 |   children,
+11 | }: Readonly<{
+12 |   children: React.ReactNode;
+13 | }>) {
+14 |   return (
+15 |     <MyRuntimeProvider>
+16 |       <html lang="en">
+17 |         <body className={cn(montserrat.className, "h-dvh")}>{children}</body>
+18 |       </html>
+19 |     </MyRuntimeProvider>
+20 |   );
+21 | }
+22 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/app/page.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use client";
+ 2 | 
+ 3 | import { SignupForm } from "@/components/SignupForm";
+ 4 | import { AssistantSidebar } from "@/components/assistant-ui/assistant-sidebar";
+ 5 | import { Form } from "@/components/ui/form";
+ 6 | import { useAssistantForm } from "@assistant-ui/react-hook-form";
+ 7 | import { useAssistantInstructions } from "@assistant-ui/react";
+ 8 | import Link from "next/link";
+ 9 | 
+10 | const SetFormFieldTool = () => {
+11 |   return (
+12 |     <p className="text-center font-mono text-sm font-bold text-blue-500">
+13 |       set_form_field(...)
+14 |     </p>
+15 |   );
+16 | };
+17 | 
+18 | const SubmitFormTool = () => {
+19 |   return (
+20 |     <p className="text-center font-mono text-sm font-bold text-blue-500">
+21 |       submit_form(...)
+22 |     </p>
+23 |   );
+24 | };
+25 | 
+26 | export default function Home() {
+27 |   useAssistantInstructions("Help users sign up for Simon's hackathon.");
+28 |   const form = useAssistantForm({
+29 |     defaultValues: {
+30 |       firstName: "",
+31 |       lastName: "",
+32 |       email: "",
+33 |       cityAndCountry: "",
+34 |       projectIdea: "",
+35 |       proficientTechnologies: "",
+36 |     },
+37 |     assistant: {
+38 |       tools: {
+39 |         set_form_field: {
+40 |           render: SetFormFieldTool,
+41 |         },
+42 |         submit_form: {
+43 |           render: SubmitFormTool,
+44 |         },
+45 |       },
+46 |     },
+47 |   });
+48 | 
+49 |   return (
+50 |     <AssistantSidebar>
+51 |       <div className="h-full overflow-y-scroll">
+52 |         <main className="container py-8">
+53 |           <h1 className="mb-2 text-2xl font-semibold">
+54 |             Simon&apos;s Hackathon
+55 |           </h1>
+56 |           <p>
+57 |             I&apos;m hosting a Hackathon on AI UX. Be the first to get an
+58 |             invite!
+59 |           </p>
+60 | 
+61 |           <div className="my-4 font-bold">
+62 |             Built with{" "}
+63 |             <Link
+64 |               href="https://github.com/assistant-ui/assistant-ui"
+65 |               className="text-blue-600 underline"
+66 |             >
+67 |               assistant-ui
+68 |             </Link>
+69 |             .
+70 |           </div>
+71 | 
+72 |           <Form {...form}>
+73 |             <SignupForm />
+74 |           </Form>
+75 |         </main>
+76 |       </div>
+77 |     </AssistantSidebar>
+78 |   );
+79 | }
+80 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components.json:
+--------------------------------------------------------------------------------
+ 1 | {
+ 2 |   "$schema": "https://ui.shadcn.com/schema.json",
+ 3 |   "style": "new-york",
+ 4 |   "rsc": true,
+ 5 |   "tsx": true,
+ 6 |   "tailwind": {
+ 7 |     "config": "",
+ 8 |     "css": "app/globals.css",
+ 9 |     "baseColor": "zinc",
+10 |     "cssVariables": true,
+11 |     "prefix": ""
+12 |   },
+13 |   "aliases": {
+14 |     "components": "@/components",
+15 |     "utils": "@/lib/utils"
+16 |   }
+17 | }
+18 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/SignupForm.tsx:
+--------------------------------------------------------------------------------
+  1 | "use client";
+  2 | import { Button } from "@/components/ui/button";
+  3 | import {
+  4 |   FormControl,
+  5 |   FormDescription,
+  6 |   FormField,
+  7 |   FormItem,
+  8 |   FormLabel,
+  9 |   FormMessage,
+ 10 | } from "@/components/ui/form";
+ 11 | import { Input } from "@/components/ui/input";
+ 12 | import { type FC, useState } from "react";
+ 13 | import { useFormContext } from "react-hook-form";
+ 14 | import { submitSignup } from "../lib/submitSignup";
+ 15 | 
+ 16 | export const SignupForm: FC = () => {
+ 17 |   const form = useFormContext();
+ 18 | 
+ 19 |   const [isSubmitting, setIsSubmitting] = useState(false);
+ 20 |   const [isSubmitted, setIsSubmitted] = useState(false);
+ 21 | 
+ 22 |   const onSubmit = async (values: object) => {
+ 23 |     try {
+ 24 |       setIsSubmitting(true);
+ 25 |       await submitSignup(values);
+ 26 |       setIsSubmitted(true);
+ 27 |     } finally {
+ 28 |       setIsSubmitting(false);
+ 29 |     }
+ 30 |   };
+ 31 | 
+ 32 |   if (isSubmitting)
+ 33 |     return <p className="my-4 font-bold text-green-600">Submitting...</p>;
+ 34 | 
+ 35 |   if (isSubmitted)
+ 36 |     return (
+ 37 |       <p className="my-4 font-bold text-green-600">
+ 38 |         Thank you for signing up, you will hear from me soon!
+ 39 |       </p>
+ 40 |     );
+ 41 | 
+ 42 |   return (
+ 43 |     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+ 44 |       <input type="hidden" {...form.register("hidden")} />
+ 45 | 
+ 46 |       <FormField
+ 47 |         control={form.control}
+ 48 |         name="firstName"
+ 49 |         render={({ field }) => (
+ 50 |           <FormItem>
+ 51 |             <FormLabel>First Name</FormLabel>
+ 52 |             <FormDescription>Your first name.</FormDescription>
+ 53 |             <FormControl>
+ 54 |               <Input placeholder="First Name" {...field} />
+ 55 |             </FormControl>
+ 56 |             <FormMessage />
+ 57 |           </FormItem>
+ 58 |         )}
+ 59 |       />
+ 60 | 
+ 61 |       <FormField
+ 62 |         control={form.control}
+ 63 |         name="lastName"
+ 64 |         render={({ field }) => (
+ 65 |           <FormItem>
+ 66 |             <FormLabel>Last Name</FormLabel>
+ 67 |             <FormDescription>Your last name.</FormDescription>
+ 68 |             <FormControl>
+ 69 |               <Input placeholder="Last Name" {...field} />
+ 70 |             </FormControl>
+ 71 |             <FormMessage />
+ 72 |           </FormItem>
+ 73 |         )}
+ 74 |       />
+ 75 | 
+ 76 |       <FormField
+ 77 |         control={form.control}
+ 78 |         name="email"
+ 79 |         render={({ field }) => (
+ 80 |           <FormItem>
+ 81 |             <FormLabel>Email</FormLabel>
+ 82 |             <FormDescription>Your email.</FormDescription>
+ 83 |             <FormControl>
+ 84 |               <Input placeholder="Email" {...field} />
+ 85 |             </FormControl>
+ 86 |             <FormMessage />
+ 87 |           </FormItem>
+ 88 |         )}
+ 89 |       />
+ 90 | 
+ 91 |       <FormField
+ 92 |         control={form.control}
+ 93 |         name="cityAndCountry"
+ 94 |         render={({ field }) => (
+ 95 |           <FormItem>
+ 96 |             <FormLabel>City</FormLabel>
+ 97 |             <FormDescription>The city and country you live in.</FormDescription>
+ 98 |             <FormControl>
+ 99 |               <Input placeholder="City" {...field} />
+100 |             </FormControl>
+101 |             <FormMessage />
+102 |           </FormItem>
+103 |         )}
+104 |       />
+105 | 
+106 |       <FormField
+107 |         control={form.control}
+108 |         name="projectIdea"
+109 |         render={({ field }) => (
+110 |           <FormItem>
+111 |             <FormLabel>Idea</FormLabel>
+112 |             <FormDescription>
+113 |               Do you have an idea for a project?
+114 |             </FormDescription>
+115 |             <FormControl>
+116 |               <Input placeholder="Idea" {...field} />
+117 |             </FormControl>
+118 |             <FormMessage />
+119 |           </FormItem>
+120 |         )}
+121 |       />
+122 | 
+123 |       <FormField
+124 |         control={form.control}
+125 |         name="proficientTechnologies"
+126 |         render={({ field }) => (
+127 |           <FormItem>
+128 |             <FormLabel>Technologies</FormLabel>
+129 |             <FormDescription>
+130 |               What technologies are you most comfortable with?
+131 |             </FormDescription>
+132 |             <FormControl>
+133 |               <Input placeholder="Next.js, Tailwind CSS" {...field} />
+134 |             </FormControl>
+135 |             <FormMessage />
+136 |           </FormItem>
+137 |         )}
+138 |       />
+139 | 
+140 |       <Button type="submit">Submit</Button>
+141 |     </form>
+142 |   );
+143 | };
+144 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/assistant-ui/assistant-sidebar.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use client";
+ 2 | 
+ 3 | import {
+ 4 |   ResizableHandle,
+ 5 |   ResizablePanel,
+ 6 |   ResizablePanelGroup,
+ 7 | } from "@/components/ui/resizable";
+ 8 | import { useMediaQuery } from "@react-hook/media-query";
+ 9 | import type { FC, PropsWithChildren } from "react";
+10 | import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+11 | import { Thread } from "@/components/assistant-ui/thread";
+12 | 
+13 | export const AssistantSidebar: FC<PropsWithChildren> = ({ children }) => {
+14 |   const isSmall = useMediaQuery("(max-width: 768px)");
+15 | 
+16 |   if (isSmall) {
+17 |     return (
+18 |       <Tabs
+19 |         defaultValue="app"
+20 |         className="mx-auto flex h-full max-w-[480px] flex-col px-4 pt-4"
+21 |       >
+22 |         <TabsList className="grid w-full grid-cols-2">
+23 |           <TabsTrigger value="app">Form</TabsTrigger>
+24 |           <TabsTrigger value="thread">Chat</TabsTrigger>
+25 |         </TabsList>
+26 |         <TabsContent value="app">{children}</TabsContent>
+27 |         <TabsContent value="thread">
+28 |           <Thread />
+29 |         </TabsContent>
+30 |       </Tabs>
+31 |     );
+32 |   }
+33 | 
+34 |   return (
+35 |     <ResizablePanelGroup direction="horizontal">
+36 |       <ResizablePanel>{children}</ResizablePanel>
+37 |       <ResizableHandle />
+38 |       <ResizablePanel>
+39 |         <Thread />
+40 |       </ResizablePanel>
+41 |     </ResizablePanelGroup>
+42 |   );
+43 | };
+44 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/assistant-ui/markdown-text.tsx:
+--------------------------------------------------------------------------------
+  1 | "use client";
+  2 | 
+  3 | import "@assistant-ui/react-markdown/styles/dot.css";
+  4 | 
+  5 | import {
+  6 |   CodeHeaderProps,
+  7 |   MarkdownTextPrimitive,
+  8 |   unstable_memoizeMarkdownComponents as memoizeMarkdownComponents,
+  9 |   useIsMarkdownCodeBlock,
+ 10 | } from "@assistant-ui/react-markdown";
+ 11 | import remarkGfm from "remark-gfm";
+ 12 | import { FC, memo, useState } from "react";
+ 13 | import { CheckIcon, CopyIcon } from "lucide-react";
+ 14 | 
+ 15 | import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
+ 16 | import { cn } from "@/lib/utils";
+ 17 | 
+ 18 | const MarkdownTextImpl = () => {
+ 19 |   return (
+ 20 |     <MarkdownTextPrimitive
+ 21 |       remarkPlugins={[remarkGfm]}
+ 22 |       className="aui-md"
+ 23 |       components={defaultComponents}
+ 24 |     />
+ 25 |   );
+ 26 | };
+ 27 | 
+ 28 | export const MarkdownText = memo(MarkdownTextImpl);
+ 29 | 
+ 30 | const CodeHeader: FC<CodeHeaderProps> = ({ language, code }) => {
+ 31 |   const { isCopied, copyToClipboard } = useCopyToClipboard();
+ 32 |   const onCopy = () => {
+ 33 |     if (!code || isCopied) return;
+ 34 |     copyToClipboard(code);
+ 35 |   };
+ 36 | 
+ 37 |   return (
+ 38 |     <div className="flex items-center justify-between gap-4 rounded-t-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white">
+ 39 |       <span className="lowercase [&>span]:text-xs">{language}</span>
+ 40 |       <TooltipIconButton tooltip="Copy" onClick={onCopy}>
+ 41 |         {!isCopied && <CopyIcon />}
+ 42 |         {isCopied && <CheckIcon />}
+ 43 |       </TooltipIconButton>
+ 44 |     </div>
+ 45 |   );
+ 46 | };
+ 47 | 
+ 48 | const useCopyToClipboard = ({
+ 49 |   copiedDuration = 3000,
+ 50 | }: {
+ 51 |   copiedDuration?: number;
+ 52 | } = {}) => {
+ 53 |   const [isCopied, setIsCopied] = useState<boolean>(false);
+ 54 | 
+ 55 |   const copyToClipboard = (value: string) => {
+ 56 |     if (!value) return;
+ 57 | 
+ 58 |     navigator.clipboard.writeText(value).then(() => {
+ 59 |       setIsCopied(true);
+ 60 |       setTimeout(() => setIsCopied(false), copiedDuration);
+ 61 |     });
+ 62 |   };
+ 63 | 
+ 64 |   return { isCopied, copyToClipboard };
+ 65 | };
+ 66 | 
+ 67 | const defaultComponents = memoizeMarkdownComponents({
+ 68 |   h1: ({ className, ...props }) => (
+ 69 |     <h1
+ 70 |       className={cn(
+ 71 |         "mb-8 scroll-m-20 text-4xl font-extrabold tracking-tight last:mb-0",
+ 72 |         className,
+ 73 |       )}
+ 74 |       {...props}
+ 75 |     />
+ 76 |   ),
+ 77 |   h2: ({ className, ...props }) => (
+ 78 |     <h2
+ 79 |       className={cn(
+ 80 |         "mb-4 mt-8 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0 last:mb-0",
+ 81 |         className,
+ 82 |       )}
+ 83 |       {...props}
+ 84 |     />
+ 85 |   ),
+ 86 |   h3: ({ className, ...props }) => (
+ 87 |     <h3
+ 88 |       className={cn(
+ 89 |         "mb-4 mt-6 scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0 last:mb-0",
+ 90 |         className,
+ 91 |       )}
+ 92 |       {...props}
+ 93 |     />
+ 94 |   ),
+ 95 |   h4: ({ className, ...props }) => (
+ 96 |     <h4
+ 97 |       className={cn(
+ 98 |         "mb-4 mt-6 scroll-m-20 text-xl font-semibold tracking-tight first:mt-0 last:mb-0",
+ 99 |         className,
+100 |       )}
+101 |       {...props}
+102 |     />
+103 |   ),
+104 |   h5: ({ className, ...props }) => (
+105 |     <h5
+106 |       className={cn(
+107 |         "my-4 text-lg font-semibold first:mt-0 last:mb-0",
+108 |         className,
+109 |       )}
+110 |       {...props}
+111 |     />
+112 |   ),
+113 |   h6: ({ className, ...props }) => (
+114 |     <h6
+115 |       className={cn("my-4 font-semibold first:mt-0 last:mb-0", className)}
+116 |       {...props}
+117 |     />
+118 |   ),
+119 |   p: ({ className, ...props }) => (
+120 |     <p
+121 |       className={cn("mb-5 mt-5 leading-7 first:mt-0 last:mb-0", className)}
+122 |       {...props}
+123 |     />
+124 |   ),
+125 |   a: ({ className, ...props }) => (
+126 |     <a
+127 |       className={cn(
+128 |         "text-primary font-medium underline underline-offset-4",
+129 |         className,
+130 |       )}
+131 |       {...props}
+132 |     />
+133 |   ),
+134 |   blockquote: ({ className, ...props }) => (
+135 |     <blockquote
+136 |       className={cn("border-l-2 pl-6 italic", className)}
+137 |       {...props}
+138 |     />
+139 |   ),
+140 |   ul: ({ className, ...props }) => (
+141 |     <ul
+142 |       className={cn("my-5 ml-6 list-disc [&>li]:mt-2", className)}
+143 |       {...props}
+144 |     />
+145 |   ),
+146 |   ol: ({ className, ...props }) => (
+147 |     <ol
+148 |       className={cn("my-5 ml-6 list-decimal [&>li]:mt-2", className)}
+149 |       {...props}
+150 |     />
+151 |   ),
+152 |   hr: ({ className, ...props }) => (
+153 |     <hr className={cn("my-5 border-b", className)} {...props} />
+154 |   ),
+155 |   table: ({ className, ...props }) => (
+156 |     <table
+157 |       className={cn(
+158 |         "my-5 w-full border-separate border-spacing-0 overflow-y-auto",
+159 |         className,
+160 |       )}
+161 |       {...props}
+162 |     />
+163 |   ),
+164 |   th: ({ className, ...props }) => (
+165 |     <th
+166 |       className={cn(
+167 |         "bg-muted px-4 py-2 text-left font-bold first:rounded-tl-lg last:rounded-tr-lg [&[align=center]]:text-center [&[align=right]]:text-right",
+168 |         className,
+169 |       )}
+170 |       {...props}
+171 |     />
+172 |   ),
+173 |   td: ({ className, ...props }) => (
+174 |     <td
+175 |       className={cn(
+176 |         "border-b border-l px-4 py-2 text-left last:border-r [&[align=center]]:text-center [&[align=right]]:text-right",
+177 |         className,
+178 |       )}
+179 |       {...props}
+180 |     />
+181 |   ),
+182 |   tr: ({ className, ...props }) => (
+183 |     <tr
+184 |       className={cn(
+185 |         "m-0 border-b p-0 first:border-t [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg",
+186 |         className,
+187 |       )}
+188 |       {...props}
+189 |     />
+190 |   ),
+191 |   sup: ({ className, ...props }) => (
+192 |     <sup
+193 |       className={cn("[&>a]:text-xs [&>a]:no-underline", className)}
+194 |       {...props}
+195 |     />
+196 |   ),
+197 |   pre: ({ className, ...props }) => (
+198 |     <pre
+199 |       className={cn(
+200 |         "overflow-x-auto rounded-b-lg bg-black p-4 text-white",
+201 |         className,
+202 |       )}
+203 |       {...props}
+204 |     />
+205 |   ),
+206 |   code: function Code({ className, ...props }) {
+207 |     const isCodeBlock = useIsMarkdownCodeBlock();
+208 |     return (
+209 |       <code
+210 |         className={cn(
+211 |           !isCodeBlock && "bg-muted rounded border font-semibold",
+212 |           className,
+213 |         )}
+214 |         {...props}
+215 |       />
+216 |     );
+217 |   },
+218 |   CodeHeader,
+219 | });
+220 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/assistant-ui/thread.tsx:
+--------------------------------------------------------------------------------
+  1 | import {
+  2 |   ActionBarPrimitive,
+  3 |   BranchPickerPrimitive,
+  4 |   ComposerPrimitive,
+  5 |   MessagePrimitive,
+  6 |   ThreadPrimitive,
+  7 | } from "@assistant-ui/react";
+  8 | import type { FC } from "react";
+  9 | import {
+ 10 |   ArrowDownIcon,
+ 11 |   CheckIcon,
+ 12 |   ChevronLeftIcon,
+ 13 |   ChevronRightIcon,
+ 14 |   CopyIcon,
+ 15 |   PencilIcon,
+ 16 |   RefreshCwIcon,
+ 17 |   SendHorizontalIcon,
+ 18 | } from "lucide-react";
+ 19 | import { cn } from "@/lib/utils";
+ 20 | 
+ 21 | import { Button } from "@/components/ui/button";
+ 22 | import { MarkdownText } from "@/components/assistant-ui/markdown-text";
+ 23 | import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
+ 24 | 
+ 25 | export const Thread: FC = () => {
+ 26 |   return (
+ 27 |     <ThreadPrimitive.Root
+ 28 |       className="bg-background box-border flex h-full flex-col overflow-hidden"
+ 29 |       style={{
+ 30 |         ["--thread-max-width" as string]: "42rem",
+ 31 |       }}
+ 32 |     >
+ 33 |       <ThreadPrimitive.Viewport className="flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8">
+ 34 |         <ThreadWelcome />
+ 35 | 
+ 36 |         <ThreadPrimitive.Messages
+ 37 |           components={{
+ 38 |             UserMessage: UserMessage,
+ 39 |             EditComposer: EditComposer,
+ 40 |             AssistantMessage: AssistantMessage,
+ 41 |           }}
+ 42 |         />
+ 43 | 
+ 44 |         <ThreadPrimitive.If empty={false}>
+ 45 |           <div className="min-h-8 flex-grow" />
+ 46 |         </ThreadPrimitive.If>
+ 47 | 
+ 48 |         <div className="sticky bottom-0 mt-3 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-4">
+ 49 |           <ThreadScrollToBottom />
+ 50 |           <Composer />
+ 51 |         </div>
+ 52 |       </ThreadPrimitive.Viewport>
+ 53 |     </ThreadPrimitive.Root>
+ 54 |   );
+ 55 | };
+ 56 | 
+ 57 | const ThreadScrollToBottom: FC = () => {
+ 58 |   return (
+ 59 |     <ThreadPrimitive.ScrollToBottom asChild>
+ 60 |       <TooltipIconButton
+ 61 |         tooltip="Scroll to bottom"
+ 62 |         variant="outline"
+ 63 |         className="absolute -top-8 rounded-full disabled:invisible"
+ 64 |       >
+ 65 |         <ArrowDownIcon />
+ 66 |       </TooltipIconButton>
+ 67 |     </ThreadPrimitive.ScrollToBottom>
+ 68 |   );
+ 69 | };
+ 70 | 
+ 71 | const ThreadWelcome: FC = () => {
+ 72 |   return (
+ 73 |     <ThreadPrimitive.Empty>
+ 74 |       <div className="flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
+ 75 |         <div className="flex w-full flex-grow flex-col items-center justify-center">
+ 76 |           <p className="mt-4 font-medium">How can I help you today?</p>
+ 77 |         </div>
+ 78 |         <ThreadWelcomeSuggestions />
+ 79 |       </div>
+ 80 |     </ThreadPrimitive.Empty>
+ 81 |   );
+ 82 | };
+ 83 | 
+ 84 | const ThreadWelcomeSuggestions: FC = () => {
+ 85 |   return (
+ 86 |     <div className="mt-3 flex w-full items-stretch justify-center gap-4">
+ 87 |       <ThreadPrimitive.Suggestion
+ 88 |         className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
+ 89 |         prompt="What is the weather in Tokyo?"
+ 90 |         method="replace"
+ 91 |         autoSend
+ 92 |       >
+ 93 |         <span className="line-clamp-2 text-ellipsis text-sm font-semibold">
+ 94 |           What is the weather in Tokyo?
+ 95 |         </span>
+ 96 |       </ThreadPrimitive.Suggestion>
+ 97 |       <ThreadPrimitive.Suggestion
+ 98 |         className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
+ 99 |         prompt="What is assistant-ui?"
+100 |         method="replace"
+101 |         autoSend
+102 |       >
+103 |         <span className="line-clamp-2 text-ellipsis text-sm font-semibold">
+104 |           What is assistant-ui?
+105 |         </span>
+106 |       </ThreadPrimitive.Suggestion>
+107 |     </div>
+108 |   );
+109 | };
+110 | 
+111 | const Composer: FC = () => {
+112 |   return (
+113 |     <ComposerPrimitive.Root className="focus-within:border-ring/20 flex w-full flex-wrap items-end rounded-lg border bg-inherit px-2.5 shadow-sm transition-colors ease-in">
+114 |       <ComposerPrimitive.Input
+115 |         rows={1}
+116 |         autoFocus
+117 |         placeholder="Write a message..."
+118 |         className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
+119 |       />
+120 |       <ComposerAction />
+121 |     </ComposerPrimitive.Root>
+122 |   );
+123 | };
+124 | 
+125 | const ComposerAction: FC = () => {
+126 |   return (
+127 |     <>
+128 |       <ThreadPrimitive.If running={false}>
+129 |         <ComposerPrimitive.Send asChild>
+130 |           <TooltipIconButton
+131 |             tooltip="Send"
+132 |             variant="default"
+133 |             className="my-2.5 size-8 p-2 transition-opacity ease-in"
+134 |           >
+135 |             <SendHorizontalIcon />
+136 |           </TooltipIconButton>
+137 |         </ComposerPrimitive.Send>
+138 |       </ThreadPrimitive.If>
+139 |       <ThreadPrimitive.If running>
+140 |         <ComposerPrimitive.Cancel asChild>
+141 |           <TooltipIconButton
+142 |             tooltip="Cancel"
+143 |             variant="default"
+144 |             className="my-2.5 size-8 p-2 transition-opacity ease-in"
+145 |           >
+146 |             <CircleStopIcon />
+147 |           </TooltipIconButton>
+148 |         </ComposerPrimitive.Cancel>
+149 |       </ThreadPrimitive.If>
+150 |     </>
+151 |   );
+152 | };
+153 | 
+154 | const UserMessage: FC = () => {
+155 |   return (
+156 |     <MessagePrimitive.Root className="grid w-full max-w-[var(--thread-max-width)] auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-2 py-4 [&:where(>*)]:col-start-2">
+157 |       <UserActionBar />
+158 | 
+159 |       <div className="bg-muted text-foreground col-start-2 row-start-2 max-w-[calc(var(--thread-max-width)*0.8)] break-words rounded-3xl px-5 py-2.5">
+160 |         <MessagePrimitive.Parts />
+161 |       </div>
+162 | 
+163 |       <BranchPicker className="col-span-full col-start-1 row-start-3 -mr-1 justify-end" />
+164 |     </MessagePrimitive.Root>
+165 |   );
+166 | };
+167 | 
+168 | const UserActionBar: FC = () => {
+169 |   return (
+170 |     <ActionBarPrimitive.Root
+171 |       hideWhenRunning
+172 |       autohide="not-last"
+173 |       className="col-start-1 row-start-2 mr-3 mt-2.5 flex flex-col items-end"
+174 |     >
+175 |       <ActionBarPrimitive.Edit asChild>
+176 |         <TooltipIconButton tooltip="Edit">
+177 |           <PencilIcon />
+178 |         </TooltipIconButton>
+179 |       </ActionBarPrimitive.Edit>
+180 |     </ActionBarPrimitive.Root>
+181 |   );
+182 | };
+183 | 
+184 | const EditComposer: FC = () => {
+185 |   return (
+186 |     <ComposerPrimitive.Root className="bg-muted my-4 flex w-full max-w-[var(--thread-max-width)] flex-col gap-2 rounded-xl">
+187 |       <ComposerPrimitive.Input className="text-foreground flex h-8 w-full resize-none bg-transparent p-4 pb-0 outline-none" />
+188 | 
+189 |       <div className="mx-3 mb-3 flex items-center justify-center gap-2 self-end">
+190 |         <ComposerPrimitive.Cancel asChild>
+191 |           <Button variant="ghost">Cancel</Button>
+192 |         </ComposerPrimitive.Cancel>
+193 |         <ComposerPrimitive.Send asChild>
+194 |           <Button>Send</Button>
+195 |         </ComposerPrimitive.Send>
+196 |       </div>
+197 |     </ComposerPrimitive.Root>
+198 |   );
+199 | };
+200 | 
+201 | const AssistantMessage: FC = () => {
+202 |   return (
+203 |     <MessagePrimitive.Root className="relative grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] py-4">
+204 |       <div className="text-foreground col-span-2 col-start-2 row-start-1 my-1.5 max-w-[calc(var(--thread-max-width)*0.8)] break-words leading-7">
+205 |         <MessagePrimitive.Parts components={{ Text: MarkdownText }} />
+206 |       </div>
+207 | 
+208 |       <AssistantActionBar />
+209 | 
+210 |       <BranchPicker className="col-start-2 row-start-2 -ml-2 mr-2" />
+211 |     </MessagePrimitive.Root>
+212 |   );
+213 | };
+214 | 
+215 | const AssistantActionBar: FC = () => {
+216 |   return (
+217 |     <ActionBarPrimitive.Root
+218 |       hideWhenRunning
+219 |       autohide="not-last"
+220 |       autohideFloat="single-branch"
+221 |       className="text-muted-foreground data-[floating]:bg-background col-start-3 row-start-2 -ml-1 flex gap-1 data-[floating]:absolute data-[floating]:rounded-md data-[floating]:border data-[floating]:p-1 data-[floating]:shadow-sm"
+222 |     >
+223 |       <ActionBarPrimitive.Copy asChild>
+224 |         <TooltipIconButton tooltip="Copy">
+225 |           <MessagePrimitive.If copied>
+226 |             <CheckIcon />
+227 |           </MessagePrimitive.If>
+228 |           <MessagePrimitive.If copied={false}>
+229 |             <CopyIcon />
+230 |           </MessagePrimitive.If>
+231 |         </TooltipIconButton>
+232 |       </ActionBarPrimitive.Copy>
+233 |       <ActionBarPrimitive.Reload asChild>
+234 |         <TooltipIconButton tooltip="Refresh">
+235 |           <RefreshCwIcon />
+236 |         </TooltipIconButton>
+237 |       </ActionBarPrimitive.Reload>
+238 |     </ActionBarPrimitive.Root>
+239 |   );
+240 | };
+241 | 
+242 | const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
+243 |   className,
+244 |   ...rest
+245 | }) => {
+246 |   return (
+247 |     <BranchPickerPrimitive.Root
+248 |       hideWhenSingleBranch
+249 |       className={cn(
+250 |         "text-muted-foreground inline-flex items-center text-xs",
+251 |         className,
+252 |       )}
+253 |       {...rest}
+254 |     >
+255 |       <BranchPickerPrimitive.Previous asChild>
+256 |         <TooltipIconButton tooltip="Previous">
+257 |           <ChevronLeftIcon />
+258 |         </TooltipIconButton>
+259 |       </BranchPickerPrimitive.Previous>
+260 |       <span className="font-medium">
+261 |         <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
+262 |       </span>
+263 |       <BranchPickerPrimitive.Next asChild>
+264 |         <TooltipIconButton tooltip="Next">
+265 |           <ChevronRightIcon />
+266 |         </TooltipIconButton>
+267 |       </BranchPickerPrimitive.Next>
+268 |     </BranchPickerPrimitive.Root>
+269 |   );
+270 | };
+271 | 
+272 | const CircleStopIcon = () => {
+273 |   return (
+274 |     <svg
+275 |       xmlns="http://www.w3.org/2000/svg"
+276 |       viewBox="0 0 16 16"
+277 |       fill="currentColor"
+278 |       width="16"
+279 |       height="16"
+280 |     >
+281 |       <rect width="10" height="10" x="3" y="3" rx="2" />
+282 |     </svg>
+283 |   );
+284 | };
+285 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/assistant-ui/tooltip-icon-button.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use client";
+ 2 | 
+ 3 | import { ComponentPropsWithoutRef, forwardRef } from "react";
+ 4 | 
+ 5 | import {
+ 6 |   Tooltip,
+ 7 |   TooltipContent,
+ 8 |   TooltipTrigger,
+ 9 | } from "@/components/ui/tooltip";
+10 | import { Button } from "@/components/ui/button";
+11 | import { cn } from "@/lib/utils";
+12 | 
+13 | export type TooltipIconButtonProps = ComponentPropsWithoutRef<typeof Button> & {
+14 |   tooltip: string;
+15 |   side?: "top" | "bottom" | "left" | "right";
+16 | };
+17 | 
+18 | export const TooltipIconButton = forwardRef<
+19 |   HTMLButtonElement,
+20 |   TooltipIconButtonProps
+21 | >(({ children, tooltip, side = "bottom", className, ...rest }, ref) => {
+22 |   return (
+23 |     <Tooltip>
+24 |       <TooltipTrigger asChild>
+25 |         <Button
+26 |           variant="ghost"
+27 |           size="icon"
+28 |           {...rest}
+29 |           className={cn("size-6 p-1", className)}
+30 |           ref={ref}
+31 |         >
+32 |           {children}
+33 |           <span className="sr-only">{tooltip}</span>
+34 |         </Button>
+35 |       </TooltipTrigger>
+36 |       <TooltipContent side={side}>{tooltip}</TooltipContent>
+37 |     </Tooltip>
+38 |   );
+39 | });
+40 | 
+41 | TooltipIconButton.displayName = "TooltipIconButton";
+42 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/ui/button.tsx:
+--------------------------------------------------------------------------------
+ 1 | import * as React from "react";
+ 2 | import { Slot } from "@radix-ui/react-slot";
+ 3 | import { cva, type VariantProps } from "class-variance-authority";
+ 4 | 
+ 5 | import { cn } from "@/lib/utils";
+ 6 | 
+ 7 | const buttonVariants = cva(
+ 8 |   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+ 9 |   {
+10 |     variants: {
+11 |       variant: {
+12 |         default:
+13 |           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+14 |         destructive:
+15 |           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+16 |         outline:
+17 |           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+18 |         secondary:
+19 |           "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+20 |         ghost:
+21 |           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+22 |         link: "text-primary underline-offset-4 hover:underline",
+23 |       },
+24 |       size: {
+25 |         default: "h-9 px-4 py-2 has-[>svg]:px-3",
+26 |         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+27 |         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+28 |         icon: "size-9",
+29 |       },
+30 |     },
+31 |     defaultVariants: {
+32 |       variant: "default",
+33 |       size: "default",
+34 |     },
+35 |   },
+36 | );
+37 | 
+38 | function Button({
+39 |   className,
+40 |   variant,
+41 |   size,
+42 |   asChild = false,
+43 |   ...props
+44 | }: React.ComponentProps<"button"> &
+45 |   VariantProps<typeof buttonVariants> & {
+46 |     asChild?: boolean;
+47 |   }) {
+48 |   const Comp = asChild ? Slot : "button";
+49 | 
+50 |   return (
+51 |     <Comp
+52 |       data-slot="button"
+53 |       className={cn(buttonVariants({ variant, size, className }))}
+54 |       {...props}
+55 |     />
+56 |   );
+57 | }
+58 | 
+59 | export { Button, buttonVariants };
+60 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/ui/form.tsx:
+--------------------------------------------------------------------------------
+  1 | "use client";
+  2 | 
+  3 | import * as React from "react";
+  4 | import * as LabelPrimitive from "@radix-ui/react-label";
+  5 | import { Slot } from "@radix-ui/react-slot";
+  6 | import {
+  7 |   Controller,
+  8 |   FormProvider,
+  9 |   useFormContext,
+ 10 |   useFormState,
+ 11 |   type ControllerProps,
+ 12 |   type FieldPath,
+ 13 |   type FieldValues,
+ 14 | } from "react-hook-form";
+ 15 | 
+ 16 | import { cn } from "@/lib/utils";
+ 17 | import { Label } from "@/components/ui/label";
+ 18 | 
+ 19 | const Form = FormProvider;
+ 20 | 
+ 21 | type FormFieldContextValue<
+ 22 |   TFieldValues extends FieldValues = FieldValues,
+ 23 |   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+ 24 | > = {
+ 25 |   name: TName;
+ 26 | };
+ 27 | 
+ 28 | const FormFieldContext = React.createContext<FormFieldContextValue>(
+ 29 |   {} as FormFieldContextValue,
+ 30 | );
+ 31 | 
+ 32 | const FormField = <
+ 33 |   TFieldValues extends FieldValues = FieldValues,
+ 34 |   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+ 35 | >({
+ 36 |   ...props
+ 37 | }: ControllerProps<TFieldValues, TName>) => {
+ 38 |   return (
+ 39 |     <FormFieldContext.Provider value={{ name: props.name }}>
+ 40 |       <Controller {...props} />
+ 41 |     </FormFieldContext.Provider>
+ 42 |   );
+ 43 | };
+ 44 | 
+ 45 | const useFormField = () => {
+ 46 |   const fieldContext = React.useContext(FormFieldContext);
+ 47 |   const itemContext = React.useContext(FormItemContext);
+ 48 |   const { getFieldState } = useFormContext();
+ 49 |   const formState = useFormState({ name: fieldContext.name });
+ 50 |   const fieldState = getFieldState(fieldContext.name, formState);
+ 51 | 
+ 52 |   if (!fieldContext) {
+ 53 |     throw new Error("useFormField should be used within <FormField>");
+ 54 |   }
+ 55 | 
+ 56 |   const { id } = itemContext;
+ 57 | 
+ 58 |   return {
+ 59 |     id,
+ 60 |     name: fieldContext.name,
+ 61 |     formItemId: `${id}-form-item`,
+ 62 |     formDescriptionId: `${id}-form-item-description`,
+ 63 |     formMessageId: `${id}-form-item-message`,
+ 64 |     ...fieldState,
+ 65 |   };
+ 66 | };
+ 67 | 
+ 68 | type FormItemContextValue = {
+ 69 |   id: string;
+ 70 | };
+ 71 | 
+ 72 | const FormItemContext = React.createContext<FormItemContextValue>(
+ 73 |   {} as FormItemContextValue,
+ 74 | );
+ 75 | 
+ 76 | function FormItem({ className, ...props }: React.ComponentProps<"div">) {
+ 77 |   const id = React.useId();
+ 78 | 
+ 79 |   return (
+ 80 |     <FormItemContext.Provider value={{ id }}>
+ 81 |       <div
+ 82 |         data-slot="form-item"
+ 83 |         className={cn("grid gap-2", className)}
+ 84 |         {...props}
+ 85 |       />
+ 86 |     </FormItemContext.Provider>
+ 87 |   );
+ 88 | }
+ 89 | 
+ 90 | function FormLabel({
+ 91 |   className,
+ 92 |   ...props
+ 93 | }: React.ComponentProps<typeof LabelPrimitive.Root>) {
+ 94 |   const { error, formItemId } = useFormField();
+ 95 | 
+ 96 |   return (
+ 97 |     <Label
+ 98 |       data-slot="form-label"
+ 99 |       data-error={!!error}
+100 |       className={cn("data-[error=true]:text-destructive", className)}
+101 |       htmlFor={formItemId}
+102 |       {...props}
+103 |     />
+104 |   );
+105 | }
+106 | 
+107 | function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
+108 |   const { error, formItemId, formDescriptionId, formMessageId } =
+109 |     useFormField();
+110 | 
+111 |   return (
+112 |     <Slot
+113 |       data-slot="form-control"
+114 |       id={formItemId}
+115 |       aria-describedby={
+116 |         !error
+117 |           ? `${formDescriptionId}`
+118 |           : `${formDescriptionId} ${formMessageId}`
+119 |       }
+120 |       aria-invalid={!!error}
+121 |       {...props}
+122 |     />
+123 |   );
+124 | }
+125 | 
+126 | function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
+127 |   const { formDescriptionId } = useFormField();
+128 | 
+129 |   return (
+130 |     <p
+131 |       data-slot="form-description"
+132 |       id={formDescriptionId}
+133 |       className={cn("text-muted-foreground text-sm", className)}
+134 |       {...props}
+135 |     />
+136 |   );
+137 | }
+138 | 
+139 | function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
+140 |   const { error, formMessageId } = useFormField();
+141 |   const body = error ? String(error?.message ?? "") : props.children;
+142 | 
+143 |   if (!body) {
+144 |     return null;
+145 |   }
+146 | 
+147 |   return (
+148 |     <p
+149 |       data-slot="form-message"
+150 |       id={formMessageId}
+151 |       className={cn("text-destructive text-sm", className)}
+152 |       {...props}
+153 |     >
+154 |       {body}
+155 |     </p>
+156 |   );
+157 | }
+158 | 
+159 | export {
+160 |   useFormField,
+161 |   Form,
+162 |   FormItem,
+163 |   FormLabel,
+164 |   FormControl,
+165 |   FormDescription,
+166 |   FormMessage,
+167 |   FormField,
+168 | };
+169 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/ui/input.tsx:
+--------------------------------------------------------------------------------
+ 1 | import * as React from "react";
+ 2 | 
+ 3 | import { cn } from "@/lib/utils";
+ 4 | 
+ 5 | function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+ 6 |   return (
+ 7 |     <input
+ 8 |       type={type}
+ 9 |       data-slot="input"
+10 |       className={cn(
+11 |         "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input shadow-xs flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base outline-none transition-[color,box-shadow] file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+12 |         "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+13 |         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+14 |         className,
+15 |       )}
+16 |       {...props}
+17 |     />
+18 |   );
+19 | }
+20 | 
+21 | export { Input };
+22 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/ui/label.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use client";
+ 2 | 
+ 3 | import * as React from "react";
+ 4 | import * as LabelPrimitive from "@radix-ui/react-label";
+ 5 | 
+ 6 | import { cn } from "@/lib/utils";
+ 7 | 
+ 8 | function Label({
+ 9 |   className,
+10 |   ...props
+11 | }: React.ComponentProps<typeof LabelPrimitive.Root>) {
+12 |   return (
+13 |     <LabelPrimitive.Root
+14 |       data-slot="label"
+15 |       className={cn(
+16 |         "flex select-none items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+17 |         className,
+18 |       )}
+19 |       {...props}
+20 |     />
+21 |   );
+22 | }
+23 | 
+24 | export { Label };
+25 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/ui/resizable.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use client";
+ 2 | 
+ 3 | import * as React from "react";
+ 4 | import { GripVerticalIcon } from "lucide-react";
+ 5 | import * as ResizablePrimitive from "react-resizable-panels";
+ 6 | 
+ 7 | import { cn } from "@/lib/utils";
+ 8 | 
+ 9 | function ResizablePanelGroup({
+10 |   className,
+11 |   ...props
+12 | }: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) {
+13 |   return (
+14 |     <ResizablePrimitive.PanelGroup
+15 |       data-slot="resizable-panel-group"
+16 |       className={cn(
+17 |         "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
+18 |         className,
+19 |       )}
+20 |       {...props}
+21 |     />
+22 |   );
+23 | }
+24 | 
+25 | function ResizablePanel({
+26 |   ...props
+27 | }: React.ComponentProps<typeof ResizablePrimitive.Panel>) {
+28 |   return <ResizablePrimitive.Panel data-slot="resizable-panel" {...props} />;
+29 | }
+30 | 
+31 | function ResizableHandle({
+32 |   withHandle,
+33 |   className,
+34 |   ...props
+35 | }: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & {
+36 |   withHandle?: boolean;
+37 | }) {
+38 |   return (
+39 |     <ResizablePrimitive.PanelResizeHandle
+40 |       data-slot="resizable-handle"
+41 |       className={cn(
+42 |         "bg-border focus-visible:ring-ring focus-visible:outline-hidden relative flex w-px items-center justify-center after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:ring-1 focus-visible:ring-offset-1 data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 data-[panel-group-direction=vertical]:after:translate-x-0 [&[data-panel-group-direction=vertical]>div]:rotate-90",
+43 |         className,
+44 |       )}
+45 |       {...props}
+46 |     >
+47 |       {withHandle && (
+48 |         <div className="bg-border rounded-xs z-10 flex h-4 w-3 items-center justify-center border">
+49 |           <GripVerticalIcon className="size-2.5" />
+50 |         </div>
+51 |       )}
+52 |     </ResizablePrimitive.PanelResizeHandle>
+53 |   );
+54 | }
+55 | 
+56 | export { ResizablePanelGroup, ResizablePanel, ResizableHandle };
+57 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/ui/tabs.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use client";
+ 2 | 
+ 3 | import * as React from "react";
+ 4 | import * as TabsPrimitive from "@radix-ui/react-tabs";
+ 5 | 
+ 6 | import { cn } from "@/lib/utils";
+ 7 | 
+ 8 | function Tabs({
+ 9 |   className,
+10 |   ...props
+11 | }: React.ComponentProps<typeof TabsPrimitive.Root>) {
+12 |   return (
+13 |     <TabsPrimitive.Root
+14 |       data-slot="tabs"
+15 |       className={cn("flex flex-col gap-2", className)}
+16 |       {...props}
+17 |     />
+18 |   );
+19 | }
+20 | 
+21 | function TabsList({
+22 |   className,
+23 |   ...props
+24 | }: React.ComponentProps<typeof TabsPrimitive.List>) {
+25 |   return (
+26 |     <TabsPrimitive.List
+27 |       data-slot="tabs-list"
+28 |       className={cn(
+29 |         "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+30 |         className,
+31 |       )}
+32 |       {...props}
+33 |     />
+34 |   );
+35 | }
+36 | 
+37 | function TabsTrigger({
+38 |   className,
+39 |   ...props
+40 | }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+41 |   return (
+42 |     <TabsPrimitive.Trigger
+43 |       data-slot="tabs-trigger"
+44 |       className={cn(
+45 |         "data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-transparent px-2 py-1 text-sm font-medium transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+46 |         className,
+47 |       )}
+48 |       {...props}
+49 |     />
+50 |   );
+51 | }
+52 | 
+53 | function TabsContent({
+54 |   className,
+55 |   ...props
+56 | }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+57 |   return (
+58 |     <TabsPrimitive.Content
+59 |       data-slot="tabs-content"
+60 |       className={cn("flex-1 outline-none", className)}
+61 |       {...props}
+62 |     />
+63 |   );
+64 | }
+65 | 
+66 | export { Tabs, TabsList, TabsTrigger, TabsContent };
+67 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/components/ui/tooltip.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use client";
+ 2 | 
+ 3 | import * as React from "react";
+ 4 | import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+ 5 | 
+ 6 | import { cn } from "@/lib/utils";
+ 7 | 
+ 8 | function TooltipProvider({
+ 9 |   delayDuration = 0,
+10 |   ...props
+11 | }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+12 |   return (
+13 |     <TooltipPrimitive.Provider
+14 |       data-slot="tooltip-provider"
+15 |       delayDuration={delayDuration}
+16 |       {...props}
+17 |     />
+18 |   );
+19 | }
+20 | 
+21 | function Tooltip({
+22 |   ...props
+23 | }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+24 |   return (
+25 |     <TooltipProvider>
+26 |       <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+27 |     </TooltipProvider>
+28 |   );
+29 | }
+30 | 
+31 | function TooltipTrigger({
+32 |   ...props
+33 | }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+34 |   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
+35 | }
+36 | 
+37 | function TooltipContent({
+38 |   className,
+39 |   sideOffset = 0,
+40 |   children,
+41 |   ...props
+42 | }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+43 |   return (
+44 |     <TooltipPrimitive.Portal>
+45 |       <TooltipPrimitive.Content
+46 |         data-slot="tooltip-content"
+47 |         sideOffset={sideOffset}
+48 |         className={cn(
+49 |           "bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-[--radix-tooltip-content-transform-origin] text-balance rounded-md px-3 py-1.5 text-xs",
+50 |           className,
+51 |         )}
+52 |         {...props}
+53 |       >
+54 |         {children}
+55 |         <TooltipPrimitive.Arrow className="bg-primary fill-primary z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
+56 |       </TooltipPrimitive.Content>
+57 |     </TooltipPrimitive.Portal>
+58 |   );
+59 | }
+60 | 
+61 | export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+62 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/eslint.config.ts:
+--------------------------------------------------------------------------------
+1 | export { default } from "@assistant-ui/x-buildutils/eslint";
+2 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/lib/submitSignup.tsx:
+--------------------------------------------------------------------------------
+ 1 | "use server";
+ 2 | 
+ 3 | export const submitSignup = async (data: object) => {
+ 4 |   const res = await fetch(process.env["ASSISTANT_UI_SUBMIT_SIGNUP_ENDPOINT"]!, {
+ 5 |     method: "POST",
+ 6 |     headers: {
+ 7 |       "Content-Type": "application/json",
+ 8 |     },
+ 9 |     body: JSON.stringify(data),
+10 |   });
+11 |   return res.json();
+12 | };
+13 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/lib/utils.ts:
+--------------------------------------------------------------------------------
+1 | import { type ClassValue, clsx } from "clsx";
+2 | import { twMerge } from "tailwind-merge";
+3 | 
+4 | export function cn(...inputs: ClassValue[]) {
+5 |   return twMerge(clsx(inputs));
+6 | }
+7 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/next-env.d.ts:
+--------------------------------------------------------------------------------
+1 | /// <reference types="next" />
+2 | /// <reference types="next/image-types/global" />
+3 | 
+4 | // NOTE: This file should not be edited
+5 | // see https://nextjs.org/docs/app/api-reference/config/typescript for more information.
+6 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/next.config.ts:
+--------------------------------------------------------------------------------
+1 | import type { NextConfig } from "next";
+2 | 
+3 | const nextConfig: NextConfig = {
+4 |   /* config options here */
+5 | };
+6 | 
+7 | export default nextConfig;
+8 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/package.json:
+--------------------------------------------------------------------------------
+ 1 | {
+ 2 |   "name": "with-react-hook-form",
+ 3 |   "version": "0.1.0",
+ 4 |   "private": true,
+ 5 |   "scripts": {
+ 6 |     "dev": "next dev --turbo",
+ 7 |     "build": "next build",
+ 8 |     "start": "next start",
+ 9 |     "lint": "next lint"
+10 |   },
+11 |   "dependencies": {
+12 |     "@ai-sdk/openai": "^1.3.22",
+13 |     "@assistant-ui/react": "workspace:*",
+14 |     "@assistant-ui/react-ai-sdk": "workspace:*",
+15 |     "@assistant-ui/react-hook-form": "workspace:*",
+16 |     "@assistant-ui/react-markdown": "workspace:*",
+17 |     "@hookform/resolvers": "^5.1.1",
+18 |     "@radix-ui/react-avatar": "^1.1.10",
+19 |     "@radix-ui/react-icons": "^1.3.2",
+20 |     "@radix-ui/react-label": "^2.1.7",
+21 |     "@radix-ui/react-slot": "^1.2.3",
+22 |     "@radix-ui/react-tabs": "^1.1.12",
+23 |     "@radix-ui/react-tooltip": "^1.2.7",
+24 |     "@react-hook/media-query": "^1.1.1",
+25 |     "ai": "^4.3.16",
+26 |     "class-variance-authority": "^0.7.1",
+27 |     "clsx": "^2.1.1",
+28 |     "json-schema-to-zod": "^2.6.1",
+29 |     "lucide-react": "^0.523.0",
+30 |     "next": "15.3.4",
+31 |     "react": "19.1.0",
+32 |     "react-dom": "19.1.0",
+33 |     "react-hook-form": "^7.58.1",
+34 |     "react-resizable-panels": "^3.0.3",
+35 |     "remark-gfm": "^4.0.1",
+36 |     "tailwind-merge": "^3.3.1",
+37 |     "tw-animate-css": "^1.3.4",
+38 |     "zod": "^3.25.67",
+39 |     "zod-to-json-schema": "^3.24.6",
+40 |     "zustand": "^5.0.6"
+41 |   },
+42 |   "devDependencies": {
+43 |     "@assistant-ui/x-buildutils": "workspace:*",
+44 |     "@types/node": "^24",
+45 |     "@types/react": "^19",
+46 |     "@types/react-dom": "^19",
+47 |     "eslint": "^9",
+48 |     "eslint-config-next": "15.3.4",
+49 |     "postcss": "^8",
+50 |     "tailwindcss": "^4.1.11",
+51 |     "typescript": "^5.8.3"
+52 |   }
+53 | }
+54 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/postcss.config.mjs:
+--------------------------------------------------------------------------------
+1 | const config = {
+2 |   plugins: ["@tailwindcss/postcss"],
+3 | };
+4 | 
+5 | export default config;
+6 | 
+
+
+--------------------------------------------------------------------------------
+/examples/with-react-hook-form/tsconfig.json:
+--------------------------------------------------------------------------------
+ 1 | {
+ 2 |   "extends": "@assistant-ui/x-buildutils/ts/base",
+ 3 |   "compilerOptions": {
+ 4 |     "target": "ES6",
+ 5 |     "module": "ESNext",
+ 6 |     "incremental": true,
+ 7 |     "plugins": [
+ 8 |       {
+ 9 |         "name": "next"
+10 |       }
+11 |     ],
+12 |     "allowJs": true,
+13 |     "strictNullChecks": true,
+14 |     "jsx": "preserve",
+15 |     "paths": {
+16 |       "@/*": ["./*"],
+17 |       "@assistant-ui/*": ["../../packages/*/src"],
+18 |       "@assistant-ui/react/*": ["../../packages/react/src/*"],
+19 |       "assistant-stream": ["../../packages/assistant-stream/src"],
+20 |       "assistant-stream/*": ["../../packages/assistant-stream/src/*"]
+21 |     }
+22 |   },
+23 |   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+24 |   "exclude": ["node_modules"]
+25 | }
+26 | 
+
+
+--------------------------------------------------------------------------------

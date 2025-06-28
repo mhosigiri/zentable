@@ -12,6 +12,15 @@ export type SlideUpdate = Database['public']['Tables']['slides']['Update']
 
 export type Profile = Database['public']['Tables']['profiles']['Row']
 
+// Assistant UI / Copilot types
+export type CopilotThread = Database['public']['Tables']['copilot_threads']['Row']
+export type CopilotThreadInsert = Database['public']['Tables']['copilot_threads']['Insert']
+export type CopilotThreadUpdate = Database['public']['Tables']['copilot_threads']['Update']
+
+export type CopilotMessage = Database['public']['Tables']['copilot_messages']['Row']
+export type CopilotMessageInsert = Database['public']['Tables']['copilot_messages']['Insert']
+export type CopilotMessageUpdate = Database['public']['Tables']['copilot_messages']['Update']
+
 // Legacy interface for compatibility with existing code
 export interface DocumentData {
   id: string
@@ -36,7 +45,7 @@ export interface SyncStatus {
   isOnline: boolean
 }
 
-class DatabaseService {
+export class DatabaseService {
   private syncInterval: NodeJS.Timeout | null = null
   private pendingSyncs = new Set<string>()
 
@@ -56,6 +65,213 @@ class DatabaseService {
     }
   }
 
+  // ============ ASSISTANT UI / COPILOT METHODS ============
+  
+  // Create a new thread for a presentation
+  async createThread(presentationId: string, title?: string): Promise<string | null> {
+    try {
+      const threadId = generateUUID()
+      const { error } = await supabase
+        .from('copilot_threads')
+        .insert({
+          id: threadId,
+          presentation_id: presentationId,
+          title: title || 'New conversation'
+        })
+      
+      if (error) {
+        console.error('Error creating thread:', error)
+        return null
+      }
+      
+      return threadId
+    } catch (error) {
+      console.error('Exception creating thread:', error)
+      return null
+    }
+  }
+  
+  // Get all threads for a presentation
+  async getThreads(presentationId: string): Promise<CopilotThread[] | null> {
+    try {
+      const { data, error } = await supabase
+        .from('copilot_threads')
+        .select('*')
+        .eq('presentation_id', presentationId)
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.error('Error getting threads:', error)
+        return null
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Exception getting threads:', error)
+      return null
+    }
+  }
+  
+  // Get a thread by ID
+  async getThread(threadId: string): Promise<CopilotThread | null> {
+    try {
+      const { data, error } = await supabase
+        .from('copilot_threads')
+        .select('*')
+        .eq('id', threadId)
+        .single()
+      
+      if (error) {
+        console.error('Error getting thread:', error)
+        return null
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Exception getting thread:', error)
+      return null
+    }
+  }
+  
+  // Update a thread
+  async updateThread(threadId: string, updates: CopilotThreadUpdate): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('copilot_threads')
+        .update(updates)
+        .eq('id', threadId)
+      
+      if (error) {
+        console.error('Error updating thread:', error)
+        return false
+      }
+      
+      return true
+    } catch (error) {
+      console.error('Exception updating thread:', error)
+      return false
+    }
+  }
+  
+  // Delete a thread and all its messages
+  async deleteThread(threadId: string): Promise<boolean> {
+    try {
+      // First delete all messages in the thread
+      const { error: messagesError } = await supabase
+        .from('copilot_messages')
+        .delete()
+        .eq('thread_id', threadId)
+      
+      if (messagesError) {
+        console.error('Error deleting thread messages:', messagesError)
+        return false
+      }
+      
+      // Then delete the thread itself
+      const { error } = await supabase
+        .from('copilot_threads')
+        .delete()
+        .eq('id', threadId)
+      
+      if (error) {
+        console.error('Error deleting thread:', error)
+        return false
+      }
+      
+      return true
+    } catch (error) {
+      console.error('Exception deleting thread:', error)
+      return false
+    }
+  }
+  
+  // Create a new message in a thread
+  async createMessage(threadId: string, role: string, content: string, toolCalls?: any): Promise<string | null> {
+    try {
+      const messageId = generateUUID()
+      const { error } = await supabase
+        .from('copilot_messages')
+        .insert({
+          id: messageId,
+          thread_id: threadId,
+          role,
+          content,
+          tool_calls: toolCalls
+        })
+      
+      if (error) {
+        console.error('Error creating message:', error)
+        return null
+      }
+      
+      return messageId
+    } catch (error) {
+      console.error('Exception creating message:', error)
+      return null
+    }
+  }
+  
+  // Get all messages for a thread
+  async getMessages(threadId: string): Promise<CopilotMessage[] | null> {
+    try {
+      const { data, error } = await supabase
+        .from('copilot_messages')
+        .select('*')
+        .eq('thread_id', threadId)
+        .order('created_at', { ascending: true })
+      
+      if (error) {
+        console.error('Error getting messages:', error)
+        return null
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Exception getting messages:', error)
+      return null
+    }
+  }
+  
+  // Update a message
+  async updateMessage(messageId: string, updates: CopilotMessageUpdate): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('copilot_messages')
+        .update(updates)
+        .eq('id', messageId)
+      
+      if (error) {
+        console.error('Error updating message:', error)
+        return false
+      }
+      
+      return true
+    } catch (error) {
+      console.error('Exception updating message:', error)
+      return false
+    }
+  }
+  
+  // Delete a message
+  async deleteMessage(messageId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('copilot_messages')
+        .delete()
+        .eq('id', messageId)
+      
+      if (error) {
+        console.error('Error deleting message:', error)
+        return false
+      }
+      
+      return true
+    } catch (error) {
+      console.error('Exception deleting message:', error)
+      return false
+    }
+  }
+  
   // ============ PRESENTATION METHODS ============
 
   async createPresentation(data: {

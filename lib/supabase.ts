@@ -171,6 +171,49 @@ export interface Database {
           style_metadata?: any | null
         }
       }
+      copilot_threads: {
+        Row: {
+          id: string
+          presentation_id: string
+          title: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          presentation_id: string
+          title?: string | null
+        }
+        Update: {
+          id?: string
+          presentation_id?: string
+          title?: string | null
+        }
+      }
+      copilot_messages: {
+        Row: {
+          id: string
+          thread_id: string
+          role: string
+          content: string
+          tool_calls: any | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          thread_id: string
+          role: string
+          content: string
+          tool_calls?: any | null
+        }
+        Update: {
+          id?: string
+          thread_id?: string
+          role?: string
+          content?: string
+          tool_calls?: any | null
+        }
+      }
     }
     Views: {
       slides_with_images: {

@@ -49,3 +49,28 @@ export async function updateSlideContent(slideId: string, content: string): Prom
     return false;
   }
 }
+
+/**
+ * Fetches all slides for a specific presentation
+ * @param presentationId The ID of the presentation
+ * @returns Array of slides or empty array if not found
+ */
+export async function getSlidesByPresentation(presentationId: string): Promise<Tables<'slides'>[]> {
+  try {
+    const { data, error } = await supabase
+      .from('slides')
+      .select('*')
+      .eq('presentation_id', presentationId)
+      .order('position', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching slides by presentation:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Exception when fetching slides by presentation:', error);
+    return [];
+  }
+}
