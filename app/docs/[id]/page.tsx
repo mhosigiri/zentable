@@ -30,9 +30,11 @@ import { db, DocumentData, PresentationUpdate } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
 import { defaultTheme } from '@/lib/themes';
 import { getSlideById } from '@/lib/slides';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import { generateUUID } from '@/lib/uuid';
+import { exportSlidesToPDF } from '@/lib/export';
+import { fetchGeneratedSlide, fetchGeneratedImage } from '@/lib/ai/generation';
+import { useSlideNavigation } from '@/hooks/useSlideNavigation';
+import { usePresentationMode } from '@/hooks/usePresentationMode';
+import { useMyRuntime } from './MyRuntimeProvider';
 
 interface OutlineSection {
   id: string;
@@ -67,17 +69,29 @@ export default function PresentationPage() {
   };
   
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
-  const [slides, setSlides] = useState<SlideData[]>([]);
+  
+  // Replace useState with our new hook
+  const { 
+    slides, 
+    setAllSlides,
+    addSlide,
+    updateSlide,
+    updateSlideById,
+    deleteSlide,
+    duplicateSlide,
+    reorderSlides,
+  } = useMyRuntime();
+  
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlideIndex, setGeneratingSlideIndex] = useState(-1);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
   const [generatingImages, setGeneratingImages] = useState(new Set<number>());
   const [generatingSlides, setGeneratingSlides] = useState(new Set<number>());
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [isAutoScrolling, setIsAutoScrolling] = useState(false); // Prevent conflicts during programmatic scroll
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   
+  const { handleSlideSelect } = useSlideNavigation(slides, currentSlideIndex, setCurrentSlideIndex);
+  const presentationMode = usePresentationMode({ slides, initialSlideIndex: currentSlideIndex });
+
   // Database integration state
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -118,14 +132,12 @@ export default function PresentationPage() {
           const dbTheme = themes.find((t: any) => t.id === data.theme);
           if (dbTheme) {
             themeToUse = dbTheme;
-            console.log('✅ Loading theme from database data (highest priority):', data.theme);
           }
         } else {
           // Fallback to localStorage theme if no database theme
           const localStorageTheme = getThemeForDocument(documentId);
           if (localStorageTheme.id !== defaultTheme.id) {
             themeToUse = localStorageTheme;
-            console.log('✅ Loading theme from localStorage (fallback):', localStorageTheme.id);
           }
         }
         
@@ -134,13 +146,11 @@ export default function PresentationPage() {
         
         // First, try to load existing generated slides
         if (data.generatedSlides && data.generatedSlides.length > 0) {
-          console.log('✅ Loading existing generated slides from localStorage');
-          setSlides(data.generatedSlides);
+          setAllSlides(data.generatedSlides);
         } else if (data.outline) {
           // Only generate slides if none exist
           if (!initRef.current) {
             initRef.current = true;
-            console.log('🔄 No existing slides found, initializing new slides');
             initializeSlides(data.outline, data.cardCount);
           }
         }
@@ -157,7 +167,6 @@ export default function PresentationPage() {
       // Update the internal documentData state to reflect the theme change
       const updatedData = { ...documentData, theme: currentTheme.id };
       setDocumentData(updatedData);
-      console.log('🔄 Updated internal theme state to:', currentTheme.id);
     }
   }, [currentTheme, documentData?.theme]);
 
@@ -166,7 +175,6 @@ export default function PresentationPage() {
     slides.forEach((slide, index) => {
       // If a slide has an image prompt, no image URL, and we're not already generating an image for it...
       if (slide.imagePrompt && !slide.imageUrl && !generatingImages.has(index) && !slide.isGeneratingImage) {
-        console.log(`useEffect trigger: Generating image for slide ${index}`);
         generateSlideImage(slide.imagePrompt, index);
       }
     });
@@ -186,18 +194,20 @@ export default function PresentationPage() {
       // Check if data is too large (over 5MB)
       const sizeInBytes = new Blob([dataString]).size;
       if (sizeInBytes > 5 * 1024 * 1024) {
-        console.warn(`⚠️ Data size (${dataSize}) exceeds 5MB limit. Skipping localStorage save to prevent quota errors.`);
+        // Only warn, not log
         return;
       }
       
       try {
         localStorage.setItem(`document_${documentId}`, dataString);
-        console.log(`💾 Saved document to localStorage (${dataSize})`);
       } catch (error: any) {
+        // Only log errors, not normal saves
+        // eslint-disable-next-line no-console
         console.error(`❌ Failed to save to localStorage (attempted size: ${dataSize}):`, error);
         
         // Handle different types of localStorage errors
         if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+          // eslint-disable-next-line no-console
           console.warn('📦 localStorage quota exceeded. Attempting to clean up old data...');
           
           // Try to free up space by removing old documents
@@ -213,13 +223,12 @@ export default function PresentationPage() {
             // Remove oldest documents first (simple cleanup strategy)
             keysToRemove.slice(0, Math.min(5, keysToRemove.length)).forEach(key => {
               localStorage.removeItem(key);
-              console.log('🗑️ Removed old document:', key);
             });
             
             // Try saving again after cleanup
             localStorage.setItem(`document_${documentId}`, dataString);
-            console.log('✅ Successfully saved after cleanup');
           } catch (cleanupError) {
+            // eslint-disable-next-line no-console
             console.error('❌ Failed to save even after cleanup:', cleanupError);
             
             // Last resort: save only essential data without generated slides
@@ -229,12 +238,15 @@ export default function PresentationPage() {
                 generatedSlides: [] // Remove slides to save space
               };
               localStorage.setItem(`document_${documentId}`, JSON.stringify(essentialData));
+              // eslint-disable-next-line no-console
               console.warn('⚠️ Saved essential data only (without slides) due to storage constraints');
             } catch (finalError) {
+              // eslint-disable-next-line no-console
               console.error('❌ Complete localStorage failure:', finalError);
             }
           }
         } else {
+          // eslint-disable-next-line no-console
           console.error('❌ Non-quota localStorage error:', error);
         }
       }
@@ -251,7 +263,6 @@ export default function PresentationPage() {
 
     const handler = setTimeout(async () => {
       setIsSyncing(true);
-      console.log('🔄 Auto-saving to database...');
       try {
         const presentationUpdates: PresentationUpdate = {
           title: documentData.outline?.title,
@@ -263,8 +274,8 @@ export default function PresentationPage() {
         await db.saveSlides(databaseId, slides);
 
         setLastSavedAt(new Date());
-        console.log('✅ Successfully saved to database.');
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('❌ Failed to save to database:', error);
       } finally {
         setIsSyncing(false);
@@ -284,8 +295,8 @@ export default function PresentationPage() {
           await db.updatePresentation(documentData.databaseId, {
             title: documentData.outline.title
           });
-          console.log('✅ Updated presentation title to:', documentData.outline.title);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.warn('⚠️ Failed to update presentation title:', error);
         }
       }
@@ -294,96 +305,8 @@ export default function PresentationPage() {
     updatePresentationTitle();
   }, [documentData?.outline?.title, documentData?.databaseId]);
 
-  // Phase 2: Auto-detect current slide based on scroll position
-  useEffect(() => {
-    if (slides.length === 0 || isAutoScrolling) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the slide that's most visible in the viewport
-        let mostVisibleSlide = null;
-        let maxVisibility = 0;
-
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > maxVisibility) {
-            maxVisibility = entry.intersectionRatio;
-            mostVisibleSlide = entry.target;
-          }
-        });
-
-        if (mostVisibleSlide) {
-          const slideIndex = parseInt(
-            (mostVisibleSlide as HTMLElement).getAttribute('data-slide-index') || '0'
-          );
-          if (slideIndex !== currentSlideIndex) {
-            setCurrentSlideIndex(slideIndex);
-          }
-        }
-      },
-      {
-        root: null, // Use viewport as root
-        rootMargin: '-20% 0px -20% 0px', // Only consider slides in middle 60% of viewport
-        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] // Multiple thresholds for better detection
-      }
-    );
-
-    // Observe all slide elements
-    const slideElements = document.querySelectorAll('[data-slide-index]');
-    slideElements.forEach((element) => observer.observe(element));
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [slides.length, currentSlideIndex, isAutoScrolling]);
-
-  // Phase 2: Keyboard navigation support
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Only handle arrow keys when not in an input field
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        (event.target as HTMLElement)?.contentEditable === 'true'
-      ) {
-        return;
-      }
-
-      switch (event.key) {
-        case 'ArrowUp':
-        case 'ArrowLeft':
-          event.preventDefault();
-          if (currentSlideIndex > 0) {
-            handleSlideSelect(currentSlideIndex - 1);
-          }
-          break;
-        case 'ArrowDown':
-        case 'ArrowRight':
-          event.preventDefault();
-          if (currentSlideIndex < slides.length - 1) {
-            handleSlideSelect(currentSlideIndex + 1);
-          }
-          break;
-        case 'Home':
-          event.preventDefault();
-          handleSlideSelect(0);
-          break;
-        case 'End':
-          event.preventDefault();
-          handleSlideSelect(slides.length - 1);
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [currentSlideIndex, slides.length]);
-
   // Initialize slides from outline - only create the requested number of slides
   const initializeSlides = (outline: GeneratedOutline, requestedCount: number) => {
-    console.log('✅ Initializing slides for the first time');
-    
     // Only create slides from sections, no automatic title slide
     // Take only the requested number of sections
     const sectionsToUse = outline.sections.slice(0, requestedCount);
@@ -396,7 +319,7 @@ export default function PresentationPage() {
       isGenerating: true
     }));
 
-    setSlides(sectionSlides);
+    setAllSlides(sectionSlides);
     
     // Start generating slides
     generateAllSlides(sectionsToUse, sectionSlides);
@@ -425,61 +348,19 @@ export default function PresentationPage() {
   const generateSlide = async (section: OutlineSection, slideIndex: number) => {
     // Prevent duplicate slide generation
     if (generatingSlides.has(slideIndex)) {
-      console.log('🚫 Already generating slide:', slideIndex, 'skipping duplicate');
       return;
     }
 
-    console.log('🎯 Starting slide generation for:', slideIndex);
     setGeneratingSlides(prev => new Set(prev).add(slideIndex));
 
     try {
-      const response = await fetch('/api/generate-slide', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sectionTitle: section.title,
-          bulletPoints: section.bulletPoints,
-          templateType: section.templateType,
-          style: documentData?.style || 'default',
-          language: documentData?.language || 'en',
-          contentLength: documentData?.contentLength || 'medium',
-          imageStyle: documentData?.imageStyle || 'professional',
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate slide');
-      }
-
-      // Parse JSON response instead of streaming
-      const result = await response.json();
+      const slideData = await fetchGeneratedSlide(section, documentData || {});
       
-      console.log('🤖 LLM Response Data:', JSON.stringify(result, null, 2));
-      
-      if (!result.success || !result.data) {
-        throw new Error('Invalid response format');
-      }
-
-      const slideData = result.data;
-      
-      // Update slide with generated content
-      setSlides(prevSlides => {
-        const newSlides = [...prevSlides];
-        const currentSlide = newSlides[slideIndex];
-        
-        newSlides[slideIndex] = { 
-          ...currentSlide, 
-          ...slideData,
-          isGenerating: false
-        };
-        return newSlides;
-      });
+      updateSlide(slideIndex, { ...slideData, isGenerating: false });
 
       // Generate image if needed
       if (slideData.imagePrompt && !slideData.imageUrl) {
-        console.log('🎯 Generation complete, image will be generated by effect for slide:', slideIndex);
+        // image will be generated by effect
       }
 
       // Remove from generating slides set
@@ -488,7 +369,8 @@ export default function PresentationPage() {
         newSet.delete(slideIndex);
         return newSet;
       });
-          } catch (error) {
+    } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('❌ Slide generation failed for slide:', slideIndex, error);
         
         // Remove from generating slides set
@@ -499,66 +381,34 @@ export default function PresentationPage() {
         });
         
         // Mark slide as failed
-        setSlides(prevSlides => 
-          prevSlides.map((slide, index) => 
-            index === slideIndex 
-              ? { 
-                  ...slide, 
-                  isGenerating: false,
-                  title: section.title,
-                  bulletPoints: section.bulletPoints
-                }
-              : slide
-          )
-        );
+        updateSlide(slideIndex, { 
+          isGenerating: false,
+          title: section.title,
+          bulletPoints: section.bulletPoints
+        });
       }
   };
 
   // Generate image for slide
   const generateSlideImage = async (imagePrompt: string, slideIndex: number) => {
     try {
-      console.log('🎨 Attempting image generation for slide:', slideIndex, 'with prompt:', imagePrompt);
-      
       // Check if already generating this slide's image
       if (generatingImages.has(slideIndex)) {
-        console.log('🚫 Already generating image for slide:', slideIndex);
         return;
       }
-
-      console.log('✅ Proceeding with image generation for slide:', slideIndex);
       
       // Add to generating set
       setGeneratingImages(prev => new Set(prev).add(slideIndex));
       
       // Mark slide as generating image to prevent duplicate calls
-      setSlides(prevSlides => 
-        prevSlides.map((slide, index) => 
-          index === slideIndex 
-            ? { ...slide, isGeneratingImage: true }
-            : slide
-        )
+      updateSlide(slideIndex, { isGeneratingImage: true });
+
+      const { imageUrl } = await fetchGeneratedImage(
+        imagePrompt,
+        slides[slideIndex]?.templateType,
+        documentData?.theme,
+        documentData?.imageStyle
       );
-
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          prompt: imagePrompt,
-          templateType: slides[slideIndex]?.templateType,
-          theme: documentData?.theme,
-          imageStyle: documentData?.imageStyle
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate image');
-      }
-
-      const { imageUrl } = await response.json();
-      
-      console.log('✅ Image generated successfully for slide:', slideIndex);
       
       // Remove from generating set
       setGeneratingImages(prev => {
@@ -568,14 +418,9 @@ export default function PresentationPage() {
       });
       
       // Update slide with generated image
-      setSlides(prevSlides => 
-        prevSlides.map((slide, index) => 
-          index === slideIndex 
-            ? { ...slide, imageUrl, isGeneratingImage: false }
-            : slide
-        )
-      );
+      updateSlide(slideIndex, { imageUrl, isGeneratingImage: false });
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('❌ Image generation failed for slide:', slideIndex, error);
       
       // Remove from generating set
@@ -586,48 +431,30 @@ export default function PresentationPage() {
       });
       
       // Mark as failed
-      setSlides(prevSlides => 
-        prevSlides.map((slide, index) => 
-          index === slideIndex 
-            ? { ...slide, isGeneratingImage: false }
-            : slide
-        )
-      );
+      updateSlide(slideIndex, { isGeneratingImage: false });
     }
   };
 
   // Update slide content
   const updateSlideContent = (slideIndex: number, updates: Partial<SlideData>) => {
-    console.log(`🔄 Updating slide at index ${slideIndex} with local updates`, updates);
-    setSlides(prevSlides => 
-      prevSlides.map((slide, index) => 
-        index === slideIndex 
-          ? { ...slide, ...updates }
-          : slide
-      )
-    );
+    updateSlide(slideIndex, updates);
   };
   
   // New function to update slide content by ID (for AI assistant updates)
   const updateSlideContentById = async (slideId: string, newContent: string) => {
-    console.log(`🤖 AI assistant updating slide with ID ${slideId}`);
-    
     try {
       // Find the slide index by ID
-      const slideIndex = slides.findIndex(slide => slide.id === slideId);
+      const updatedIndex = updateSlideById(slideId, { content: newContent });
       
-      if (slideIndex === -1) {
+      if (updatedIndex === -1) {
+        // eslint-disable-next-line no-console
         console.error(`❌ Could not find slide with ID ${slideId} in local state`);
         return false;
       }
       
-      console.log(`✅ Found slide at index ${slideIndex}, updating content`);
-      
-      // Update local state
-      updateSlideContent(slideIndex, { content: newContent });
-      
       return true;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('❌ Error updating slide by ID:', error);
       return false;
     }
@@ -636,12 +463,11 @@ export default function PresentationPage() {
   // Refresh a single slide from database after approval
   const refreshSlideById = async (slideId: string): Promise<boolean> => {
     try {
-      console.log(`🔄 Refreshing slide from database: ${slideId}`);
-      
       // Get the updated slide from database
       const updatedSlide = await getSlideById(slideId);
       
       if (!updatedSlide) {
+        // eslint-disable-next-line no-console
         console.error('❌ Slide not found in database:', slideId);
         return false;
       }
@@ -650,80 +476,36 @@ export default function PresentationPage() {
       const slideIndex = slides.findIndex(slide => slide.id === slideId);
       
       if (slideIndex === -1) {
+        // eslint-disable-next-line no-console
         console.error('❌ Slide not found in local state:', slideId);
         return false;
       }
       
-      console.log(`✅ Found slide at index ${slideIndex}, refreshing from database`);
-      
       // Update local state with fresh data from database
-      setSlides(prevSlides => 
-        prevSlides.map(slide => 
-          slide.id === slideId ? {
-            ...slide,
-            content: updatedSlide.content || slide.content,
-            title: updatedSlide.title || slide.title
-          } : slide
-        )
-      );
+      updateSlide(slideIndex, {
+        content: updatedSlide.content || undefined, // Use undefined to avoid overwriting with null
+        title: updatedSlide.title || undefined
+      });
       
       return true;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('❌ Error refreshing slide by ID:', error);
       return false;
     }
   };
 
   // Sidebar handlers - Phase 2: Navigation & Selection
-  const handleSlideSelect = (index: number) => {
-    setCurrentSlideIndex(index);
-    setIsAutoScrolling(true);
-    
-    // Smooth scroll to selected slide
-    const slideElement = document.querySelector(`[data-slide-index="${index}"]`);
-    if (slideElement) {
-      slideElement.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center',
-        inline: 'nearest'
-      });
-      
-      // Re-enable auto-detection after scroll completes
-      setTimeout(() => {
-        setIsAutoScrolling(false);
-      }, 1000); // Allow time for smooth scroll to complete
-    } else {
-      setIsAutoScrolling(false);
-    }
-  };
+  // const handleSlideSelect = (index: number) => { ... };
 
   // Phase 3: Slide addition functions
   const addNewSlide = (templateType: string, slideData: Partial<SlideData> = {}, insertIndex?: number) => {
-    const newSlide: SlideData = {
-      id: generateUUID(),
-      templateType,
-      title: slideData.title || 'New Slide',
-      content: slideData.content || '',
-      bulletPoints: slideData.bulletPoints || [],
-      isGenerating: false,
-      ...slideData
-    };
-
-    // Use provided insertIndex or default to after current slide
     const targetIndex = insertIndex !== undefined ? insertIndex : currentSlideIndex + 1;
-    const newSlides = [...slides];
-    newSlides.splice(targetIndex, 0, newSlide);
+    addSlide({ templateType, ...slideData }, targetIndex);
     
-    setSlides(newSlides);
     setCurrentSlideIndex(targetIndex);
-    
-    // Reset insert position
     setInsertAtIndex(null);
-    
-    // Scroll to new slide after a brief delay
-    setTimeout(() => {
-      handleSlideSelect(targetIndex);
-    }, 100);
+    setTimeout(() => handleSlideSelect(targetIndex), 100);
   };
 
   const handleAddSlide = () => {
@@ -767,8 +549,7 @@ export default function PresentationPage() {
       const oldIndex = slides.findIndex(slide => slide.id === active.id);
       const newIndex = slides.findIndex(slide => slide.id === over.id);
       
-      const reorderedSlides = arrayMove(slides, oldIndex, newIndex);
-      setSlides(reorderedSlides);
+      reorderSlides(oldIndex, newIndex);
       
       // Update current slide index if needed
       if (oldIndex === currentSlideIndex) {
@@ -783,8 +564,7 @@ export default function PresentationPage() {
 
   // Sidebar reorder handler
   const handleSidebarReorder = (oldIndex: number, newIndex: number) => {
-    const reorderedSlides = arrayMove(slides, oldIndex, newIndex);
-    setSlides(reorderedSlides);
+    reorderSlides(oldIndex, newIndex);
     
     // Update current slide index if needed
     if (oldIndex === currentSlideIndex) {
@@ -808,7 +588,7 @@ export default function PresentationPage() {
     
     const newSlides = [...slides];
     newSlides.splice(index + 1, 0, duplicatedSlide);
-    setSlides(newSlides);
+    setAllSlides(newSlides);
     
     // Update current slide index if needed
     if (index < currentSlideIndex) {
@@ -819,8 +599,7 @@ export default function PresentationPage() {
   const handleDeleteSlide = (index: number) => {
     if (slides.length <= 1) return; // Don't delete the last slide
     
-    const newSlides = slides.filter((_, i) => i !== index);
-    setSlides(newSlides);
+    deleteSlide(index);
     
     // Update current slide index
     if (index < currentSlideIndex) {
@@ -835,7 +614,7 @@ export default function PresentationPage() {
     if (index === 0) return; // Can't move first slide up
     
     const reorderedSlides = arrayMove(slides, index, index - 1);
-    setSlides(reorderedSlides);
+    setAllSlides(reorderedSlides);
     
     // Update current slide index if needed
     if (index === currentSlideIndex) {
@@ -849,7 +628,7 @@ export default function PresentationPage() {
     if (index === slides.length - 1) return; // Can't move last slide down
     
     const reorderedSlides = arrayMove(slides, index, index + 1);
-    setSlides(reorderedSlides);
+    setAllSlides(reorderedSlides);
     
     // Update current slide index if needed
     if (index === currentSlideIndex) {
@@ -861,16 +640,15 @@ export default function PresentationPage() {
 
   const handleHideSlide = (index: number) => {
     // TODO: Implement hide functionality
-    console.log('Hide slide:', index);
   };
 
   const handleExportSlide = (index: number) => {
     // TODO: Implement export functionality
-    console.log('Export slide:', index);
   };
 
   const handleAIGenerate = async (prompt: string, templateType: string) => {
     setIsGeneratingNewSlide(true);
+    const targetIndex = insertAtIndex !== null ? insertAtIndex : currentSlideIndex + 1;
     
     try {
       // Create placeholder slide
@@ -883,59 +661,23 @@ export default function PresentationPage() {
         isGenerating: true
       };
 
-      const targetIndex = insertAtIndex !== null ? insertAtIndex : currentSlideIndex + 1;
-      const newSlides = [...slides];
-      newSlides.splice(targetIndex, 0, placeholderSlide);
+      addSlide(placeholderSlide, targetIndex);
       
-      setSlides(newSlides);
       setCurrentSlideIndex(targetIndex);
 
-      // Generate slide content using existing API
-      const response = await fetch('/api/generate-slide', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sectionTitle: prompt,
-          bulletPoints: [],
-          templateType: templateType === 'magic' ? 'title-with-bullets' : templateType,
-          style: documentData?.style || 'default',
-          language: documentData?.language || 'en',
-          contentLength: documentData?.contentLength || 'medium',
-          imageStyle: documentData?.imageStyle || 'professional',
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate slide');
-      }
-
-      // Parse JSON response instead of streaming
-      const result = await response.json();
-      
-      if (!result.success || !result.data) {
-        throw new Error('Invalid response format');
-      }
-
-      const slideData = result.data;
+      // Generate slide content using new helper
+      const slideData = await fetchGeneratedSlide({
+        title: prompt,
+        bulletPoints: [],
+        templateType: templateType === 'magic' ? 'title-with-bullets' : templateType,
+      }, documentData || {});
       
       // Update slide with generated content
-      setSlides(prevSlides => 
-        prevSlides.map((slide, index) => 
-          index === targetIndex 
-            ? { 
-                ...slide, 
-                ...slideData,
-                isGenerating: false
-              }
-            : slide
-        )
-      );
+      updateSlide(targetIndex, { ...slideData, isGenerating: false });
 
       // Generate image if needed
       if (slideData.imagePrompt && !slideData.imageUrl) {
-        console.log('🎯 Generation complete, image will be generated by effect for slide:', targetIndex);
+        // image will be generated by effect
       }
 
       setShowAIModal(false);
@@ -949,9 +691,10 @@ export default function PresentationPage() {
       setInsertAtIndex(null);
       
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to generate slide:', error);
       // Remove failed slide
-      setSlides(prevSlides => prevSlides.filter((_, index) => index !== currentSlideIndex + 1));
+      deleteSlide(targetIndex);
     } finally {
       setIsGeneratingNewSlide(false);
     }
@@ -1004,7 +747,6 @@ export default function PresentationPage() {
         // Delete slides that no longer exist in current state
         if (slidesToDelete.length > 0) {
           const idsToDelete = slidesToDelete.map(slide => slide.id);
-          console.log('🗑️ Deleting removed slides:', idsToDelete);
           await supabase
             .from('slides')
             .delete()
@@ -1013,7 +755,6 @@ export default function PresentationPage() {
 
         // Save current slides to database using upsert operation
         if (slides.length > 0) {
-          console.log('💾 Saving slides with upsert operation');
           const slidesBatch = slides.map((slide, i) => ({
             id: slide.id,
             presentation_id: documentData.databaseId,
@@ -1039,12 +780,13 @@ export default function PresentationPage() {
           }
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.warn('Failed to sync slides to database:', error);
       }
 
       setLastSavedAt(new Date());
-      console.log('✅ Presentation synced to database');
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn('⚠️ Database sync failed:', error);
     } finally {
       setIsSyncing(false);
@@ -1116,130 +858,8 @@ export default function PresentationPage() {
 
   // PDF Download functionality
   const handleDownloadPDF = async () => {
-    if (slides.length === 0 || isPdfGenerating) return;
-
-    setIsPdfGenerating(true);
-    
-    try {
-      // Create PDF with 16:9 aspect ratio
-      const pdf = new jsPDF({
-        orientation: 'landscape', // Landscape for presentation slides
-        unit: 'px',
-        format: [1600, 900] // 16:9 aspect ratio at high resolution
-      });
-      
-      const slideElements = document.querySelectorAll('.slide-for-pdf');
-      
-      if (slideElements.length === 0) {
-        // If no slides with the specific class are found, try rendering to canvas manually
-        for (let i = 0; i < slides.length; i++) {
-          // Create temporary slide renderer
-          const slideContainer = document.createElement('div');
-          slideContainer.style.width = '1600px';
-          slideContainer.style.height = '900px';
-          slideContainer.style.position = 'absolute';
-          slideContainer.style.left = '-9999px';
-          slideContainer.className = 'slide-temp-render';
-          document.body.appendChild(slideContainer);
-          
-          // Render slide
-          const slide = slides[i];
-          const slideElement = document.createElement('div');
-          slideElement.className = 'bg-white w-full h-full';
-          slideContainer.appendChild(slideElement);
-          
-          // Wait for the next frame to ensure the slide is rendered
-          await new Promise(resolve => requestAnimationFrame(resolve));
-          
-          // Capture as canvas and add to PDF
-          const canvas = await html2canvas(slideContainer, {
-            scale: 1,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff'
-          });
-          
-          const imgData = canvas.toDataURL('image/jpeg', 0.92);
-          
-          if (i > 0) {
-            pdf.addPage();
-          }
-          pdf.addImage(imgData, 'JPEG', 0, 0, 1600, 900);
-          
-          // Clean up
-          document.body.removeChild(slideContainer);
-        }
-      } else {
-        // Use existing slide elements
-        for (let i = 0; i < slideElements.length; i++) {
-          const slideElement = slideElements[i] as HTMLElement;
-          
-          const canvas = await html2canvas(slideElement, {
-            scale: 1,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff'
-          });
-          
-          const imgData = canvas.toDataURL('image/jpeg', 0.92);
-          
-          if (i > 0) {
-            pdf.addPage();
-          }
-          pdf.addImage(imgData, 'JPEG', 0, 0, 1600, 900);
-        }
-      }
-      
-      // Save the PDF
-      const title = documentData?.outline?.title || 'presentation';
-      const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      pdf.save(`${safeTitle}.pdf`);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    } finally {
-      setIsPdfGenerating(false);
-    }
+    await exportSlidesToPDF(slides, documentData, setIsPdfGenerating);
   };
-
-  // Presentation mode functionality
-  useEffect(() => {
-    if (!isPlaying) return;
-    
-    // Handle full screen presentation mode
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isPlaying) return;
-      
-      switch(e.key) {
-        case 'Escape':
-          setIsPlaying(false);
-          setIsFullScreen(false);
-          break;
-        case 'ArrowRight':
-        case 'ArrowDown':
-        case ' ':
-          // Next slide
-          if (currentSlideIndex < slides.length - 1) {
-            setCurrentSlideIndex(prev => prev + 1);
-          }
-          break;
-        case 'ArrowLeft':
-        case 'ArrowUp':
-        case 'Backspace':
-          // Previous slide
-          if (currentSlideIndex > 0) {
-            setCurrentSlideIndex(prev => prev - 1);
-          }
-          break;
-      }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    setIsFullScreen(true);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isPlaying, currentSlideIndex, slides.length]);
 
   if (!documentData || slides.length === 0) {
     return (
@@ -1255,21 +875,18 @@ export default function PresentationPage() {
   }
 
   // Presentation mode full screen view
-  if (isPlaying && isFullScreen) {
+  if (presentationMode.isPlaying && presentationMode.isFullScreen) {
     return (
       <ThemedLayout>
         <div className="fixed inset-0 bg-black z-50 flex flex-col">
           <div className="bg-black/40 p-2 flex justify-between items-center">
             <h2 className="text-white">
-              {documentData?.outline?.title || 'Presentation'} ({currentSlideIndex + 1}/{slides.length})
+              {documentData?.outline?.title || 'Presentation'} ({presentationMode.currentSlideIndexInPresentation + 1}/{slides.length})
             </h2>
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => {
-                setIsPlaying(false);
-                setIsFullScreen(false);
-              }}
+              onClick={presentationMode.pause}
               className="text-white"
             >
               <X className="w-5 h-5" />
@@ -1279,7 +896,7 @@ export default function PresentationPage() {
           <div className="flex-1 flex items-center justify-center">
             <div className="w-full max-w-6xl aspect-[16/9] mx-auto">
               <SlideRenderer
-                slide={slides[currentSlideIndex]}
+                slide={presentationMode.currentSlideInPresentation}
                 isEditable={false}
               />
             </div>
@@ -1288,16 +905,16 @@ export default function PresentationPage() {
           <div className="bg-black/40 p-3 flex justify-center items-center space-x-4">
             <Button
               variant="ghost"
-              disabled={currentSlideIndex === 0}
-              onClick={() => setCurrentSlideIndex(prev => Math.max(0, prev - 1))}
+              disabled={presentationMode.currentSlideIndexInPresentation === 0}
+              onClick={presentationMode.goToPrevSlide}
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <span className="text-white">{currentSlideIndex + 1} / {slides.length}</span>
+            <span className="text-white">{presentationMode.currentSlideIndexInPresentation + 1} / {slides.length}</span>
             <Button
               variant="ghost"
-              disabled={currentSlideIndex === slides.length - 1}
-              onClick={() => setCurrentSlideIndex(prev => Math.min(slides.length - 1, prev + 1))}
+              disabled={presentationMode.currentSlideIndexInPresentation === slides.length - 1}
+              onClick={presentationMode.goToNextSlide}
             >
               <ChevronRight className="w-5 h-5" />
             </Button>
@@ -1350,11 +967,11 @@ export default function PresentationPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={() => (presentationMode.isPlaying ? presentationMode.pause() : presentationMode.play(currentSlideIndex))}
               className="text-gray-600 hover:text-gray-900"
               title="Present Slides"
             >
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              {presentationMode.isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </Button>
             <Button
               variant="ghost"
@@ -1513,23 +1130,19 @@ export default function PresentationPage() {
           presentationId={documentData.databaseId}
           className="max-w-xs"
           onSlideUpdate={(slideId: string, newContent: string | null) => {
-            console.log(`🤖 AI Assistant requested update for slide ${slideId}`);
-            
             if (!slideId) {
+              // eslint-disable-next-line no-console
               console.error("❌ Invalid slideId for slide update");
               return;
             }
             
             // If newContent is null, this is a refresh request after approval
             if (newContent === null) {
-              console.log("✅ Refreshing slide after approved update:", slideId);
-              
               // Refresh the slide from database
               refreshSlideById(slideId).then(() => {
                 // Find the slide index to scroll to it
                 const slideIndex = slides.findIndex(slide => slide.id === slideId);
                 if (slideIndex !== -1) {
-                  console.log(`📌 Scroll to refreshed slide at index ${slideIndex}`);
                   handleSlideSelect(slideIndex);
                 }
               });
@@ -1538,6 +1151,7 @@ export default function PresentationPage() {
             
             // Otherwise, this is a direct content update (legacy support)
             if (!newContent) {
+              // eslint-disable-next-line no-console
               console.error("❌ Invalid content for slide update");
               return;
             }
@@ -1546,15 +1160,13 @@ export default function PresentationPage() {
             updateSlideContentById(slideId, newContent)
               .then(success => {
                 if (success) {
-                  console.log("✅ Successfully updated slide content in UI for slide ID:", slideId);
-                  
                   // Find the slide index to potentially scroll to it
                   const slideIndex = slides.findIndex(slide => slide.id === slideId);
                   if (slideIndex !== -1) {
-                    console.log(`📌 Scroll to updated slide at index ${slideIndex}`);
                     handleSlideSelect(slideIndex);
                   }
                 } else {
+                  // eslint-disable-next-line no-console
                   console.error("❌ Failed to update slide content in UI");
                 }
               });

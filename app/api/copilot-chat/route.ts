@@ -1,7 +1,7 @@
 import { createAzure } from '@ai-sdk/azure';
-import { streamText, tool } from 'ai';
-import { getSlideById, updateSlideContent } from '@/lib/slides';
-import { z } from 'zod';
+import { streamText } from 'ai';
+import { getSlideById } from '@/lib/slides';
+import { slideTools } from '@/lib/ai/slide-tools';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,83 +11,6 @@ const azureOpenAI = createAzure({
   apiVersion: '2025-01-01-preview',
   resourceName: process.env.AZURE_RESOURCE_NAME,
 });
-
-// Define the updateSlideContent tool using the AI SDK tool helper
-const updateSlideContentTool = tool({
-  description: 'Update the content of a slide with new HTML content',
-  parameters: z.object({
-    slideId: z.string().describe('The ID of the slide to update'),
-    content: z.string().describe('The new HTML content for the slide'),
-  }),
-  execute: async ({ slideId, content }) => {
-    console.log('🔍 Tool called: updateSlideContent');
-    console.log(`📝 SlideID: ${slideId}`);
-    console.log(`📄 Content length: ${content.length} characters`);
-    console.log(`📄 Content preview: ${content.substring(0, 100)}...`);
-    
-    try {
-      // Get existing slide first
-      console.log('🔍 Fetching slide from database...');
-      const slide = await getSlideById(slideId);
-      
-      if (!slide) {
-        console.warn('⚠️ Slide not found with ID:', slideId);
-        return {
-          success: false,
-          error: "Slide not found",
-          slideId
-        };
-      }
-      
-      console.log('✅ Found slide:');
-      console.log(`   - ID: ${slide.id}`);
-      console.log(`   - Original content length: ${slide.content?.length || 0} chars`);
-      console.log(`   - Original content preview: ${slide.content?.substring(0, 100) || '(empty)'}...`);
-      
-      // Update the slide content
-      console.log('🔄 Calling updateSlideContent function...');
-      const success = await updateSlideContent(slideId, content);
-      
-      if (success) {
-        console.log('✅ Database update successful!');
-        
-        // Verify the update by fetching the slide again
-        console.log('🔍 Verifying update by fetching slide again...');
-        const updatedSlide = await getSlideById(slideId);
-        
-        if (updatedSlide && updatedSlide.content === content) {
-          console.log('✅ Verification successful - content matches update');
-        } else if (updatedSlide) {
-          console.warn('⚠️ Verification issue - content doesn\'t match update');
-          console.log(`   - Updated content length: ${updatedSlide.content?.length || 0}`);
-          console.log(`   - Expected content length: ${content.length}`);
-        } else {
-          console.error('❌ Verification failed - could not fetch updated slide');
-        }
-        
-        return {
-          success: true,
-          slideId,
-          message: "Slide content updated successfully"
-        };
-      } else {
-        console.error('❌ Database update returned false');
-        return {
-          success: false,
-          error: "Failed to update slide content",
-          slideId
-        };
-      }
-    } catch (error) {
-      console.error('❌ Exception in updateSlideContent tool:', error);
-      return {
-        success: false,
-        error: "An exception occurred when updating slide content",
-        slideId: slideId
-      };
-    }
-  },
-})
 
 export async function POST(req: Request) {
   try {
@@ -165,7 +88,15 @@ Important: When returning content through the updateSlideContent tool, provide O
       ],
       temperature: 0.7,
       tools: {
-        updateSlideContent: updateSlideContentTool
+        updateSlideContent: slideTools.updateSlideContent,
+        getSlideIdByNumber: slideTools.getSlideIdByNumber,
+        createSlide: slideTools.createSlide,
+        deleteSlide: slideTools.deleteSlide,
+        duplicateSlide: slideTools.duplicateSlide,
+        moveSlide: slideTools.moveSlide,
+        applyTheme: slideTools.applyTheme,
+        updateSlideImage: slideTools.updateSlideImage,
+        changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
       maxSteps: 2, // Allow initial response and tool execution

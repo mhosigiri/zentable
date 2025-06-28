@@ -7,10 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Clock, Edit, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AssistantSlidePreview } from '@/components/assistant-ui/assistant-slide-preview';
+import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
+import { useTheme } from '@/contexts/ThemeContext';
+import { getThemeById } from '@/lib/themes';
 
 // Convert technical tool names to user-friendly descriptions
 const getUserFriendlyToolName = (toolName: string): string => {
   const toolNameMap: Record<string, string> = {
+    'updateSlideImage': 'Updating Slide Image',
+    'applyTheme': 'Applying Theme',
+    'changeSlideTemplate': 'Changing Slide Template',
+    'createSlide': 'Creating Slide',
+    'deleteSlide': 'Deleting Slide',
+    'duplicateSlide': 'Duplicating Slide',
+    'moveSlide': 'Moving Slide',
+    'getSlideContent': 'Viewing Slide Content',
     'updateSlideContent': 'Updating Slide Content',
     'getSlideIdByNumber': 'Getting Slide Content',
     'getSlideById': 'Retrieving Slide',
@@ -36,8 +47,18 @@ interface ToolResultProps {
 
 const getToolIcon = (toolName: string) => {
   switch (toolName) {
+    case 'updateSlideImage':
+    case 'applyTheme':
+    case 'changeSlideTemplate':
     case 'updateSlideContent':
+    case 'createSlide':
+    case 'duplicateSlide':
       return <Edit className="w-4 h-4" />;
+    case 'deleteSlide':
+      return <XCircle className="w-4 h-4" />;
+    case 'moveSlide':
+      return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-move-up-down w-4 h-4"><path d="m8 18 4 4 4-4"/><path d="m8 6 4-4 4 4"/><path d="M12 2v20"/></svg>;
+    case 'getSlideContent':
     case 'getSlideIdByNumber':
       return <Search className="w-4 h-4" />;
     default:
@@ -47,8 +68,18 @@ const getToolIcon = (toolName: string) => {
 
 const getToolColor = (toolName: string) => {
   switch (toolName) {
+    case 'updateSlideImage':
+    case 'applyTheme':
+    case 'changeSlideTemplate':
     case 'updateSlideContent':
+    case 'createSlide':
+    case 'duplicateSlide':
       return 'bg-blue-500';
+    case 'deleteSlide':
+      return 'bg-red-500';
+    case 'moveSlide':
+      return 'bg-yellow-500';
+    case 'getSlideContent':
     case 'getSlideIdByNumber':
       return 'bg-green-500';
     default:
@@ -58,10 +89,47 @@ const getToolColor = (toolName: string) => {
 
 export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
+  const slideManager = useMyRuntime();
+  const { setTheme } = useTheme();
   
-  const handleApprove = () => {
+  const handleApprove = async () => {
     setStatus('approved');
-    onApprove?.(toolCall);
+    
+    const { toolName, result } = toolCall;
+
+    try {
+      if (toolName === 'updateSlideContent' && toolCall.args.slideId && toolCall.args.content) {
+        await slideManager.updateSlideById(toolCall.args.slideId, { content: toolCall.args.content });
+      } else if (toolName === 'createSlide' && result.success) {
+        slideManager.addSlide(result.newSlide, result.newSlide.position);
+      } else if (toolName === 'deleteSlide' && result.success) {
+        const slideIndex = slideManager.slides.findIndex(s => s.id === result.slideId);
+        if (slideIndex !== -1) slideManager.deleteSlide(slideIndex);
+      } else if (toolName === 'duplicateSlide' && result.success) {
+        const slideIndex = slideManager.slides.findIndex(s => s.id === result.originalSlideId);
+        if (slideIndex !== -1) slideManager.duplicateSlide(slideIndex);
+      } else if (toolName === 'moveSlide' && result.success) {
+        const oldIndex = slideManager.slides.findIndex(s => s.id === result.slideId);
+        if (oldIndex !== -1) slideManager.reorderSlides(oldIndex, result.newPosition);
+      } else if (toolName === 'changeSlideTemplate' && result.success) {
+        slideManager.updateSlideById(result.slideId, { templateType: result.newTemplateType });
+      } else if (toolName === 'applyTheme' && result.success) {
+        const theme = getThemeById(result.themeId);
+        if (theme) setTheme(theme);
+      } else if (toolName === 'updateSlideImage' && result.success) {
+        slideManager.updateSlideById(result.slideId, { 
+          imagePrompt: result.imagePrompt,
+          imageUrl: undefined, // Clear existing image to trigger regeneration
+          isGeneratingImage: true 
+        });
+      }
+    } catch (e) {
+      console.error(`Failed to apply ${toolName} on client`, e);
+      setStatus('rejected'); // Revert status on failure
+    }
+
+    // Commenting out server-side callback for testing UI-only updates
+    // onApprove?.(toolCall);
   };
   
   const handleReject = () => {
@@ -70,6 +138,8 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   };
 
   const isUpdateSlideContent = toolCall.toolName === 'updateSlideContent';
+  const isGetSlideContent = toolCall.toolName === 'getSlideContent';
+  const requiresApproval = toolCall.result?.requiresApproval;
   
   return (
     <Card className="my-4 border-l-4 border-l-blue-500">
@@ -122,6 +192,20 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
       
       <CardContent>
         <div className="space-y-3">
+          {/* For slide content viewing */}
+          {isGetSlideContent && toolCall.result?.success && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Slide Preview:</h4>
+              <div className="mb-4">
+                <AssistantSlidePreview 
+                  content={toolCall.result.content || ''} 
+                  title={toolCall.result.title || ''}
+                  templateType={toolCall.result.templateType || 'bullets'}
+                />
+              </div>
+            </div>
+          )}
+
           {/* For slide updates, show content preview */}
           {isUpdateSlideContent && toolCall.args.content && (
             <div>
@@ -136,7 +220,7 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
             </div>
           )}
           {/* Action Buttons */}
-          {status === 'pending' && isUpdateSlideContent && (
+          {status === 'pending' && requiresApproval && (
             <div className="flex gap-2 pt-2">
               <Button 
                 onClick={handleApprove}

@@ -1,8 +1,8 @@
 import { createAzure } from '@ai-sdk/azure';
-import { streamText, tool } from 'ai';
-import { getSlideById, updateSlideContent, getSlidesByPresentation } from '@/lib/slides';
-import { z } from 'zod';
+import { streamText } from 'ai';
+import { getSlidesByPresentation } from '@/lib/slides';
 import { DatabaseService } from '@/lib/database';
+import { slideTools } from '@/lib/ai/slide-tools';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,119 +11,6 @@ const azureOpenAI = createAzure({
   apiKey: process.env.AZURE_OPENAI_API_KEY || process.env.AZURE_API_KEY,
   apiVersion: '2025-01-01-preview',
   resourceName: process.env.AZURE_RESOURCE_NAME,
-});
-
-// Define the updateSlideContent tool using the AI SDK tool helper
-const updateSlideContentTool = tool({
-  description: 'Propose an update to slide content with improved HTML. This will show a preview for user approval.',
-  parameters: z.object({
-    slideId: z.string().describe('The ID of the slide to update'),
-    content: z.string().describe('The new HTML content for the slide'),
-  }),
-  execute: async ({ slideId, content }) => {
-    console.log('🔍 Tool called: updateSlideContent (PREVIEW MODE)');
-    console.log('📝 SlideID:', slideId);
-    console.log('📄 Content length:', content.length, 'characters');
-    console.log('📄 Content preview:', content.substring(0, 100) + '...');
-    
-    try {
-      // Get the current slide to show what we're updating
-      console.log('🔍 Fetching slide from database...');
-      const currentSlide = await getSlideById(slideId);
-      
-      if (!currentSlide) {
-        console.error('❌ Slide not found with ID:', slideId);
-        return {
-          success: false,
-          error: 'Slide not found',
-          slideId
-        };
-      }
-      
-      console.log('✅ Found slide - returning proposed changes for approval');
-      
-      // Return proposed changes without updating database
-      return {
-        success: true,
-        message: 'Slide content update proposed - awaiting approval',
-        slideId,
-        currentContent: currentSlide.content,
-        proposedContent: content,
-        contentLength: content.length,
-        slideTitle: currentSlide.title,
-        requiresApproval: true
-      };
-    } catch (error) {
-      console.error('❌ Exception in updateSlideContent tool:', error);
-      return {
-        success: false,
-        error: "An exception occurred when proposing slide content update",
-        slideId
-      };
-    }
-  },
-});
-
-// Define a tool to get slide ID by slide number
-const getSlideIdByNumberTool = tool({
-  description: 'Get the ID of a slide by its number in the presentation',
-  parameters: z.object({
-    presentationId: z.string().describe('The ID of the presentation'),
-    slideNumber: z.number().describe('The number of the slide (1-based index)'),
-  }),
-  execute: async ({ presentationId, slideNumber }) => {
-    console.log(`🔍 Tool called: getSlideIdByNumber`);
-    console.log(`📝 PresentationID: ${presentationId}`);
-    console.log(`📄 SlideNumber: ${slideNumber}`);
-
-    try {
-      // Get all slides for the presentation
-      const slides = await getSlidesByPresentation(presentationId);
-      
-      if (!slides || slides.length === 0) {
-        console.warn('⚠️ No slides found for presentation:', presentationId);
-        return {
-          success: false,
-          error: "No slides found for this presentation",
-          slideNumber
-        };
-      }
-      
-      console.log(`✅ Found ${slides.length} slides in presentation`);
-      
-      // Slide numbers are 1-based, but array is 0-based
-      const index = slideNumber - 1;
-      if (index < 0 || index >= slides.length) {
-        console.warn(`⚠️ Invalid slide number: ${slideNumber} (total slides: ${slides.length})`);
-        return {
-          success: false,
-          error: `Invalid slide number. Please provide a number between 1 and ${slides.length}`,
-          slideNumber
-        };
-      }
-      
-      const slide = slides[index];
-      console.log(`✅ Found slide at position ${slideNumber}:`);
-      console.log(`   - ID: ${slide.id}`);
-      console.log(`   - Type: ${slide.template_type}`);
-      console.log(`   - Title: ${slide.title || '(no title)'}`);
-      
-      return {
-        success: true,
-        slideId: slide.id,
-        slideNumber,
-        templateType: slide.template_type,
-        title: slide.title || null,
-      };
-    } catch (error) {
-      console.error('❌ Exception in getSlideIdByNumber tool:', error);
-      return {
-        success: false,
-        error: "An exception occurred when fetching slide ID",
-        slideNumber
-      };
-    }
-  }
 });
 
 export async function POST(req: Request) {
@@ -170,8 +57,16 @@ ${presentationContext}
 PRESENTATION ID: ${presentationId}
 
 AVAILABLE TOOLS:
-1. updateSlideContent: Use this to modify a slide's content with improved HTML
-2. getSlideIdByNumber: Use this to get a slide ID when the user references a slide by number (when using this tool, always provide the presentationId parameter)
+1. getSlideContent: Use to get a slide's content for viewing. NEVER use for updates.
+2. updateSlideContent: Use this to modify a slide's content with improved HTML.
+3. getSlideIdByNumber: Use this to get a slide ID when the user references a slide by number (when using this tool, always provide the presentationId parameter)
+4. createSlide: Use this to create a new slide
+5. deleteSlide: Use this to delete a slide
+6. duplicateSlide: Use this to duplicate a slide
+7. moveSlide: Use this to move a slide
+8. applyTheme: Use this to apply a theme to a slide
+9. updateSlideImage: Use this to update a slide's image
+10. changeSlideTemplate: Use this to change a slide's template
 
 IMPORTANT INSTRUCTIONS:
 - ALWAYS explain your plan before using any tools
@@ -186,12 +81,15 @@ WHEN USING TOOLS:
 - After completing the action, summarize what you did.
 
 TOOL USAGE RULES:
+- Use 'getSlideContent' when a user asks to SEE, SHOW, READ, or VIEW a slide's content.
 - CRITICAL: ONLY use the 'updateSlideContent' tool if the user explicitly asks to CHANGE, UPDATE, MODIFY, ADD, or REMOVE content.
 - NEVER use 'updateSlideContent' if the user asks to SEE, SHOW, READ, or VIEW a slide. For these requests, simply get the content and display it in the chat.
+- Example of correct usage for viewing:
+  * User asks: 'what is the content of the second slide?'
+  * GOOD: Use 'getSlideIdByNumber' then 'getSlideContent'. Then display the result in the chat.
 - Example of incorrect usage:
   * User asks: 'what is the content of the second slide?'
   * BAD: Using 'getSlideIdByNumber' then 'updateSlideContent'.
-  * GOOD: Using 'getSlideIdByNumber', then displaying the content in the chat as text.
 
 WHEN DISPLAYING SLIDE CONTENT:
 - ALWAYS present slide content with full HTML tags and styling
@@ -282,11 +180,19 @@ REMINDERS:
       ],
       temperature: 0.7,
       tools: {
-        updateSlideContent: updateSlideContentTool,
-        getSlideIdByNumber: getSlideIdByNumberTool,
+        getSlideContent: slideTools.getSlideContent,
+        updateSlideContent: slideTools.proposeSlideUpdate,
+        getSlideIdByNumber: slideTools.getSlideIdByNumber,
+        createSlide: slideTools.createSlide,
+        deleteSlide: slideTools.deleteSlide,
+        duplicateSlide: slideTools.duplicateSlide,
+        moveSlide: slideTools.moveSlide,
+        applyTheme: slideTools.applyTheme,
+        updateSlideImage: slideTools.updateSlideImage,
+        changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
-      maxSteps: 3, // Allow for conversation, getting slide ID, and updating content
+      maxSteps: 2,
       onFinish: async (completion) => {
         // Save assistant's response to database when the stream finishes
         if (currentThreadId && completion.text) {

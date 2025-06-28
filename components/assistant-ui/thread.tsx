@@ -6,7 +6,6 @@ import {
   ComposerPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
-  ToolCallContentPart,
 } from "@assistant-ui/react";
 import type { FC } from "react";
 import {
@@ -27,7 +26,6 @@ import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarFallback } from "@radix-ui/react-avatar";
 import { ToolResult } from "@/components/assistant-ui/tool-result";
-import { updateSlideContent } from "@/lib/slides";
 
 export const Thread: FC = () => {
   return (
@@ -143,7 +141,7 @@ const ComposerAction: FC = () => {
           </TooltipIconButton>
         </ComposerPrimitive.Send>
       </ThreadPrimitive.If>
-      <ThreadPrimitive.If running>
+      <ThreadPrimitive.If running={true}>
         <ComposerPrimitive.Cancel asChild>
           <TooltipIconButton
             tooltip="Cancel"
@@ -190,17 +188,18 @@ const UserActionBar: FC = () => {
 
 const EditComposer: FC = () => {
   return (
-    <ComposerPrimitive.Root className="bg-muted my-4 flex w-full max-w-[var(--thread-max-width)] flex-col gap-2 rounded-xl">
-      <ComposerPrimitive.Input className="text-foreground flex h-8 w-full resize-none bg-transparent p-4 pb-0 outline-none" />
-
-      <div className="mx-3 mb-3 flex items-center justify-center gap-2 self-end">
-        <ComposerPrimitive.Cancel asChild>
-          <Button variant="ghost">Cancel</Button>
-        </ComposerPrimitive.Cancel>
-        <ComposerPrimitive.Send asChild>
-          <Button>Send</Button>
-        </ComposerPrimitive.Send>
-      </div>
+    <ComposerPrimitive.Root className="flex w-full items-end rounded-lg border bg-inherit p-2.5 shadow-sm">
+      <ComposerPrimitive.Input className="max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-1.5 text-sm outline-none focus:ring-0" />
+      <ComposerPrimitive.Cancel asChild>
+        <TooltipIconButton tooltip="Cancel">
+          <XIcon />
+        </TooltipIconButton>
+      </ComposerPrimitive.Cancel>
+      <ComposerPrimitive.Send asChild>
+        <TooltipIconButton tooltip="Save">
+          <CheckIcon />
+        </TooltipIconButton>
+      </ComposerPrimitive.Send>
     </ComposerPrimitive.Root>
   );
 };
@@ -208,6 +207,8 @@ const EditComposer: FC = () => {
 const AssistantMessage: FC = () => {
   const handleApproveSlideUpdate = async (toolCall: any) => {
     try {
+      // Commenting out database write for testing UI-only updates
+      /*
       const response = await fetch('/api/approve-slide-update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -216,7 +217,7 @@ const AssistantMessage: FC = () => {
           content: toolCall.args.content
         })
       });
-      
+
       const result = await response.json();
       if (result.success) {
         // Trigger slide refresh in parent component
@@ -225,6 +226,8 @@ const AssistantMessage: FC = () => {
           slideId: toolCall.args.slideId
         });
       }
+      */
+      console.log('Database write skipped for testing UI-only updates');
     } catch (error) {
       console.error('Failed to apply slide update:', error);
     }
@@ -233,12 +236,12 @@ const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root className="relative grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] py-4">
       <div className="text-foreground col-span-2 col-start-2 row-start-1 my-1.5 max-w-[calc(var(--thread-max-width)*0.8)] break-words leading-7">
-        <MessagePrimitive.Content 
-          components={{ 
+        <MessagePrimitive.Content
+          components={{
             Text: MarkdownText,
             tools: {
               Fallback: (props: any) => (
-                <ToolResult 
+                <ToolResult
                   toolCall={{
                     toolName: props.toolName,
                     args: props.args,
@@ -248,7 +251,7 @@ const AssistantMessage: FC = () => {
                 />
               )
             }
-          }} 
+          }}
         />
       </div>
 
@@ -316,16 +319,42 @@ const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
   );
 };
 
+// a square icon with a circle in the middle
 const CircleStopIcon = () => {
   return (
     <svg
+      width="1em"
+      height="1em"
+      viewBox="0 0 24 24"
+      fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 16 16"
-      fill="currentColor"
-      width="16"
-      height="16"
     >
-      <rect width="10" height="10" x="3" y="3" rx="2" />
+      <path
+        d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM0 12C0 5.37258 5.37258 0 12 0C18.6274 0 24 5.37258 24 12C24 18.6274 18.6274 24 12 24C5.37258 24 0 18.6274 0 12Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6Z"
+        fill="currentColor"
+      />
     </svg>
   );
 };
+
+const XIcon = () => (
+  <svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M18 6L6 18M6 6l12 12"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

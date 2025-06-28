@@ -1,0 +1,148 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# AI Assistant Chat Architecture Guide
+
+This document provides a complete overview of the AI assistant's architecture. It is intended for developers who need to understand, maintain, or extend the assistant's capabilities by adding new tools.
+
+## High-Level Overview
+
+The AI assistant provides a conversational interface for users to interact with and modify their presentations. It uses a tool-based architecture where the AI can decide to call specific functions (tools) to perform actions, such as updating a slide's content or retrieving information.
+
+The entire system is designed to be modular and maintainable, with a clear separation of concerns between the API layer, tool definitions, and the business logic layer.
+
+## Core Components
+
+1.  **API Route (`assistant-chat`):** The main entry point for all assistant-related requests is the API route located at [`app/api/assistant-chat/route.ts`](mdc:app/api/assistant-chat/route.ts). This route is responsible for handling incoming messages, managing conversation context, and orchestrating the interaction with the AI model.
+
+2.  **Centralized Tool Definitions:** All available tools for the AI assistant are defined and consolidated in a single file: [`lib/ai/slide-tools.ts`](mdc:lib/ai/slide-tools.ts). This is the **single source of truth** for tool implementation.
+
+3.  **Business Logic Layer (`slides.ts`):** The core functions for interacting with the slide data in the database are located in [`lib/slides.ts`](mdc:lib/slides.ts). This file handles all direct Supabase calls, such as fetching, creating, or updating slides.
+
+## Data & Logic Flow
+
+The process from a user sending a message to receiving a response follows these steps:
+
+1.  **Request Initiation:** The frontend sends a POST request to the `/api/assistant-chat` endpoint. The request body contains the user's message history and presentation context.
+2.  **Context Preparation:** The API route [`app/api/assistant-chat/route.ts`](mdc:app/api/assistant-chat/route.ts) receives the request and prepares a detailed system prompt for the AI. This prompt includes the overall presentation context, the presentation ID, and a list of all available tools and their descriptions.
+3.  **AI Model Invocation:** The route calls the Vercel AI SDK's `streamText` function, passing the system prompt, message history, and the `tools` object imported from `lib/ai/slide-tools.ts`.
+4.  **Tool Execution:**
+    *   The AI model processes the request. If it determines that an action is needed, it issues a "tool call" with the specific tool to use and the required parameters.
+    *   The AI SDK intercepts this call and executes the corresponding tool's `execute` function from [`lib/ai/slide-tools.ts`](mdc:lib/ai/slide-tools.ts). **Crucially, the tool's logic then calls the necessary functions from `lib/slides.ts` to perform the actual database operations.**
+    *   **Example**: If the user says "make the title of slide 2 bigger," the AI might first call `getSlideIdByNumber`. Then, its `execute` function would call `updateSlideContent` from `lib/slides.ts` to save the change.
+5.  **Response Generation:** The result of the tool's execution is sent back to the AI model. The model then uses this result to formulate a final, human-readable response, which is streamed back to the user.
+6.  **Approval Flow:** Some tools, like `proposeSlideUpdate`, have a special approval flow. They don't modify the database directly. Instead, they return a structured object with the proposed changes. The frontend receives this object and displays a special UI component, allowing the user to approve or reject the change.
+
+## How to Add a New Tool: A Step-by-Step Guide
+
+Here is the standard procedure for adding a new tool to the assistant.
+
+### Step 1: Define the Tool in the Central Registry
+
+All new tools must be added to [`lib/ai/slide-tools.ts`](mdc:lib/ai/slide-tools.ts).
+
+1.  **Open the file:** Navigate to `lib/ai/slide-tools.ts`.
+2.  **Create the tool definition:** Use the `tool` helper from the Vercel AI SDK. Define a clear `description` and use `zod` to define the `parameters`.
+
+    ```typescript
+    import { tool } from 'ai';
+    import { z } from 'zod';
+    // Import the business logic functions you need
+    import { getSlideById, updateSlideContent } from '@/lib/slides';
+
+    export const yourNewTool = tool({
+      // A clear, concise description for the AI to understand what this tool does.
+      description: 'A brief explanation of what your tool does.',
+
+      // Define the parameters the tool accepts using a Zod schema.
+      parameters: z.object({
+        slideId: z.string().describe('The ID of the slide to act on.'),
+        // ... other parameters
+      }),
+
+      // The main logic of your tool goes inside the `execute` function.
+      execute: async ({ slideId, ... }) => {
+        console.log(`Executing yourNewTool for slide:`, slideId);
+
+        // --- YOUR TOOL'S LOGIC HERE ---
+        // Call functions from the business logic layer (`lib/slides.ts`)
+        // to handle all database interactions.
+        const success = await updateSlideContent(slideId, "new content");
+
+        // Return a result object for the AI.
+        return {
+          success,
+          message: `Successfully executed yourNewTool for ${slideId}.`
+        };
+      },
+    });
+    ```
+*Note: If a corresponding function doesn't exist in [`lib/slides.ts`](mdc:lib/slides.ts), you should add it there first before using it in your tool.*
+
+### Step 2: Export the New Tool
+
+At the bottom of [`lib/ai/slide-tools.ts`](mdc:lib/ai/slide-tools.ts), add your newly created tool to the `slideTools` object.
+
+```typescript
+// ... other tool definitions
+
+export const slideTools = {
+  updateSlideContent: updateSlideContentTool,
+  proposeSlideUpdate: proposeSlideUpdate,
+  getSlideIdByNumber: getSlideIdByNumber,
+  yourNewTool: yourNewTool, // <-- ADD YOUR NEW TOOL HERE
+};
+```
+
+### Step 3: Register the Tool in the API Route
+
+Open [`app/api/assistant-chat/route.ts`](mdc:app/api/assistant-chat/route.ts) and add your new tool to the `tools` object within the `streamText` call. You can either pass the entire `slideTools` object or pick the specific tools needed for that endpoint.
+
+```typescript
+// In app/api/assistant-chat/route.ts
+
+// ...
+
+const result = await streamText({
+  // ... other properties
+  tools: {
+    updateSlideContent: slideTools.proposeSlideUpdate,
+    getSlideIdByNumber: slideTools.getSlideIdByNumber,
+    yourNewTool: slideTools.yourNewTool, // <-- REGISTER YOUR NEW TOOL HERE
+  },
+  // ... other properties
+});
+```
+*Note: If the tool should also be available in the `copilot-chat` route, you must also register it in [`app/api/copilot-chat/route.ts`](mdc:app/api/copilot-chat/route.ts).*
+
+### Step 4: Update the System Prompt
+
+Finally, update the system prompt within [`app/api/assistant-chat/route.ts`](mdc:app/api/assistant-chat/route.ts) to make the AI aware of its new capability. Add a description of the new tool under the `AVAILABLE TOOLS` section. This is crucial for the AI to know when to use your new tool.
+
+That's it! By following these steps, you can seamlessly extend the AI assistant's functionality in a clean and maintainable way.
+
+## Available Tools
+
+The AI assistant has access to the following tools, all defined in [`lib/ai/slide-tools.ts`](mdc:lib/ai/slide-tools.ts):
+
+### Content Management Tools
+1. **`updateSlideContent`** - Modifies the HTML content of an existing slide
+2. **`proposeSlideUpdate`** - Proposes content changes that require user approval (used in assistant-chat)
+
+### Slide Management Tools  
+3. **`createSlide`** - Creates a new slide with specified template type and content
+4. **`deleteSlide`** - Deletes a slide from the presentation (prevents deleting the last slide)
+5. **`duplicateSlide`** - Creates a copy of an existing slide
+6. **`moveSlide`** - Moves a slide to a new position in the presentation
+7. **`changeSlideTemplate`** - Changes the template type of an existing slide while preserving content
+
+### Visual and Theme Tools
+8. **`updateSlideImage`** - Updates or generates a new image for a slide using an image prompt
+9. **`applyTheme`** - Applies a theme to the entire presentation
+
+### Utility Tools
+10. **`getSlideIdByNumber`** - Converts slide numbers (1, 2, 3...) to slide IDs for other tools
+
+Each tool is designed to work with the database layer and automatically sync with the frontend through the existing hybrid sync system.
