@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { AssistantSlidePreview } from '@/components/assistant-ui/assistant-slide-preview';
 import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
 import { useTheme } from '@/contexts/ThemeContext';
-import { getThemeById } from '@/lib/themes';
+import { getThemeById, applyAndPersistTheme } from '@/lib/themes';
 
 // Convert technical tool names to user-friendly descriptions
 const getUserFriendlyToolName = (toolName: string): string => {
@@ -91,6 +92,8 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const slideManager = useMyRuntime();
   const { setTheme } = useTheme();
+  const params = useParams();
+  const documentId = params.id as string;
   
   const handleApprove = async () => {
     setStatus('approved');
@@ -115,7 +118,16 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
         slideManager.updateSlideById(result.slideId, { templateType: result.newTemplateType });
       } else if (toolName === 'applyTheme' && result.success) {
         const theme = getThemeById(result.themeId);
-        if (theme) setTheme(theme);
+        if (theme) {
+          // eslint-disable-next-line no-console
+          console.log(`🎨 Assistant applying theme for documentId: ${documentId}`);
+          
+          // Update the theme context first
+          setTheme(theme, documentId);
+          
+          // Persist the theme change
+          applyAndPersistTheme(theme, documentId);
+        }
       } else if (toolName === 'updateSlideImage' && result.success) {
         slideManager.updateSlideById(result.slideId, { 
           imagePrompt: result.imagePrompt,
@@ -218,6 +230,15 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
                 />
               </div>
             </div>
+          )}
+
+          {/* Previews for other tools */}
+          {toolCall.toolName === 'updateSlideImage' && toolCall.result?.imagePrompt && (
+            <p className="text-sm">Generate image with prompt: <em>"{toolCall.result.imagePrompt}"</em></p>
+          )}
+
+          {toolCall.toolName === 'changeSlideTemplate' && toolCall.result?.slideId && (
+            <p className="text-sm">Change template for slide <code className='text-xs bg-gray-200 p-1 rounded'>{toolCall.result.slideId}</code> to <strong>{toolCall.result.newTemplateType}</strong>?</p>
           )}
           {/* Action Buttons */}
           {status === 'pending' && requiresApproval && (

@@ -335,10 +335,14 @@ export const moveSlide = tool({
   },
 });
 
+const themeListForDescription = themes
+  .map(theme => `- ${theme.name} (ID: ${theme.id})`)
+  .join('\n');
+
 export const applyTheme = tool({
-  description: 'Apply a theme to the presentation.',
+  description: `Apply a theme to the presentation. The user can specify a theme by name. Use the following list to find the correct theme ID. Available themes:\n${themeListForDescription}`,
   parameters: z.object({
-    themeId: z.string().describe('The ID of the theme to apply (e.g., "light", "dark", "professional")'),
+    themeId: z.string().describe('The ID of the theme to apply from the list in the description.'),
   }),
   execute: async ({ themeId }) => {
     const theme = getThemeById(themeId);
