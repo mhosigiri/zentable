@@ -1,7 +1,7 @@
 'use client';
 
 import React, { FC, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Thread } from "@/components/assistant-ui/thread";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
@@ -22,7 +22,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
   // Initialize collapsed state based on screen size
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth >= 1024; // Default to open on larger screens
+      return window.innerWidth >= 1440; // Default to open on larger screens
     }
     return true;
   });
@@ -132,8 +132,12 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
           onClick={() => setIsOpen(true)}
           className="p-3 w-full h-full flex flex-col items-center justify-center hover:bg-white/20 dark:hover:bg-black/20 rounded-xl text-white"
         >
-          <ChevronLeft className="h-5 w-5" />
-          <span className="mt-1 text-xs rotate-90">Assistant</span>
+          <div className="flex flex-col items-center gap-3">
+            <Wand2 className="h-5 w-5 animate-shimmer" />
+            <div className="h-16">
+              <span className="text-xs rotate-90 whitespace-nowrap block origin-center translate-y-5">AI Assistant</span>
+            </div>
+          </div>
         </button>
       )}
         </div>

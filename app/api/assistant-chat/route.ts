@@ -61,15 +61,16 @@ AVAILABLE TOOLS:
 2. updateSlideContent: Use this to modify a slide's content with improved HTML.
 3. getSlideIdByNumber: Use this to get a slide ID when the user references a slide by number (when using this tool, always provide the presentationId parameter)
 4. createSlide: Use this to create a new slide
-5. deleteSlide: Use this to delete a slide
-6. duplicateSlide: Use this to duplicate a slide
-7. moveSlide: Use this to move a slide
-8. applyTheme: Use this to apply a theme to a slide
-9. updateSlideImage: Use this to update a slide's image
-10. changeSlideTemplate: Use this to change a slide's template
+5. createSlideWithAI: Use this to create a new slide with AI-generated content
+6. deleteSlide: Use this to delete a slide
+7. duplicateSlide: Use this to duplicate a slide
+8. moveSlide: Use this to move a slide
+9. applyTheme: Use this to apply a theme to a slide
+10. updateSlideImage: Use this to update a slide's image
+11. changeSlideTemplate: Use this to change a slide's template
 
 IMPORTANT INSTRUCTIONS:
-- ALWAYS explain your plan before using any tools
+- ALWAYS explain your plan before using any tools. DO NOT include code or HTML in your explanations.
 - Clearly state what you're going to do and why before taking action
 - When asked to modify a slide, use getSlideIdByNumber if the user refers to a slide by number 
 - Then use updateSlideContent with the retrieved slideId to make the change
@@ -184,6 +185,7 @@ REMINDERS:
         updateSlideContent: slideTools.proposeSlideUpdate,
         getSlideIdByNumber: slideTools.getSlideIdByNumber,
         createSlide: slideTools.createSlide,
+        createSlideWithAI: slideTools.createSlideWithAI,
         deleteSlide: slideTools.deleteSlide,
         duplicateSlide: slideTools.duplicateSlide,
         moveSlide: slideTools.moveSlide,

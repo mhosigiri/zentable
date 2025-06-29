@@ -4,6 +4,7 @@ import { db } from '@/lib/database';
 import { generateUUID } from '@/lib/uuid';
 import { themes, getThemeById } from '@/lib/themes';
 import { z } from 'zod';
+import { fetchGeneratedSlideForServer } from './generation';
 
 export const getSlideContent = tool({
   description: "Get a slide's full HTML content, title, and template type for 'view only' requests.",
@@ -275,6 +276,65 @@ export const createSlide = tool({
   },
 });
 
+export const createSlideWithAI = tool({
+  description: 'Create a new slide with AI-generated content based on a title and bullet points.',
+  parameters: z.object({
+    presentationId: z.string().describe('The ID of the presentation to add the slide to'),
+    templateType: z.string().describe('The template type for the new slide (e.g., "title-with-bullets", "image-and-text", "two-columns", etc.)'),
+    title: z.string().describe('The title for the new slide - will be used to generate content'),
+    bulletPoints: z.array(z.string()).describe('Key points to include in the slide content'),
+    position: z.number().optional().describe('The position to insert the new slide at (0-indexed)'),
+  }),
+  execute: async ({ presentationId, templateType, title, bulletPoints, position }) => {
+    try {
+      console.log(`🎯 Creating slide with AI. Template: ${templateType}, Title: ${title}`);
+
+      // Combine title and bullet points into a single prompt to align with UI behavior
+      const prompt = `${title}\n\n${bulletPoints.map(bp => `- ${bp}`).join('\n')}`;
+
+      const generatedData = await fetchGeneratedSlideForServer(
+        { 
+          title: prompt, // Use the combined prompt
+          bulletPoints: [], // Send an empty array to ensure title and content are generated
+          templateType 
+        },
+        { style: 'default', language: 'en', contentLength: 'medium', imageStyle: 'professional' }
+      );
+
+      const newSlide = {
+        id: generateUUID(),
+        presentation_id: presentationId,
+        template_type: templateType,
+        title: generatedData.title || title,
+        content: generatedData.content || '',
+        position: position,
+        bulletPoints: generatedData.bulletPoints || bulletPoints,
+        imagePrompt: generatedData.imagePrompt || null,
+        imageUrl: null,
+        isGeneratingImage: !!generatedData.imagePrompt,
+        isHidden: false,
+        isGenerating: false,
+      };
+
+      console.log(`✅ Slide creation successful with template: ${templateType}`);
+
+      return {
+        success: true,
+        message: 'Slide creation proposed with AI-generated content. Ready to be added.',
+        newSlide,
+        requiresApproval: true,
+      };
+    } catch (error) {
+      console.error('❌ Error creating slide with AI:', error);
+      return {
+        success: false,
+        message: 'Failed to create slide with AI-generated content',
+        error: String(error),
+      };
+    }
+  },
+});
+
 export const deleteSlide = tool({
   description: 'Delete a slide from the presentation.',
   parameters: z.object({
@@ -400,6 +460,7 @@ export const slideTools = {
   proposeSlideUpdate: proposeSlideUpdate,
   getSlideIdByNumber: getSlideIdByNumber,
   createSlide: createSlide,
+  createSlideWithAI: createSlideWithAI,
   deleteSlide: deleteSlide,
   duplicateSlide: duplicateSlide,
   moveSlide: moveSlide,

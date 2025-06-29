@@ -30,12 +30,12 @@ import { ToolResult } from "@/components/assistant-ui/tool-result";
 export const Thread: FC = () => {
   return (
     <ThreadPrimitive.Root
-      className="bg-background box-border flex h-full flex-col overflow-hidden"
+      className="bg-white/10 backdrop-blur box-border flex h-full flex-col overflow-hidden rounded-lg border border-white/20 shadow-lg"
       style={{
         ["--thread-max-width" as string]: "42rem",
       }}
     >
-      <ThreadPrimitive.Viewport className="flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8">
+      <ThreadPrimitive.Viewport className="flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8 pb-10">
         <ThreadWelcome />
 
         <ThreadPrimitive.Messages
@@ -50,7 +50,7 @@ export const Thread: FC = () => {
           <div className="min-h-8 flex-grow" />
         </ThreadPrimitive.If>
 
-        <div className="sticky bottom-0 mt-3 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-4">
+        <div className="sticky bottom-0 mt-3 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-6 z-10">
           <ThreadScrollToBottom />
           <Composer />
         </div>
@@ -115,7 +115,7 @@ const ThreadWelcomeSuggestions: FC = () => {
 
 const Composer: FC = () => {
   return (
-    <ComposerPrimitive.Root className="focus-within:border-ring/20 flex w-full flex-wrap items-end rounded-lg border bg-inherit px-2.5 shadow-sm transition-colors ease-in">
+    <ComposerPrimitive.Root className="focus-within:border-white/30 flex w-full flex-wrap items-end rounded-lg border border-white/20 bg-white/10 px-2.5 shadow transition-colors ease-in backdrop-blur">
       <ComposerPrimitive.Input
         rows={1}
         autoFocus
@@ -188,7 +188,7 @@ const UserActionBar: FC = () => {
 
 const EditComposer: FC = () => {
   return (
-    <ComposerPrimitive.Root className="flex w-full items-end rounded-lg border bg-inherit p-2.5 shadow-sm">
+    <ComposerPrimitive.Root className="flex w-full items-end rounded-lg border border-white/20 bg-white/10 p-2.5 shadow backdrop-blur">
       <ComposerPrimitive.Input className="max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-1.5 text-sm outline-none focus:ring-0" />
       <ComposerPrimitive.Cancel asChild>
         <TooltipIconButton tooltip="Cancel">

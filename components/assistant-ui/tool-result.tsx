@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, Edit, Search } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Edit, Search, Wand2, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AssistantSlidePreview } from '@/components/assistant-ui/assistant-slide-preview';
 import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
@@ -19,6 +19,7 @@ const getUserFriendlyToolName = (toolName: string): string => {
     'applyTheme': 'Applying Theme',
     'changeSlideTemplate': 'Changing Slide Template',
     'createSlide': 'Creating Slide',
+    'createSlideWithAI': 'Creating AI-Generated Slide',
     'deleteSlide': 'Deleting Slide',
     'duplicateSlide': 'Duplicating Slide',
     'moveSlide': 'Moving Slide',
@@ -49,16 +50,16 @@ interface ToolResultProps {
 const getToolIcon = (toolName: string) => {
   switch (toolName) {
     case 'updateSlideImage':
+    case 'generateImage':
+      return <Sparkles className="w-4 h-4" />;
     case 'applyTheme':
     case 'changeSlideTemplate':
     case 'updateSlideContent':
     case 'createSlide':
     case 'duplicateSlide':
-      return <Edit className="w-4 h-4" />;
-    case 'deleteSlide':
-      return <XCircle className="w-4 h-4" />;
     case 'moveSlide':
-      return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-move-up-down w-4 h-4"><path d="m8 18 4 4 4-4"/><path d="m8 6 4-4 4 4"/><path d="M12 2v20"/></svg>;
+    case 'deleteSlide':
+      return <Wand2 className="w-4 h-4" />;
     case 'getSlideContent':
     case 'getSlideIdByNumber':
       return <Search className="w-4 h-4" />;
@@ -67,26 +68,7 @@ const getToolIcon = (toolName: string) => {
   }
 };
 
-const getToolColor = (toolName: string) => {
-  switch (toolName) {
-    case 'updateSlideImage':
-    case 'applyTheme':
-    case 'changeSlideTemplate':
-    case 'updateSlideContent':
-    case 'createSlide':
-    case 'duplicateSlide':
-      return 'bg-blue-500';
-    case 'deleteSlide':
-      return 'bg-red-500';
-    case 'moveSlide':
-      return 'bg-yellow-500';
-    case 'getSlideContent':
-    case 'getSlideIdByNumber':
-      return 'bg-green-500';
-    default:
-      return 'bg-gray-500';
-  }
-};
+
 
 export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
@@ -154,15 +136,10 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const requiresApproval = toolCall.result?.requiresApproval;
   
   return (
-    <Card className="my-4 border-l-4 border-l-blue-500">
+    <Card className="my-4 bg-white/10 border border-white/20 rounded-lg backdrop-blur shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
-          <div className={cn(
-            "p-2 rounded-md text-white",
-            getToolColor(toolCall.toolName)
-          )}>
-            {getToolIcon(toolCall.toolName)}
-          </div>
+          {getToolIcon(toolCall.toolName)}
           <div className="flex-1">
             <CardTitle className="text-base font-medium">
               {getUserFriendlyToolName(toolCall.toolName)}
@@ -177,27 +154,10 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
             }
             className="gap-1"
           >
+            {status === 'pending' && !toolCall.result && <Loader2 className="w-3 h-3 animate-spin" />}
+            {status === 'pending' && toolCall.result && <CheckCircle className="w-3 h-3" />}
             {status === 'approved' && <CheckCircle className="w-3 h-3" />}
             {status === 'rejected' && <XCircle className="w-3 h-3" />}
-            {!status && toolCall.result && <CheckCircle className="w-3 h-3" />}
-            {!status && !toolCall.result && (
-              <svg className="w-3 h-3 animate-spin text-gray-400" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                />
-              </svg>
-            )}
           </Badge>
         </div>
       </CardHeader>

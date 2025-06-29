@@ -208,7 +208,7 @@ export function SlidesSidebar({
   // Initialize collapsed state based on screen size
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth < 768; // Default to collapsed on mobile (md breakpoint)
+      return window.innerWidth < 1440; // Default to collapsed on mobile (md breakpoint)
     }
     return false;
   });
