@@ -1,10 +1,18 @@
 import { DatabaseService } from '@/lib/database';
+import { createClient } from '@/lib/supabase/server';
 import { NextRequest } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
     const body = await req.json();
     const { presentationId, title } = body;
     
@@ -15,8 +23,8 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    const db = new DatabaseService();
-    const threadId = await db.createThread(presentationId, title);
+    const db = new DatabaseService(supabase);
+    const threadId = await db.createThread(presentationId, title, user.id);
     
     if (!threadId) {
       return new Response(
@@ -40,6 +48,13 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const presentationId = searchParams.get('presentationId');
     
@@ -50,8 +65,8 @@ export async function GET(req: NextRequest) {
       );
     }
     
-    const db = new DatabaseService();
-    const threads = await db.getThreads(presentationId);
+    const db = new DatabaseService(supabase);
+    const threads = await db.getThreads(presentationId, user.id);
     
     return new Response(
       JSON.stringify({ threads }),

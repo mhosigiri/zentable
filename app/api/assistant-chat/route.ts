@@ -3,6 +3,7 @@ import { streamText } from 'ai';
 import { getSlidesByPresentation } from '@/lib/slides';
 import { DatabaseService } from '@/lib/database';
 import { slideTools } from '@/lib/ai/slide-tools';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,18 @@ const azureOpenAI = createAzure({
 
 export async function POST(req: Request) {
   try {
+    // Authenticate user first
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.error('[assistant-chat] Unauthorized: No user found in session.');
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+        status: 401, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
+    }
+
     const body = await req.json();
     const { messages, context, threadId, saveMessage } = body;
     
@@ -134,8 +147,8 @@ REMINDERS:
 
     console.log('Creating AI stream with context and tools');
     
-    // Initialize database service for persistence
-    const db = new DatabaseService();
+    // Initialize database service for persistence with authenticated client
+    const db = new DatabaseService(supabase);
     
     // Handle thread creation and message persistence
     let currentThreadId = threadId;
@@ -148,8 +161,9 @@ REMINDERS:
           'New conversation') : 
         'New conversation';
       
-      currentThreadId = await db.createThread(presentationId, threadTitle);
-      console.log('Created new thread:', currentThreadId);
+      console.log(`[assistant-chat] Creating new thread for user: ${user.id} with title: "${threadTitle}"`);
+      currentThreadId = await db.createThread(presentationId, threadTitle, user.id);
+      console.log('[assistant-chat] Created new thread with ID:', currentThreadId);
     }
     
     // Save incoming user messages to database

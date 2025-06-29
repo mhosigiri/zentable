@@ -1,5 +1,6 @@
 import { supabase, Database } from './supabase'
 import { generateUUID, isValidUUID, ensureUUID } from './uuid'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Type aliases for easier use
 export type Presentation = Database['public']['Tables']['presentations']['Row']
@@ -25,6 +26,7 @@ export type CopilotMessageUpdate = Database['public']['Tables']['copilot_message
 export interface DocumentData {
   id: string
   databaseId?: string // UUID for database operations
+  userId?: string | null
   prompt: string
   cardCount: number
   style: string
@@ -48,11 +50,16 @@ export interface SyncStatus {
 export class DatabaseService {
   private syncInterval: NodeJS.Timeout | null = null
   private pendingSyncs = new Set<string>()
+  private supabaseClient: SupabaseClient<Database>
+
+  constructor(supabaseClient?: SupabaseClient<Database>) {
+    this.supabaseClient = supabaseClient || supabase
+  }
 
   // Start auto-sync every 30 seconds
   startAutoSync() {
     if (this.syncInterval) return
-    
+
     this.syncInterval = setInterval(() => {
       this.syncAllPresentations()
     }, 30000) // 30 seconds
@@ -66,130 +73,144 @@ export class DatabaseService {
   }
 
   // ============ ASSISTANT UI / COPILOT METHODS ============
-  
+
   // Create a new thread for a presentation
-  async createThread(presentationId: string, title?: string): Promise<string | null> {
+  async createThread(
+    presentationId: string,
+    title: string | null | undefined,
+    userId: string
+  ): Promise<string | null> {
     try {
       const threadId = generateUUID()
-      const { error } = await supabase
+      const { error } = await this.supabaseClient
         .from('copilot_threads')
         .insert({
           id: threadId,
           presentation_id: presentationId,
-          title: title || 'New conversation'
+          title: title || 'New conversation',
+          user_id: userId
         })
-      
+
       if (error) {
         console.error('Error creating thread:', error)
         return null
       }
-      
+
       return threadId
     } catch (error) {
       console.error('Exception creating thread:', error)
       return null
     }
   }
-  
+
   // Get all threads for a presentation
-  async getThreads(presentationId: string): Promise<CopilotThread[] | null> {
+  async getThreads(
+    presentationId: string,
+    userId: string
+  ): Promise<CopilotThread[] | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await this.supabaseClient
         .from('copilot_threads')
         .select('*')
         .eq('presentation_id', presentationId)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
-      
+
       if (error) {
         console.error('Error getting threads:', error)
         return null
       }
-      
+
       return data
     } catch (error) {
       console.error('Exception getting threads:', error)
       return null
     }
   }
-  
+
   // Get a thread by ID
   async getThread(threadId: string): Promise<CopilotThread | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await this.supabaseClient
         .from('copilot_threads')
         .select('*')
         .eq('id', threadId)
         .single()
-      
+
       if (error) {
         console.error('Error getting thread:', error)
         return null
       }
-      
+
       return data
     } catch (error) {
       console.error('Exception getting thread:', error)
       return null
     }
   }
-  
+
   // Update a thread
   async updateThread(threadId: string, updates: CopilotThreadUpdate): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await this.supabaseClient
         .from('copilot_threads')
         .update(updates)
         .eq('id', threadId)
-      
+
       if (error) {
         console.error('Error updating thread:', error)
         return false
       }
-      
+
       return true
     } catch (error) {
       console.error('Exception updating thread:', error)
       return false
     }
   }
-  
+
   // Delete a thread and all its messages
   async deleteThread(threadId: string): Promise<boolean> {
     try {
       // First delete all messages in the thread
-      const { error: messagesError } = await supabase
+      const { error: messagesError } = await this.supabaseClient
         .from('copilot_messages')
         .delete()
         .eq('thread_id', threadId)
-      
+
       if (messagesError) {
         console.error('Error deleting thread messages:', messagesError)
         return false
       }
-      
+
       // Then delete the thread itself
-      const { error } = await supabase
+      const { error } = await this.supabaseClient
         .from('copilot_threads')
         .delete()
         .eq('id', threadId)
-      
+
       if (error) {
         console.error('Error deleting thread:', error)
         return false
       }
-      
+
       return true
     } catch (error) {
       console.error('Exception deleting thread:', error)
       return false
     }
   }
-  
+
   // Create a new message in a thread
-  async createMessage(threadId: string, role: string, content: string, toolCalls?: any): Promise<string | null> {
+  async createMessage(
+    threadId: string,
+    role: string,
+    content: string,
+    toolCalls?: any
+  ): Promise<string | null> {
     try {
       const messageId = generateUUID()
-      const { error } = await supabase
+      const { error } = await this.supabaseClient
         .from('copilot_messages')
         .insert({
           id: messageId,
@@ -198,80 +219,80 @@ export class DatabaseService {
           content,
           tool_calls: toolCalls
         })
-      
+
       if (error) {
         console.error('Error creating message:', error)
         return null
       }
-      
+
       return messageId
     } catch (error) {
       console.error('Exception creating message:', error)
       return null
     }
   }
-  
+
   // Get all messages for a thread
   async getMessages(threadId: string): Promise<CopilotMessage[] | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await this.supabaseClient
         .from('copilot_messages')
         .select('*')
         .eq('thread_id', threadId)
         .order('created_at', { ascending: true })
-      
+
       if (error) {
         console.error('Error getting messages:', error)
         return null
       }
-      
+
       return data
     } catch (error) {
       console.error('Exception getting messages:', error)
       return null
     }
   }
-  
+
   // Update a message
   async updateMessage(messageId: string, updates: CopilotMessageUpdate): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await this.supabaseClient
         .from('copilot_messages')
         .update(updates)
         .eq('id', messageId)
-      
+
       if (error) {
         console.error('Error updating message:', error)
         return false
       }
-      
+
       return true
     } catch (error) {
       console.error('Exception updating message:', error)
       return false
     }
   }
-  
+
   // Delete a message
   async deleteMessage(messageId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await this.supabaseClient
         .from('copilot_messages')
         .delete()
         .eq('id', messageId)
-      
+
       if (error) {
         console.error('Error deleting message:', error)
         return false
       }
-      
+
       return true
     } catch (error) {
       console.error('Exception deleting message:', error)
       return false
     }
   }
-  
+
   // ============ PRESENTATION METHODS ============
 
   async createPresentation(data: {
@@ -283,11 +304,13 @@ export class DatabaseService {
     contentLength?: string
     themeId?: string
     imageStyle?: string
+    userId?: string | null  // Add optional userId parameter
   }): Promise<Presentation> {
     const id = data.id || generateUUID(); // Ensure ID is defined
+
     const presentationData: PresentationInsert = {
       id: id,
-      user_id: null, // No auth yet, so set to null
+      user_id: data.userId || null, // Use provided userId
       prompt: data.prompt,
       card_count: data.cardCount || 8,
       style: (data.style as any) || 'default',
@@ -301,8 +324,8 @@ export class DatabaseService {
     // Try to save to Supabase first
     try {
       console.log('📝 Creating presentation in Supabase:', presentationData)
-      
-      const { data: presentation, error } = await supabase
+
+      const { data: presentation, error } = await this.supabaseClient
         .from('presentations')
         .insert(presentationData)
         .select()
@@ -314,28 +337,27 @@ export class DatabaseService {
       }
 
       console.log('✅ Successfully created presentation:', presentation)
-      
+
       // Also save to localStorage as backup
       this.saveToLocalStorage(id, this.convertToDocumentData(presentation))
-      
+
       return presentation
     } catch (error) {
       console.warn('Failed to save to Supabase, saving locally:', error)
-      
+
       // Fallback to localStorage
       const documentData = this.convertToDocumentData({
         ...presentationData,
         id: id,
-        user_id: null,
         title: 'Untitled Presentation',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         last_synced_at: new Date().toISOString()
       } as Presentation)
-      
+
       this.saveToLocalStorage(id, documentData)
       this.markForSync(id)
-      
+
       return presentationData as Presentation
     }
   }
@@ -343,7 +365,7 @@ export class DatabaseService {
   async getPresentation(id: string): Promise<Presentation | null> {
     try {
       // Try Supabase first
-      const { data: presentation, error } = await supabase
+      const { data: presentation, error } = await this.supabaseClient
         .from('presentations')
         .select(`
           *,
@@ -388,7 +410,7 @@ export class DatabaseService {
     const slideDataToUpsert = validSlides.map((slide, index) => {
       // Ensure ID is a valid UUID, generate a new one if not
       const slideId = ensureUUID(slide.id);
-      
+
       return {
         id: slideId,
         presentation_id: presentationId,
@@ -409,7 +431,7 @@ export class DatabaseService {
     })
 
     try {
-      const { error } = await supabase.from('slides').upsert(slideDataToUpsert, {
+      const { error } = await this.supabaseClient.from('slides').upsert(slideDataToUpsert, {
         onConflict: 'id',
       })
 
@@ -429,7 +451,7 @@ export class DatabaseService {
 
   async updatePresentation(id: string, updates: PresentationUpdate): Promise<Presentation | null> {
     try {
-      const { data: presentation, error } = await supabase
+      const { data: presentation, error } = await this.supabaseClient
         .from('presentations')
         .update({
           ...updates,
@@ -445,7 +467,7 @@ export class DatabaseService {
       return this.getPresentation(id)
     } catch (error) {
       console.warn('Failed to update in Supabase, updating locally:', error)
-      
+
       // Update localStorage
       const localData = this.getFromLocalStorage(id)
       if (localData) {
@@ -453,14 +475,14 @@ export class DatabaseService {
         this.saveToLocalStorage(id, updatedData)
         this.markForSync(id)
       }
-      
+
       return null
     }
   }
 
   async deletePresentation(id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await this.supabaseClient
         .from('presentations')
         .delete()
         .eq('id', id)
@@ -470,15 +492,15 @@ export class DatabaseService {
       // Remove from localStorage
       localStorage.removeItem(`document_${id}`)
       this.removeSyncMark(id)
-      
+
       return true
     } catch (error) {
       console.warn('Failed to delete from Supabase:', error)
-      
+
       // Mark as deleted locally (for sync later)
       localStorage.removeItem(`document_${id}`)
       localStorage.setItem(`deleted_${id}`, 'true')
-      
+
       return false
     }
   }
@@ -487,14 +509,14 @@ export class DatabaseService {
 
   async createSlide(slideData: SlideInsert): Promise<Slide | null> {
     try {
-      const { data: slide, error } = await supabase
+      const { data: slide, error } = await this.supabaseClient
         .from('slides')
         .insert(slideData)
         .select()
         .single()
 
       if (error) throw error
-      
+
       return slide
     } catch (error) {
       console.warn('Failed to create slide in Supabase:', error)
@@ -505,7 +527,7 @@ export class DatabaseService {
 
   async updateSlide(id: string, updates: SlideUpdate): Promise<Slide | null> {
     try {
-      const { data: slide, error } = await supabase
+      const { data: slide, error } = await this.supabaseClient
         .from('slides')
         .update(updates)
         .eq('id', id)
@@ -513,7 +535,7 @@ export class DatabaseService {
         .single()
 
       if (error) throw error
-      
+
       return slide
     } catch (error) {
       console.warn('Failed to update slide in Supabase:', error)
@@ -526,13 +548,13 @@ export class DatabaseService {
 
   async deleteSlide(id: string, presentationId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await this.supabaseClient
         .from('slides')
         .delete()
         .eq('id', id)
 
       if (error) throw error
-      
+
       return true
     } catch (error) {
       console.warn('Failed to delete slide from Supabase:', error)
@@ -618,6 +640,8 @@ export class DatabaseService {
   private convertToDocumentData(presentation: Presentation & { slides?: Slide[] }): DocumentData {
     return {
       id: presentation.id,
+      databaseId: presentation.id, // for consistency
+      userId: presentation.user_id, // Add userId
       prompt: presentation.prompt,
       cardCount: presentation.card_count,
       style: presentation.style,
@@ -650,7 +674,7 @@ export class DatabaseService {
   private convertFromDocumentData(documentData: DocumentData): Presentation {
     return {
       id: documentData.id,
-      user_id: null,
+      user_id: documentData.userId || null, // Use userId from local data
       title: 'Untitled Presentation',
       prompt: documentData.prompt,
       card_count: documentData.cardCount,
@@ -671,7 +695,7 @@ export class DatabaseService {
 
   async createProfile(user: { id: string; email: string; full_name?: string }): Promise<Profile | null> {
     try {
-      const { data: profile, error } = await supabase
+      const { data: profile, error } = await this.supabaseClient
         .from('profiles')
         .insert({
           id: user.id,
@@ -682,7 +706,7 @@ export class DatabaseService {
         .single()
 
       if (error) throw error
-      
+
       return profile
     } catch (error) {
       console.warn('Failed to create profile:', error)
@@ -692,14 +716,14 @@ export class DatabaseService {
 
   async getProfile(userId: string): Promise<Profile | null> {
     try {
-      const { data: profile, error } = await supabase
+      const { data: profile, error } = await this.supabaseClient
         .from('profiles')
         .select()
         .eq('id', userId)
         .single()
 
       if (error) throw error
-      
+
       return profile
     } catch (error) {
       console.warn('Failed to get profile:', error)
@@ -709,7 +733,7 @@ export class DatabaseService {
 
   async getUserPresentations(userId: string): Promise<Presentation[]> {
     try {
-      const { data: presentations, error } = await supabase
+      const { data: presentations, error } = await this.supabaseClient
         .from('presentations')
         .select(`
           *,
@@ -719,7 +743,7 @@ export class DatabaseService {
         .order('updated_at', { ascending: false })
 
       if (error) throw error
-      
+
       return presentations || []
     } catch (error) {
       console.warn('Failed to get user presentations:', error)
@@ -734,16 +758,16 @@ export const db = new DatabaseService()
 // Auto-start sync when module loads
 if (typeof window !== 'undefined') {
   db.startAutoSync()
-  
+
   // Sync on page visibility change
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       db.syncAllPresentations()
     }
   })
-  
+
   // Sync before page unload
   window.addEventListener('beforeunload', () => {
     db.syncAllPresentations()
   })
-} 
+}

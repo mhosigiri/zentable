@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { db } from '@/lib/database';
 import { generateUUID, generatePrefixedId } from '@/lib/uuid';
+import { createClient } from '@/lib/supabase/client';
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -32,6 +33,15 @@ export default function GeneratePage() {
   const [style, setStyle] = useState('professional');
   const [language, setLanguage] = useState('en');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 User on page load:', user);
+    };
+    fetchUser();
+  }, []);
 
   const examplePrompts = [
     {
@@ -96,6 +106,14 @@ export default function GeneratePage() {
       
       // Also save to database in the background (new addition)
       try {
+        // Get the current user session
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        // console.log('👤 Fetched user session:', user); // DEBUG LOG
+        
+        const userId = user?.id || null;
+        // console.log('🔑 User ID being sent to database:', userId); // DEBUG LOG
+        
         await db.createPresentation({
           id: databaseId, // Use proper UUID for database
           prompt: prompt.trim(),
@@ -104,7 +122,8 @@ export default function GeneratePage() {
           language,
           contentLength: 'medium',
           themeId: 'default',
-          imageStyle: ''
+          imageStyle: '',
+          userId: userId // Pass the user ID
         });
         console.log('✅ Presentation saved to database with UUID:', databaseId);
       } catch (dbError) {

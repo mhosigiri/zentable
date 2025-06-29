@@ -41,7 +41,7 @@ export interface Database {
           title: string
           prompt: string
           card_count: number
-          style: 'default' | 'modern' | 'minimal' | 'creative' | 'professional' | 'dark'
+          style: 'default' | 'modern' | 'minimal' | 'creative' | 'professional' | 'dark' | 'fun' | 'friendly' | 'casual' | 'formal'
           language: string
           content_length: 'brief' | 'medium' | 'detailed'
           theme_id: string
@@ -58,7 +58,7 @@ export interface Database {
           title?: string
           prompt: string
           card_count?: number
-          style?: 'default' | 'modern' | 'minimal' | 'creative' | 'professional' | 'dark'
+          style?: 'default' | 'modern' | 'minimal' | 'creative' | 'professional' | 'dark' | 'fun' | 'friendly' | 'casual' | 'formal'
           language?: string
           content_length?: 'brief' | 'medium' | 'detailed'
           theme_id?: string
@@ -72,7 +72,7 @@ export interface Database {
           title?: string
           prompt?: string
           card_count?: number
-          style?: 'default' | 'modern' | 'minimal' | 'creative' | 'professional' | 'dark'
+          style?: 'default' | 'modern' | 'minimal' | 'creative' | 'professional' | 'dark' | 'fun' | 'friendly' | 'casual' | 'formal'
           language?: string
           content_length?: 'brief' | 'medium' | 'detailed'
           theme_id?: string
@@ -178,16 +178,19 @@ export interface Database {
           title: string | null
           created_at: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           id?: string
           presentation_id: string
           title?: string | null
+          user_id: string
         }
         Update: {
           id?: string
           presentation_id?: string
           title?: string | null
+          user_id?: string
         }
       }
       copilot_messages: {
