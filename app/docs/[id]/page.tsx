@@ -26,6 +26,7 @@ import {
   Loader2,
   X
   } from 'lucide-react';
+import { PresentationMode } from '@/components/ui/presentation-mode';
 import { db, DocumentData, PresentationUpdate } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
 import { defaultTheme } from '@/lib/themes';
@@ -877,50 +878,17 @@ export default function PresentationPage() {
   // Presentation mode full screen view
   if (presentationMode.isPlaying && presentationMode.isFullScreen) {
     return (
-      <ThemedLayout>
-        <div className="fixed inset-0 bg-black z-50 flex flex-col">
-          <div className="bg-black/40 p-2 flex justify-between items-center">
-            <h2 className="text-white">
-              {documentData?.outline?.title || 'Presentation'} ({presentationMode.currentSlideIndexInPresentation + 1}/{slides.length})
-            </h2>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={presentationMode.pause}
-              className="text-white"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-          
-          <div className="flex-1 flex items-center justify-center">
-            <div className="w-full max-w-6xl aspect-[16/9] mx-auto">
-              <SlideRenderer
-                slide={presentationMode.currentSlideInPresentation}
-                isEditable={false}
-              />
-            </div>
-          </div>
-          
-          <div className="bg-black/40 p-3 flex justify-center items-center space-x-4">
-            <Button
-              variant="ghost"
-              disabled={presentationMode.currentSlideIndexInPresentation === 0}
-              onClick={presentationMode.goToPrevSlide}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <span className="text-white">{presentationMode.currentSlideIndexInPresentation + 1} / {slides.length}</span>
-            <Button
-              variant="ghost"
-              disabled={presentationMode.currentSlideIndexInPresentation === slides.length - 1}
-              onClick={presentationMode.goToNextSlide}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </ThemedLayout>
+      <PresentationMode
+        isPlaying={presentationMode.isPlaying}
+        isFullScreen={presentationMode.isFullScreen}
+        currentSlide={presentationMode.currentSlideInPresentation}
+        currentSlideIndex={presentationMode.currentSlideIndexInPresentation}
+        totalSlides={slides.length}
+        title={documentData?.outline?.title || 'Presentation'}
+        onPause={presentationMode.pause}
+        onNext={presentationMode.goToNextSlide}
+        onPrevious={presentationMode.goToPrevSlide}
+      />
     );
   }
 
@@ -988,7 +956,7 @@ export default function PresentationPage() {
               size="sm"
               className="text-gray-600 hover:text-gray-900"
             >
-              <Share2 className="w-4 h-4" />
+              {/* <Share2 className="w-4 h-4" /> */}
             </Button>
           </>
         }

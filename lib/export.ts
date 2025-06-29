@@ -1,5 +1,6 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { themes } from '@/lib/themes';
 
 /**
  * Exports the given slides as a PDF file.
@@ -20,54 +21,93 @@ export async function exportSlidesToPDF(slides: any[], documentData: any, setIsP
       format: [1600, 900],
     });
 
-    const slideElements = document.querySelectorAll('.slide-for-pdf');
-
+    // Look for slide elements with the specific class, or fall back to data attribute
+    let slideElements = document.querySelectorAll('.slide-for-pdf');
+    
     if (slideElements.length === 0) {
-      // If no slides with the specific class are found, try rendering to canvas manually
-      for (let i = 0; i < slides.length; i++) {
-        // Create temporary slide renderer
-        const slideContainer = document.createElement('div');
-        slideContainer.style.width = '1600px';
-        slideContainer.style.height = '900px';
-        slideContainer.style.position = 'absolute';
-        slideContainer.style.left = '-9999px';
-        slideContainer.className = 'slide-temp-render';
-        document.body.appendChild(slideContainer);
+      // Fallback: look for elements with data-slide-index attribute
+      slideElements = document.querySelectorAll('[data-slide-index]');
+    }
 
-        // Render slide (this is a placeholder; actual rendering logic may vary)
-        // You may want to render your SlideRenderer component here if possible
-        // For now, just fill with white
-        const slideElement = document.createElement('div');
-        slideElement.className = 'bg-white w-full h-full';
-        slideContainer.appendChild(slideElement);
-
-        await new Promise(resolve => requestAnimationFrame(resolve));
-
-        const canvas = await html2canvas(slideContainer, {
-          scale: 1,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, 0, 1600, 900);
-        document.body.removeChild(slideContainer);
-      }
-    } else {
-      // Use existing slide elements
+    if (slideElements.length > 0) {
+      // Get theme for proper background rendering
+      const currentTheme = documentData?.theme ? themes.find(t => t.id === documentData.theme) : themes[0];
+      
+      // Use existing slide elements from the DOM
       for (let i = 0; i < slideElements.length; i++) {
         const slideElement = slideElements[i] as HTMLElement;
-        const canvas = await html2canvas(slideElement, {
+        
+        // Create a temporary container with theme background for PDF export
+        const exportContainer = document.createElement('div');
+        exportContainer.style.position = 'absolute';
+        exportContainer.style.left = '-9999px';
+        exportContainer.style.width = '1600px';
+        exportContainer.style.height = '900px';
+        exportContainer.style.overflow = 'hidden';
+        
+        // Apply theme background
+        if (currentTheme?.background) {
+          exportContainer.style.background = currentTheme.background;
+        }
+        
+        // Center the slide within the container
+        exportContainer.style.display = 'flex';
+        exportContainer.style.alignItems = 'center';
+        exportContainer.style.justifyContent = 'center';
+        exportContainer.style.padding = '40px';
+        
+        // Clone the slide element
+        const slideClone = slideElement.cloneNode(true) as HTMLElement;
+        
+        // Set the slide to be 95% of the container's width, maintaining aspect ratio
+        slideClone.style.width = '95%';
+        slideClone.style.height = 'auto';
+        slideClone.style.aspectRatio = '16 / 9';
+        // Reset any transforms from the main page view
+        slideClone.style.transform = 'none';
+        
+        exportContainer.appendChild(slideClone);
+        document.body.appendChild(exportContainer);
+        
+        // Wait for styles to apply and ensure all CSS is loaded
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Force a repaint to ensure all styles are applied
+        exportContainer.offsetHeight;
+        
+        const canvas = await html2canvas(exportContainer, {
           scale: 1,
           useCORS: true,
           allowTaint: true,
-          backgroundColor: '#ffffff',
+          backgroundColor: null,
+          logging: false,
+          width: 1600,
+          height: 900,
+          ignoreElements: (element) => {
+            // Skip any overlay elements that might interfere
+            return element.classList.contains('drag-overlay') || 
+                   element.classList.contains('drag-handle') ||
+                   element.hasAttribute('data-radix-popper-content-wrapper');
+          },
         });
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        
+        // Clean up
+        document.body.removeChild(exportContainer);
+        
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         if (i > 0) pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, 0, 1600, 900);
+      }
+    } else {
+      // Last resort fallback
+      console.warn('No slide elements found for PDF export');
+      for (let i = 0; i < slides.length; i++) {
+        if (i > 0) pdf.addPage();
+        // Add a placeholder page
+        pdf.setFontSize(24);
+        pdf.text(`Slide ${i + 1}`, 800, 450, { align: 'center' });
+        pdf.setFontSize(16);
+        pdf.text('Content could not be rendered', 800, 500, { align: 'center' });
       }
     }
 

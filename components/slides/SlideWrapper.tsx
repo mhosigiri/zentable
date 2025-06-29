@@ -2,6 +2,7 @@
 
 import React, { ReactNode } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
 
 interface SlideWrapperProps {
   children: ReactNode;
@@ -24,11 +25,10 @@ export function SlideWrapper({
   
   // Base styling that applies to all slides
   const baseClasses = `
-    w-full ${minHeight} rounded-lg shadow-2xl border transition-all duration-300 hover:shadow-3xl
-    backdrop-blur-md hover:backdrop-blur-lg
+    w-full ${minHeight} rounded-xl shadow-2xl transition-all duration-300 ease-in-out overflow-hidden p-8 sm:p-10 md:p-12 lg:p-14
     ${isDarkTheme 
-      ? 'bg-black/15 border-white/30 shadow-black/25 hover:bg-black/20' 
-      : 'bg-white/60 border-white/50 shadow-black/15 hover:bg-white/70'
+      ? 'bg-black/10 backdrop-blur-lg border-white/10' 
+      : 'bg-white/50 backdrop-blur-lg border-white/30'
     }
   `.trim();
   
