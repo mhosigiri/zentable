@@ -61,7 +61,7 @@ export function ImageAndText({
                   {isGenerating ? 'Generating slide...' : isGeneratingImage ? 'Generating image...' : 'Loading image...'}
                 </p>
                 {imagePrompt && (
-                  <p className="text-xs text-slate-500 max-w-xs px-4 leading-relaxed">"{imagePrompt}"</p>
+                  <p className="text-xs text-slate-500 max-w-xs px-4 leading-relaxed">&quot;{imagePrompt}&quot;</p>
                 )}
               </div>
             </div>

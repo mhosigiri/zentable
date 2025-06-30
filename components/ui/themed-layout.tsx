@@ -19,7 +19,7 @@ export function ThemedLayout({ children, className = '' }: ThemedLayoutProps) {
         className="fixed inset-0 z-0"
         style={{ 
           background: currentTheme.background,
-          backgroundSize: currentTheme.category === 'pattern' ? '40px 40px' : 'cover'
+          backgroundSize: 'cover'
         }}
       />
       

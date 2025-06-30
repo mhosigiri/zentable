@@ -194,7 +194,7 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
 
           {/* Previews for other tools */}
           {toolCall.toolName === 'updateSlideImage' && toolCall.result?.imagePrompt && (
-            <p className="text-sm">Generate image with prompt: <em>"{toolCall.result.imagePrompt}"</em></p>
+            <p className="text-sm">Generate image with prompt: <em>&quot;{toolCall.result.imagePrompt}&quot;</em></p>
           )}
 
           {toolCall.toolName === 'changeSlideTemplate' && toolCall.result?.slideId && (

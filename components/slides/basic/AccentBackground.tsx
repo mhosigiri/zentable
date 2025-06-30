@@ -62,7 +62,7 @@ export function AccentBackground({
               {isGenerating ? 'Generating slide...' : 'Generating background image...'}
             </p>
             {imagePrompt && (
-              <p className="text-xs text-white/80 max-w-xs px-4 leading-relaxed">"{imagePrompt}"</p>
+              <p className="text-xs text-white/80 max-w-xs px-4 leading-relaxed">&quot;{imagePrompt}&quot;</p>
             )}
           </div>
         </div>

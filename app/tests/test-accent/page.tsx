@@ -170,7 +170,7 @@ export default function TestAccentPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div>
                 <h4 className="font-medium text-gray-700 mb-2">Image Prompt:</h4>
-                <p className="text-gray-600 italic">"{sampleData.imagePrompt}"</p>
+                <p className="text-gray-600 italic">&quot;{sampleData.imagePrompt}&quot;</p>
               </div>
               <div>
                 <h4 className="font-medium text-gray-700 mb-2">Image URL:</h4>
