@@ -1,0 +1,596 @@
+import { NextRequest } from 'next/server'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import { z } from 'zod'
+import { createGroq } from '@ai-sdk/groq'
+import { generateObject } from 'ai'
+import { hashApiKey, isValidApiKeyFormat, extractApiKeyFromHeader } from '@/lib/mcp-api-keys'
+import { mcpDatabase } from '@/lib/mcp-database'
+import { generateUUID } from '@/lib/uuid'
+
+// Configure Groq
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+})
+const modelName = 'meta-llama/llama-4-scout-17b-16e-instruct'
+
+// Outline schema for first step
+const OutlineSchema = z.object({
+  title: z.string().describe('A compelling, professional title for the presentation'),
+  sections: z.array(
+    z.object({
+      title: z.string().describe('Section title that clearly describes the main topic'),
+      bulletPoints: z.array(z.string()).describe('3-4 concise, actionable bullet points that support the section title'),
+      templateType: z.enum([
+        'blank-card', 'bullets', 'paragraph', 'image-and-text', 'text-and-image', 'two-columns',
+        'two-column-with-headings', 'three-columns', 'three-column-with-headings',
+        'four-columns', 'four-columns-with-headings', 'title-with-bullets',
+        'title-with-bullets-and-image', 'title-with-text', 'accent-left', 'accent-right', 'accent-top'
+      ]).describe('Template type that best fits the content and purpose of this section')
+    })
+  ).describe('Array of presentation sections with supporting bullet points and template types')
+})
+
+// Individual slide content schemas (same as generate-slide route)
+const BlankCardSchema = z.object({
+  content: z.string().describe('Complete HTML content starting with a heading (h3 for main title, h4 for subtitles) followed by the main content. Use appropriate formatting like <p>, <strong>, <em>, or additional headings. Structure: <h3>Title</h3><p>Content description...</p>'),
+})
+
+const BulletsSchema = z.object({
+  content: z.string().describe('Complete HTML content with h3 title and table-based 2x2 grid layout for exactly 4 numbered bullet points with bold Point Titles. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1rem 1rem 0; vertical-align: top;"><h4><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">1</span>Point Title</h4><p>Description</p></td><td style="width: 50%; padding: 0 0 1rem 1rem; vertical-align: top;"><h4><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">2</span>Point Title</h4><p>Description</p></td></tr><tr><td style="width: 50%; padding: 1rem 1rem 0 0; vertical-align: top;"><h4><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">3</span>Point Title</h4><p>Description</p></td><td style="width: 50%; padding: 1rem 0 0 1rem; vertical-align: top;"><h4><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">4</span>Point Title</h4><p>Description</p></td></tr></table><hr style="margin: 2rem 0; border: 1px solid #e5e7eb;" /><p><strong>Conclusion:</strong> Summary content</p>'),
+})
+
+const TitleWithBulletsSchema = z.object({
+  content: z.string().describe('Complete HTML content starting with a heading (h3 for main title, h4 for subtitles) followed by formatted bullet points using <ul> and <li> tags (3-5 points). Include formatting like <strong>, <em>, or additional heading tags if appropriate for emphasis. Structure: <h3>Title</h3><ul><li><p>Point 1</p></li>...</ul>'),
+})
+
+const ParagraphSchema = z.object({
+  content: z.string().describe('Complete HTML content with h3 title followed by multiple sections with h4 headings and paragraphs. Structure: <h3>Title</h3><h4>Section 1</h4><p>Paragraph 1</p><p>Paragraph 2</p><h4>Section 2</h4><p>Paragraph 1</p><p>Paragraph 2</p><h4>Conclusion</h4><p>Concluding thoughts</p>'),
+})
+
+// Schema selection helper
+function getSchemaForTemplate(templateType: string): z.ZodType<any> {
+  switch (templateType) {
+    case 'blank-card':
+      return BlankCardSchema;
+    case 'bullets':
+      return BulletsSchema;
+    case 'title-with-bullets':
+      return TitleWithBulletsSchema;
+    case 'paragraph':
+      return ParagraphSchema;
+    default:
+      return BlankCardSchema;
+  }
+}
+
+// Template selection logic (simplified version of generate-outline route)
+function selectTemplateType(title: string, bulletPoints: string[], index: number, totalSections: number, usedTemplates: string[] = []): string {
+  const contentText = (title + ' ' + bulletPoints.join(' ')).toLowerCase();
+  
+  const allTemplates = [
+    'blank-card', 'bullets', 'paragraph', 'title-with-bullets'
+  ];
+  
+  let suitableTemplates: string[] = [];
+  
+  // Content-based selection
+  if (contentText.includes('benefit') || contentText.includes('advantage') || 
+      contentText.includes('reason') || contentText.includes('point') ||
+      contentText.includes('key') || contentText.includes('important')) {
+    suitableTemplates.push('bullets', 'title-with-bullets');
+  }
+  
+  if (contentText.includes('strategy') || contentText.includes('process') || 
+      contentText.includes('methodology') || contentText.includes('framework') ||
+      contentText.includes('analysis') || contentText.includes('overview')) {
+    suitableTemplates.push('paragraph', 'title-with-bullets');
+  }
+  
+  // Multi-item content based on bullet count
+  if (bulletPoints.length >= 4) {
+    suitableTemplates.push('bullets', 'title-with-bullets');
+  } else if (bulletPoints.length <= 2) {
+    suitableTemplates.push('paragraph', 'title-with-bullets');
+  }
+  
+  if (suitableTemplates.length === 0) {
+    suitableTemplates = [...allTemplates];
+  }
+  
+  // Remove duplicates and ensure variety
+  suitableTemplates = Array.from(new Set(suitableTemplates));
+  
+  // Avoid repeating the same template as previous slide
+  if (index > 0 && usedTemplates[index - 1]) {
+    suitableTemplates = suitableTemplates.filter(t => t !== usedTemplates[index - 1]);
+    if (suitableTemplates.length === 0) suitableTemplates = [...allTemplates];
+  }
+  
+  return suitableTemplates[Math.floor(Math.random() * suitableTemplates.length)];
+}
+
+// Authentication middleware
+async function validateApiKey(authorization: string | null): Promise<string | null> {
+  console.log('--- API Key Validation ---');
+  console.log(`Received Authorization header: ${authorization}`);
+
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    console.log('Validation failed: Missing or malformed Bearer token.');
+    return null;
+  }
+
+  const apiKey = authorization.substring(7);
+  console.log(`Extracted API Key: ${apiKey.substring(0, 8)}...`);
+
+  if (!isValidApiKeyFormat(apiKey)) {
+    console.log('Validation failed: Invalid API key format.');
+    return null;
+  }
+
+  const keyHash = hashApiKey(apiKey);
+  console.log(`Hashed API Key: ${keyHash}`);
+
+  const validation = await mcpDatabase.validateApiKey(keyHash);
+  console.log(`Database validation result: ${JSON.stringify(validation)}`);
+
+  if (validation.isValid) {
+    console.log(`Validation successful for user: ${validation.userId}`);
+  } else {
+    console.log('Validation failed: No matching key found in database.');
+  }
+  
+  return validation.isValid ? validation.userId! : null;
+}
+
+// Presentation creation handler
+async function handleCreatePresentation(userId: string, args: any) {
+  try {
+    console.log(`🎯 MCP: Creating presentation for user ${userId}`)
+    console.log(`📝 Prompt: ${args.prompt}`)
+    console.log(`📊 Slides: ${args.slideCount}, Style: ${args.style}, Language: ${args.language}`)
+
+    const { prompt, slideCount = 5, style = 'professional', language = 'en', contentLength = 'medium' } = args
+
+    // Map style to writing tone (from generate-outline route)
+    const styleMap: Record<string, string> = {
+      'professional': 'professional and clear',
+      'friendly': 'warm and approachable',
+      'fun': 'playful and engaging',
+      'casual': 'relaxed and conversational',
+      'formal': 'precise and authoritative'
+    };
+
+    // Map language to instruction
+    const languageMap: Record<string, string> = {
+      'en': 'English',
+      'es': 'Spanish',
+      'fr': 'French',
+      'de': 'German'
+    };
+
+    const writingStyle = styleMap[style] || 'professional and clear';
+    const targetLanguage = languageMap[language] || 'English';
+
+    // STEP 1: Generate outline (using same prompt as generate-outline route)
+    const outlineSystemPrompt = `You are an expert presentation designer and content strategist. Create a comprehensive, well-structured presentation outline that is ${writingStyle} in tone and written in ${targetLanguage}.
+
+CRITICAL GUIDELINES FOR PRESENTATION CONTENT:
+- Generate exactly ${slideCount} sections for the presentation
+- Each section should have a clear, descriptive title (max 8-10 words)
+- Include 3-4 bullet points per section that are SUCCINCT and presentation-ready
+- Each bullet point should be 1-2 lines maximum - NOT paragraphs
+- Focus on key insights that can be quickly read and understood on a slide
+- Ensure logical flow and progression between sections
+- Make content engaging but CONCISE for visual presentation
+- Avoid long sentences or complex explanations in bullet points
+- Use active voice and strong, impactful language
+- Each bullet should be a complete thought but brief enough for slides
+- Prioritize clarity and visual readability over detailed explanations
+
+TEMPLATE VARIETY REQUIREMENTS:
+- Maximize template diversity across all slides
+- Avoid repeating the same template type when possible
+- Use the full range of available templates to create visual interest
+- Consider content suitability but prioritize template variety
+
+Remember: This is for SLIDE presentations - content must be scannable and visually digestible, not essay-like.
+
+The outline should create a compelling ${slideCount}-slide presentation with maximum visual variety.`;
+
+    const { object: outline } = await generateObject({
+      model: groq(modelName),
+      system: outlineSystemPrompt,
+      prompt: `Create a presentation outline for: "${prompt}"`,
+      schema: OutlineSchema,
+    });
+
+    // Add template types and IDs to sections
+    const usedTemplates: string[] = [];
+    const sectionsWithTemplates = outline.sections.map((section, index) => {
+      const templateType = section.templateType || selectTemplateType(
+        section.title, 
+        section.bulletPoints, 
+        index, 
+        outline.sections.length,
+        usedTemplates
+      );
+      
+      usedTemplates.push(templateType);
+      
+      return {
+        ...section,
+        id: generateUUID(),
+        templateType
+      };
+    });
+
+    // STEP 2: Generate individual slides with proper HTML content
+    const generatedSlides = [];
+    
+    for (let i = 0; i < sectionsWithTemplates.length; i++) {
+      const section = sectionsWithTemplates[i];
+      
+      // Map content length to specific guidelines (from generate-slide route)
+      const contentLengthMap: Record<string, string> = {
+        'brief': 'VERY BRIEF - Bullet points: 1 line max (6-12 words). Paragraphs: 1-2 sentences max.',
+        'medium': 'MODERATE - Bullet points: 1-2 lines (12-20 words). Paragraphs: 2-3 sentences max.',
+        'detailed': 'COMPREHENSIVE - Bullet points: 2-3 lines (20-30 words). Paragraphs: 3-4 sentences max.'
+      };
+
+      const contentGuidelines = contentLengthMap[contentLength] || contentLengthMap['medium'];
+      
+      const schema = getSchemaForTemplate(section.templateType);
+      
+      // Generate slide content using same approach as generate-slide route
+      const slideSystemPrompt = `You are an expert presentation designer and content creator. Create compelling slide content that is ${writingStyle} in tone and written in ${targetLanguage}.
+
+CRITICAL INSTRUCTIONS FOR PRESENTATION SLIDES:
+- DO NOT use the outline bullet points directly - they are reference points only
+- CREATE concise, presentation-ready content that expands meaningfully on the topic
+- CHOOSE the most appropriate format: bullet points for lists/key points, paragraphs for explanations
+- Keep ALL text brief and scannable - this is for VISUAL presentation slides
+- Use active voice, strong verbs, and impactful language
+- Make content immediately understandable when viewed on a slide
+- Prioritize clarity and visual readability over comprehensive detail
+- Ensure content flows logically and supports the main message
+- Each piece of content should be presentation-ready and appropriately sized for slides
+
+CONTENT LENGTH REQUIREMENTS: ${contentGuidelines}
+
+CONTENT FORMAT FLEXIBILITY:
+- Use bullet points when listing key points, features, benefits, or steps
+- Use short paragraphs when explaining concepts, providing context, or telling a story
+- Choose the format that best serves the content and audience understanding
+- Mix formats within a slide if appropriate (e.g., intro paragraph + bullet list)
+
+CONTENT LENGTH GUIDELINES:
+- Titles: 3-8 words maximum
+- Headings: 2-4 words maximum
+- Content follows the ${contentLength} guidelines above
+
+Template: ${section.templateType}
+
+Remember: Transform the outline into CONCISE, visually-friendly presentation content that audiences can quickly read and understand! Choose the best format (bullets vs paragraphs) for each piece of content and make content substantial enough to be meaningful while respecting the ${contentLength} length requirements.`;
+
+      const slidePrompt = `Section: "${section.title}"\nKey points: ${section.bulletPoints.join(', ')}`;
+      
+      const { object: slideContent } = await generateObject({
+        model: groq(modelName),
+        system: slideSystemPrompt,
+        prompt: slidePrompt,
+        schema,
+        maxTokens: 1000,
+        temperature: 0.7,
+      });
+
+      generatedSlides.push({
+        templateType: section.templateType,
+        title: section.title,
+        content: slideContent.content,
+        position: i,
+        bulletPoints: section.bulletPoints,
+        imagePrompt: null,
+        imageUrl: null
+      });
+    }
+
+    // Save to database
+    const savedPresentation = await mcpDatabase.createPresentation({
+      prompt,
+      cardCount: slideCount,
+      style,
+      language,
+      contentLength,
+      themeId: 'theme-blue',
+      imageStyle: 'professional',
+      userId
+    })
+
+    await mcpDatabase.saveSlides(savedPresentation.id, generatedSlides)
+
+    console.log(`✅ MCP: Presentation created successfully: ${savedPresentation.id}`)
+
+    return {
+      content: [{
+        type: 'text',
+        text: `✅ **Presentation Created Successfully!**
+
+**Title:** ${outline.title}
+**Slides:** ${slideCount}
+**ID:** ${savedPresentation.id}
+
+**Slides Overview:**
+${sectionsWithTemplates.map((section, i) => `${i + 1}. **${section.title}** (${section.templateType})`).join('\n')}
+
+You can view and edit this presentation in your dashboard at: https://your-domain.com/docs/${savedPresentation.id}
+
+The presentation has been saved to your account and is available for editing, sharing, and exporting.`
+      }]
+    }
+  } catch (error) {
+    console.error('❌ MCP: Error creating presentation:', error)
+    return {
+      content: [{
+        type: 'text',
+        text: `❌ **Error Creating Presentation**
+
+Sorry, there was an error creating your presentation. Please try again with a different prompt or contact support if the issue persists.
+
+Error details: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }],
+      isError: true
+    }
+  }
+}
+
+// Create MCP server instance
+function createMcpServer(userId: string) {
+  const server = new McpServer({
+    name: 'slides-ai-mcp-server',
+    version: '1.0.0'
+  })
+
+  // Register the create_presentation tool
+  server.registerTool(
+    'create_presentation',
+    {
+      title: 'Create Presentation',
+      description: 'Generate a complete presentation with slides based on a topic or prompt',
+      inputSchema: {
+        prompt: z.string().describe('The topic or content description for the presentation'),
+        slideCount: z.number().min(3).max(20).default(5).describe('Number of slides to generate (3-20)'),
+        style: z.enum(['default', 'modern', 'minimal', 'creative', 'professional']).default('professional').describe('Presentation style'),
+        language: z.string().default('en').describe('Language for the presentation content'),
+        contentLength: z.enum(['brief', 'medium', 'detailed']).default('medium').describe('How detailed the content should be')
+      }
+    },
+    async ({ prompt, slideCount, style, language, contentLength }: {
+      prompt: string
+      slideCount: number
+      style: string
+      language: string
+      contentLength: string
+    }) => {
+      try {
+        console.log(`🎯 MCP: Creating presentation for user ${userId}`)
+        console.log(`📝 Prompt: ${prompt}`)
+        console.log(`📊 Slides: ${slideCount}, Style: ${style}, Language: ${language}`)
+
+        // Generate presentation using same approach as handleCreatePresentation but with proper return type
+        const result = await handleCreatePresentation(userId, { prompt, slideCount, style, language, contentLength })
+        return {
+          content: result.content.map(item => ({
+            type: item.type as 'text',
+            text: item.text
+          })),
+          isError: result.isError
+        }
+      } catch (error) {
+        console.error('❌ MCP: Error creating presentation:', error)
+        return {
+          content: [{
+            type: 'text',
+            text: `❌ **Error Creating Presentation**
+
+Sorry, there was an error creating your presentation. Please try again with a different prompt or contact support if the issue persists.
+
+Error details: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        }
+      }
+    }
+  )
+
+  return server
+}
+
+// Main MCP endpoint
+export async function POST(req: NextRequest) {
+  try {
+    console.log('🔄 MCP: Handling POST request')
+    
+    // Validate API key
+    const authorization = req.headers.get('Authorization')
+    const userId = await validateApiKey(authorization)
+    
+    if (!userId) {
+      console.log('❌ MCP: Unauthorized request')
+      return new Response(JSON.stringify({
+        jsonrpc: '2.0',
+        error: {
+          code: -32001,
+          message: 'Invalid or missing API key'
+        },
+        id: null
+      }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
+    console.log(`✅ MCP: Authorized user: ${userId}`)
+
+    // Create MCP server instance for this user
+    const server = createMcpServer(userId)
+
+    // Create transport
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined, // Stateless mode
+    })
+
+    // Handle cleanup
+    const cleanup = () => {
+      console.log('🧹 MCP: Cleaning up transport and server')
+      transport.close()
+      server.close()
+    }
+
+    req.signal?.addEventListener('abort', cleanup)
+
+    try {
+      // Connect server to transport
+      await server.connect(transport)
+      
+      // Get request body
+      const body = await req.json()
+      console.log('📨 MCP: Request body:', JSON.stringify(body, null, 2))
+
+      // For MCP protocol, we need to handle JSON-RPC directly
+      const { method, params, id } = body
+      
+      if (method === 'tools/list') {
+        const response = {
+          jsonrpc: '2.0',
+          id,
+          result: {
+            tools: [{
+              name: 'create_presentation',
+              description: 'Generate a complete presentation with slides based on a topic or prompt',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  prompt: {
+                    type: 'string',
+                    description: 'The topic or content description for the presentation'
+                  },
+                  slideCount: {
+                    type: 'number',
+                    minimum: 3,
+                    maximum: 20,
+                    default: 5,
+                    description: 'Number of slides to generate (3-20)'
+                  },
+                  style: {
+                    type: 'string',
+                    enum: ['default', 'modern', 'minimal', 'creative', 'professional'],
+                    default: 'professional',
+                    description: 'Presentation style'
+                  },
+                  language: {
+                    type: 'string',
+                    default: 'en',
+                    description: 'Language for the presentation content'
+                  },
+                  contentLength: {
+                    type: 'string',
+                    enum: ['brief', 'medium', 'detailed'],
+                    default: 'medium',
+                    description: 'How detailed the content should be'
+                  }
+                },
+                required: ['prompt']
+              }
+            }]
+          }
+        }
+        
+        console.log('📤 MCP: Sending tools/list response')
+        return new Response(JSON.stringify(response), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+      
+      if (method === 'tools/call' && params?.name === 'create_presentation') {
+        // Handle the create_presentation tool call directly
+        const result = await handleCreatePresentation(userId, params.arguments)
+        
+        const response = {
+          jsonrpc: '2.0',
+          id,
+          result
+        }
+        
+        console.log('📤 MCP: Sending tools/call response')
+        return new Response(JSON.stringify(response), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+      
+      // Unknown method
+      const errorResponse = {
+        jsonrpc: '2.0',
+        id,
+        error: {
+          code: -32601,
+          message: `Method not found: ${method}`
+        }
+      }
+      
+      return new Response(JSON.stringify(errorResponse), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    } catch (error) {
+      cleanup()
+      throw error
+    }
+
+  } catch (error) {
+    console.error('❌ MCP: Request handling error:', error)
+    return new Response(JSON.stringify({
+      jsonrpc: '2.0',
+      error: {
+        code: -32603,
+        message: 'Internal server error',
+        data: error instanceof Error ? error.message : 'Unknown error'
+      },
+      id: null
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+}
+
+// Handle other HTTP methods for completeness
+export async function GET() {
+  return new Response(JSON.stringify({
+    jsonrpc: '2.0',
+    error: {
+      code: -32000,
+      message: 'Method not allowed. Use POST for MCP requests.'
+    },
+    id: null
+  }), {
+    status: 405,
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+
+export async function DELETE() {
+  return new Response(JSON.stringify({
+    jsonrpc: '2.0',
+    error: {
+      code: -32000,
+      message: 'Method not allowed. Use POST for MCP requests.'
+    },
+    id: null
+  }), {
+    status: 405,
+    headers: { 'Content-Type': 'application/json' }
+  })
+} 

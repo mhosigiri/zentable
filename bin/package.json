@@ -1,0 +1,21 @@
+{
+  "name": "@your-company/slides-ai-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "SlidesAI MCP Server - Generate presentations from any AI tool",
+  "main": "slides-ai-mcp.mjs",
+  "bin": {
+    "slides-ai-mcp": "./slides-ai-mcp.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.22.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["mcp", "presentations", "ai", "slides"],
+  "author": "Your Company",
+  "license": "MIT"
+} 

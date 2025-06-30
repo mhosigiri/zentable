@@ -1,0 +1,192 @@
+# Slides-AI MCP Integration: A Deep Dive for Developers
+
+> **Scope**  
+> This document provides a comprehensive architectural overview of the Model-Context-Protocol (MCP) server that powers SlidesAI's remote presentation generation. It explains the design philosophy, implementation details, and step-by-step guides for extending, testing, and publishing the system. It is aimed at developers onboarding to the project.
+
+---
+
+## 1. Core Concepts & Architecture
+
+The MCP integration allows external AI clients (like Cursor, Claude, Windsurf) to securely generate presentations in a user's SlidesAI account. We offer two ways for clients to connect:
+
+1.  **Direct API Endpoint**: A standard HTTP-based MCP server running at [`app/api/mcp/route.ts`](mdc:app/api/mcp/route.ts).
+2.  **NPM Package CLI**: A user-friendly NPM package that developers can run locally via `npx`. This CLI acts as a secure proxy, forwarding requests to our production API endpoint. This is the recommended approach for end-users.
+
+### Architectural Diagram
+
+```
++----------------+      +---------------------------------+      +------------------------+
+|   MCP Client   |      |      Your Local Machine         |      |    SlidesAI Cloud      |
+| (Cursor, etc.) |      |                                 |      |                        |
++----------------+      +---------------------------------+      +------------------------+
+       |                         |        (npx)            |                 |
+       |-------------------------▶ @slides-ai/mcp-cli:1234 |-----------------▶ /api/mcp/route.ts
+       |  (JSON-RPC over stdin)   | (local proxy server)    |  (JSON-RPC over HTTPS)  |
+       |                         +-------------------------+                 |
+       |                                                                     | (Authentication)
+       |                                                                     ▼
+       |                                                 +-----------------------------------+
+       |                                                 |        lib/mcp-database.ts        |
+       |                                                 | (using Service Role Key to bypass RLS) |
+       |                                                 +-----------------------------------+
+       |                                                                     | (DB Operations)
+       |                                                                     ▼
+       |                                                         +-------------------------+
+       |                                                         |    Supabase Database    |
+       |                                                         | (api_keys, presentations) |
+       |                                                         +-------------------------+
+       |                                                                     | (AI Generation)
+       |                                                                     ▼
+       |                                                       +-----------------------------+
+       |                                                       |    Groq API (Llama 4)       |
+       |                                                       +-----------------------------+
+
+```
+
+### Key Components
+
+-   **MCP API Route** ([`app/api/mcp/route.ts`](mdc:app/api/mcp/route.ts)): The heart of the server. It's a stateless Next.js API route that handles incoming JSON-RPC 2.0 requests. It's responsible for:
+    -   Authenticating requests via Bearer tokens.
+    -   Parsing `tools/list` and `tools/call` methods.
+    -   Calling the appropriate business logic.
+-   **Database Service** ([`lib/mcp-database.ts`](mdc:lib/mcp-database.ts)): A dedicated service for all MCP-related database operations. **Crucially, it uses a Supabase Service Role Client to bypass Row-Level Security (RLS)**. This is necessary so the server can validate API keys against the `api_keys` table for *any* user, not just the currently logged-in one.
+-   **Authentication Helpers** ([`lib/mcp-api-keys.ts`](mdc:lib/mcp-api-keys.ts)): Contains utility functions for generating secure API keys and hashing them with SHA-256 before database storage. We never store raw API keys.
+-   **NPM Package CLI** ([`bin/slides-ai-mcp.mjs`](mdc:bin/slides-ai-mcp.mjs)): A standalone Node.js script published to NPM. It uses the `@modelcontextprotocol/cli` library to create a simple local server that proxies requests to our hosted API endpoint. This improves the developer experience and security for our users, as they only need to expose an API key to a local process.
+-   **Testing Script** ([`scripts/test-mcp.js`](mdc:scripts/test-mcp.js)): An essential command-line script for smoke testing the entire MCP flow, from connectivity and authentication to a full tool call.
+
+---
+
+## 2. Authentication Deep Dive
+
+Authentication is handled via Bearer tokens. The flow is as follows:
+
+1.  A user generates an API key from their SlidesAI dashboard. The key has the prefix `slai_`.
+2.  The key is hashed using SHA-256 and stored in the `api_keys` table in Supabase. The raw key is shown to the user *only once* and is never stored on our backend. See [`supabase/migrations/20241220_add_api_keys.sql`](mdc:supabase/migrations/20241220_add_api_keys.sql) for the table schema.
+3.  The user configures their MCP client (e.g., Cursor) to send the API key in the `Authorization` header: `Authorization: Bearer slai_...`.
+4.  Our API route at `/api/mcp` receives the request and extracts the key.
+5.  The `validateApiKey` function hashes the received key and queries the `api_keys.key_hash` column to find a match.
+6.  If a match is found, the request is associated with the corresponding `user_id`, and the request proceeds. If not, a `401 Unauthorized` error is returned.
+
+**Critical Note on Middleware**: The main Supabase middleware at [`lib/supabase/middleware.ts`](mdc:lib/supabase/middleware.ts) is configured to **exclude** the `/api/mcp/*` and `/api/api-keys/*` routes from its session-based authentication. This is because these routes use their own token-based auth and must be publicly accessible.
+
+---
+
+## 3. Content Generation Deep Dive: The Two-Step Process
+
+To ensure the highest quality presentations, we intentionally replicated the proven logic from our main application. Generation is a two-step process:
+
+1.  **Generate Outline**: First, we call the Groq AI model with the user's prompt and a sophisticated system prompt borrowed directly from [`app/api/generate-outline/route.ts`](mdc:app/api/generate-outline/route.ts). This prompt instructs the AI to create a well-structured outline with a title and several sections, each containing key bullet points and a suggested `templateType`.
+2.  **Generate Slide Content**: Next, we loop through each section of the newly created outline. For each section, we make a *second* call to the Groq AI, using the prompts and schemas from [`app/api/generate-slide/route.ts`](mdc:app/api/generate-slide/route.ts). This call takes the section's title and bullet points as input and generates rich, presentation-ready HTML content formatted specifically for the section's assigned template.
+
+This two-step approach is superior to a single-shot generation because it allows for greater control, higher fidelity, and reuse of our most refined prompting techniques.
+
+---
+
+## 4. How to Add a New MCP Tool
+
+Let's say you want to add a tool that fetches the titles of a user's last 5 presentations.
+
+1.  **Define the Business Logic**: Add a new method to `lib/mcp-database.ts`.
+    ```ts
+    // In lib/mcp-database.ts
+    async getRecentPresentations(userId: string, limit: number = 5) {
+      const { data, error } = await this.supabase
+        .from('presentations')
+        .select('title, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data;
+    }
+    ```
+
+2.  **Register the New Tool**: In `app/api/mcp/route.ts`, find the `createMcpServer` function and use `server.registerTool()`.
+    ```ts
+    // In app/api/mcp/route.ts inside createMcpServer()
+    server.registerTool(
+      'get_recent_presentations', // Tool name, snake_case
+      {
+        title: 'Get Recent Presentations',
+        description: 'Fetches the titles of the most recent presentations for the user.',
+        inputSchema: {
+          limit: z.number().min(1).max(20).default(5).describe('Number of presentations to fetch (1-20)')
+        }
+      },
+      // The handler function
+      async ({ limit }) => {
+        try {
+          const presentations = await mcpDatabase.getRecentPresentations(userId, limit);
+          const presentationList = presentations.map((p, i) => `${i + 1}. ${p.title}`).join('\n');
+          return {
+            content: [{
+              type: 'text',
+              text: `✅ **Your Last ${limit} Presentations:**\n\n${presentationList}`
+            }]
+          };
+        } catch (error) {
+          console.error('Error fetching recent presentations:', error);
+          return {
+            content: [{ type: 'text', text: `❌ Error: Could not fetch presentations.` }],
+            isError: true
+          };
+        }
+      }
+    );
+    ```
+
+3.  **Update the Test Script**: Add a new test case to `scripts/test-mcp.js` to validate your new tool.
+    ```javascript
+    // In scripts/test-mcp.js
+    console.log('\n2️⃣ Testing "get_recent_presentations" tool...');
+    const listResponse = await callMcp('tools/call', {
+      name: 'get_recent_presentations',
+      arguments: { limit: 3 },
+    });
+    // Add assertions here...
+    ```
+
+4.  **Run the Tests**: Execute `npm run test:mcp YOUR_API_KEY` to ensure everything works.
+
+---
+
+## 5. Publishing the CLI Package
+
+The CLI wrapper in the `bin/` directory makes life easier for our users.
+
+### Local Testing Before Publishing
+Before you publish, you can test the package locally.
+1.  Navigate into the directory: `cd bin`
+2.  Link the package: `npm link`. This creates a global symlink to your local package.
+3.  Now, in any other terminal window, you can run `@your-company/slides-ai-mcp` as if it were installed globally.
+4.  When you're done, unlink it: `npm unlink` from within the `bin/` directory.
+
+### Publishing Steps
+1.  **Bump Version**: In `bin/package.json`, increment the version number following [semantic versioning](https://semver.org/).
+2.  **Login to NPM**: Run `npm login` and enter your credentials. You must have permissions to publish to the `@your-company` scope.
+3.  **Publish**: From within the `bin/` directory, run `npm publish --access public`.
+4.  **Tag Release**: Create a git tag for the release: `git tag cli/v1.2.1 && git push origin cli/v1.2.1`.
+
+---
+
+## 6. Local Development & Troubleshooting
+
+| Symptom                               | Probable Cause & Solution                                                                                                                                                                                            |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 401 "Invalid or missing API key"      | 1. The key is wrong. <br> 2. The key hash in the DB is wrong. <br> 3. The `/api/mcp` route is NOT excluded from the main Supabase middleware, so it's trying session auth instead of token auth. Check `middleware.ts`. |
+| React Hydration Error on Settings page | A component is rendering different content on the server vs. the client (e.g., using `window.location`). Fix this by using `useEffect` + `useState` to defer client-side-only logic. See [`app/dashboard/settings/page.tsx`](mdc:app/dashboard/settings/page.tsx) for the canonical example. |
+| `fetch failed` in `npm run test:mcp`  | The local dev server (`npm run dev`) is not running, or the `SLIDES_AI_SERVER_URL` environment variable is pointing to the wrong address.                                                                                |
+| `SyntaxError: Cannot use import...`   | A file is being run with Node that uses ES module syntax (`import`) but isn't being treated as a module. Fix by renaming to `.mjs` or setting `"type": "module"` in the nearest `package.json`.                           |
+
+### Useful Commands
+| Task                               | Command                                                                                                |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Start Dev Server                   | `npm run dev`                                                                                          |
+| Run MCP Tests                      | `npm run test:mcp YOUR_API_KEY`                                                                        |
+| Test `tools/list` with curl        | `curl -X POST http://localhost:3000/api/mcp -H "Authorization: Bearer <KEY>" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'` |
+| Generate a new API key hash        | `node -e "console.log(require('./lib/mcp-api-keys').hashApiKey('slai_...'))"`                           |
+| Manually publish the CLI           | `cd bin && npm version patch && npm publish --access public`                                           |
+
+---
+
+This guide should provide a solid foundation for working on the MCP integration. Happy hacking! 
