@@ -56,6 +56,15 @@ export default function Home() {
                 <p className="text-gray-400">
                   © 2024 Zent. Empowering ideas through AI.
                 </p>
+                <a
+                  href="https://bolt.new"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-4 px-4 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-pink-500 text-white font-semibold text-sm shadow hover:scale-105 transition-transform"
+                  aria-label="Built with Bolt.new"
+                >
+                  🚀 Built with Bolt.new
+                </a>
               </div>
             </div>
           </div>
