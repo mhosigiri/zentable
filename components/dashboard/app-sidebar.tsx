@@ -1,25 +1,26 @@
 "use client"
 
 import * as React from "react"
+import { createClient } from "@/lib/supabase/client"
 import {
-  ArrowUpCircleIcon,
-  BarChartIcon,
-  CameraIcon,
-  ClipboardListIcon,
-  DatabaseIcon,
-  FileCodeIcon,
-  FileIcon,
-  FileTextIcon,
-  FolderIcon,
+  // ArrowUpCircleIcon,
+  // BarChartIcon,
+  // CameraIcon,
+  // ClipboardListIcon,
+  // DatabaseIcon,
+  // FileCodeIcon,
+  // FileIcon,
+  // FileTextIcon,
+  // FolderIcon,
   HelpCircleIcon,
   LayoutDashboardIcon,
-  ListIcon,
+  // ListIcon,
   SearchIcon,
   SettingsIcon,
-  UsersIcon,
+  // UsersIcon,
 } from "lucide-react"
 
-import { NavDocuments } from "@/components/dashboard/nav-documents"
+// import { NavDocuments } from "@/components/dashboard/nav-documents"
 import { NavMain } from "@/components/dashboard/nav-main"
 import { NavSecondary } from "@/components/dashboard/nav-secondary"
 import { NavUser } from "@/components/dashboard/nav-user"
@@ -28,92 +29,85 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
+  // SidebarMenu,
+  // SidebarMenuButton,
+  // SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { type Profile } from "@/lib/database"
+import { LogoutButton } from "./logout-button"
+import { DropdownMenuItem } from "../ui/dropdown-menu"
+import { LogOutIcon } from "lucide-react"
+
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [profile, setProfile] = React.useState<Profile | null>(null)
+  
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        setProfile(profileData)
+      }
+    }
+    fetchProfile()
+  }, [])
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+      name: profile?.full_name ?? 'Guest',
+      email: profile?.email ?? '',
+      avatar: profile?.avatar_url ?? '',
   },
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+        url: "/dashboard",
       icon: LayoutDashboardIcon,
     },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: ListIcon,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: BarChartIcon,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: FolderIcon,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: UsersIcon,
-    },
+      // {
+      //   title: "Lifecycle",
+      //   url: "#",
+      //   icon: ListIcon,
+      // },
+      // {
+      //   title: "Analytics",
+      //   url: "#",
+      //   icon: BarChartIcon,
+      // },
+      // {
+      //   title: "Projects",
+      //   url: "#",
+      //   icon: FolderIcon,
+      // },
+      // {
+      //   title: "Team",
+      //   url: "#",
+      //   icon: UsersIcon,
+      // },
   ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: CameraIcon,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: FileTextIcon,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: FileCodeIcon,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
+    // documents: [
+    //   {
+    //     name: "Data Library",
+    //     url: "#",
+    //     icon: DatabaseIcon,
+    //   },
+    //   {
+    //     name: "Reports",
+    //     url: "#",
+    //     icon: ClipboardListIcon,
+    //   },
+    //   {
+    //     name: "Word Assistant",
+    //     url: "#",
+    //     icon: FileIcon,
+    //   },
+    // ],
   navSecondary: [
     {
       title: "Settings",
@@ -131,30 +125,13 @@ const data = {
       icon: SearchIcon,
     },
   ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: DatabaseIcon,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: ClipboardListIcon,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: FileIcon,
-    },
-  ],
-}
+  }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
+        {/* <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
@@ -166,15 +143,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
-        </SidebarMenu>
+        </SidebarMenu> */}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {/* <NavDocuments items={data.documents} /> */}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavSecondary items={data.navSecondary} />
+        <NavUser user={data.user}>
+          <DropdownMenuItem asChild>
+            <LogoutButton />
+          </DropdownMenuItem>
+        </NavUser>
       </SidebarFooter>
     </Sidebar>
   )
