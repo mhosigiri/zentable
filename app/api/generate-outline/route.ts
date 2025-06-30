@@ -177,13 +177,14 @@ function selectTemplateType(title: string, bulletPoints: string[], index: number
   
   // PRIORITY 4: Strategic selection based on position
   if (index === 0) {
-    // First slide - prefer visually striking templates
-    const firstSlidePreferred = finalTemplates.filter(t => 
-      [ 'accent-left', 'accent-right'].includes(t)
-    );
-    if (firstSlidePreferred.length > 0) {
-      return firstSlidePreferred[Math.floor(Math.random() * firstSlidePreferred.length)];
+    // First slide - default to a visually striking accent template
+    const accentTemplates = ['accent-left', 'accent-right', 'accent-top'];
+    const preferred = finalTemplates.filter(t => accentTemplates.includes(t));
+    if (preferred.length > 0) {
+      return preferred[Math.floor(Math.random() * preferred.length)];
     }
+    // If no accent template is in finalTemplates (e.g. filtered out), just pick a random one as a fallback.
+    return accentTemplates[Math.floor(Math.random() * accentTemplates.length)];
   }
   
   if (index === totalSections - 1) {
@@ -283,13 +284,20 @@ The outline should create a compelling ${cardCount}-slide presentation with maxi
     // Add template types and IDs to sections
     const usedTemplates: string[] = [];
     const sectionsWithTemplates = object.sections.map((section, index) => {
-      const templateType = section.templateType || selectTemplateType(
-        section.title, 
-        section.bulletPoints, 
-        index, 
-        object.sections.length,
-        usedTemplates
-      );
+      let templateType;
+      if (index === 0) {
+        // Force the first slide to be an accent template
+        const accentTemplates = ['accent-left', 'accent-right', 'accent-top'];
+        templateType = accentTemplates[Math.floor(Math.random() * accentTemplates.length)];
+      } else {
+        templateType = section.templateType || selectTemplateType(
+          section.title, 
+          section.bulletPoints, 
+          index, 
+          object.sections.length,
+          usedTemplates
+        );
+      }
       
       usedTemplates.push(templateType);
       
