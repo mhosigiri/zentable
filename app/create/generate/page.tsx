@@ -1,12 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AppHeader } from '@/components/ui/app-header';
 import { 
   Sparkles, 
   Home, 
@@ -141,17 +141,7 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <header className="border-b border-white/20 backdrop-blur-sm bg-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center py-4">
-            <Link href="/create" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-              <Home className="w-5 h-5 mr-2" />
-              Create
-            </Link>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Title */}
@@ -163,7 +153,7 @@ export default function GeneratePage() {
         </div>
 
         {/* Content Type Selection */}
-        <div className="flex justify-center mb-8">
+        {/* <div className="flex justify-center mb-8">
           <div className="flex bg-white/60 backdrop-blur-sm rounded-lg p-2 border border-white/20">
             <button
               onClick={() => setSelectedType('presentation')}
@@ -177,7 +167,7 @@ export default function GeneratePage() {
               Presentation
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Options Row */}
         <div className="flex justify-center gap-4 mb-8">
