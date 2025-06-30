@@ -60,10 +60,14 @@ export default function Home() {
                   href="https://bolt.new"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-4 px-4 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-pink-500 text-white font-semibold text-sm shadow hover:scale-105 transition-transform"
+                  className="inline-block mt-4"
                   aria-label="Built with Bolt.new"
                 >
-                  🚀 Built with Bolt.new
+                  <img
+                    src="/assets/logotext_poweredby_360w.png"
+                    alt="Powered by Bolt.new"
+                    className="h-10 w-auto mx-auto drop-shadow-md"
+                  />
                 </a>
               </div>
             </div>
