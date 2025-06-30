@@ -30,17 +30,15 @@ export function useSlides(initialSlides: SlideData[] = []) {
     setSlides(newSlides);
   }, []);
 
-  const addSlide = useCallback((slideData: Partial<SlideData>, index: number) => {
-    const newSlide: SlideData = {
-      id: generateUUID(),
-      templateType: 'blank-card',
-      title: 'New Slide',
-      isGenerating: false,
-      ...slideData,
+  const addSlide = useCallback((newSlide: SlideData, index?: number) => {
+    const slideToAdd: SlideData = {
+      ...newSlide,
+      id: newSlide.id || generateUUID(),
     };
     
     const newSlides = [...slides];
-    newSlides.splice(index, 0, newSlide);
+    const insertIndex = index !== undefined ? index : slides.length;
+    newSlides.splice(insertIndex, 0, slideToAdd);
     setSlides(newSlides);
   }, [slides]);
 

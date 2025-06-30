@@ -36,6 +36,7 @@ import { fetchGeneratedSlide, fetchGeneratedImage } from '@/lib/ai/generation';
 import { useSlideNavigation } from '@/hooks/useSlideNavigation';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useMyRuntime } from './MyRuntimeProvider';
+import { generateUUID } from '@/lib/uuid';
 
 interface OutlineSection {
   id: string;
@@ -502,7 +503,17 @@ export default function PresentationPage() {
   // Phase 3: Slide addition functions
   const addNewSlide = (templateType: string, slideData: Partial<SlideData> = {}, insertIndex?: number) => {
     const targetIndex = insertIndex !== undefined ? insertIndex : currentSlideIndex + 1;
-    addSlide({ templateType, ...slideData }, targetIndex);
+    
+    // Create a complete SlideData object with defaults
+    const newSlide: SlideData = {
+      id: generateUUID(),
+      templateType,
+      title: 'New Slide',
+      isGenerating: false,
+      ...slideData, // Override defaults with provided data
+    };
+    
+    addSlide(newSlide, targetIndex);
     
     setCurrentSlideIndex(targetIndex);
     setInsertAtIndex(null);

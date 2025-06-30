@@ -121,6 +121,44 @@ const formatDate = (dateString: string) => {
   })
 }
 
+interface ActionsCellProps {
+  presentation: Presentation
+}
+
+function ActionsCell({ presentation }: ActionsCellProps) {
+  const router = useRouter()
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreVerticalIcon className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() => router.push(`/docs/${presentation.id}`)}
+        >
+          Open Presentation
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            navigator.clipboard.writeText(presentation.id)
+            toast.success("Presentation ID copied to clipboard")
+          }}
+        >
+          Copy ID
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-destructive">
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 const columns: ColumnDef<Presentation>[] = [
   {
     id: "select",
@@ -221,40 +259,7 @@ const columns: ColumnDef<Presentation>[] = [
   {
     id: "actions",
     header: () => null,
-    cell: ({ row }) => {
-      const presentation = row.original
-      const router = useRouter()
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreVerticalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => router.push(`/docs/${presentation.id}`)}
-            >
-              Open Presentation
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                navigator.clipboard.writeText(presentation.id)
-                toast.success("Presentation ID copied to clipboard")
-              }}
-            >
-              Copy ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
+    cell: ({ row }) => <ActionsCell presentation={row.original} />,
   },
 ]
 

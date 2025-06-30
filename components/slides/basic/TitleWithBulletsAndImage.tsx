@@ -113,7 +113,7 @@ export function TitleWithBulletsAndImage({
                   {imagePrompt && (
                     <p className={`text-xs max-w-xs px-4 leading-relaxed ${
                       isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}>"{imagePrompt}"</p>
+                    }`}>&quot;{imagePrompt}&quot;</p>
                   )}
                 </div>
               </div>

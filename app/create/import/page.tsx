@@ -63,7 +63,7 @@ export default function ImportPage() {
             <h1 className="text-4xl font-bold text-gray-900">Import with AI</h1>
           </div>
           <p className="text-xl text-gray-600">
-            Select the file you'd like to transform
+            Select the file you&apos;d like to transform
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export default function ImportPage() {
         {/* Alternative Option */}
         <div className="text-center mb-16">
           <p className="text-gray-600">
-            If your file isn't supported, you can also{' '}
+            If your file isn&apos;t supported, you can also{' '}
             <Link href="/create/paste" className="text-blue-600 hover:text-blue-700 underline">
               paste in text
             </Link>

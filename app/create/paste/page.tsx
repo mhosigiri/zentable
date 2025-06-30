@@ -119,7 +119,7 @@ export default function PastePage() {
           <div className="lg:col-span-2">
             <div className="mb-6">
               <p className="text-gray-700 text-center mb-4">
-                Paste in the notes, outline or text content you'd like to use
+                Paste in the notes, outline or text content you&apos;d like to use
               </p>
               
               <Card className="bg-white/60 backdrop-blur-sm border-white/20">
@@ -166,7 +166,7 @@ export default function PastePage() {
                     <Copy className="w-5 h-5 text-purple-500 mr-4" />
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">Preserve this exact text</h4>
-                      <p className="text-sm text-gray-600">Create using your text, exactly as you've written it</p>
+                      <p className="text-sm text-gray-600">Create using your text, exactly as you&apos;ve written it</p>
                     </div>
                   </CardContent>
                 </Card>

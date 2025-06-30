@@ -56,7 +56,7 @@ export const ChatWidget: FC<ChatWidgetProps> = ({
             "fixed right-4 bottom-4 z-50 flex flex-col overflow-hidden rounded-lg border border-white/20 bg-white/20 backdrop-blur shadow-lg transition-all duration-300 ease-in-out",
             isMinimized ? "h-14 w-72" : "h-[80vh] max-h-[600px] w-[350px] sm:w-[400px]",
             className
-          )
+          )}
         >
           <div className="flex h-14 items-center justify-between border-b px-4">
             <h3 className="text-sm font-medium">AI Assistant</h3>
