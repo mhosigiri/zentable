@@ -37,8 +37,13 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Check if this is an API route that uses Bearer token authentication
+  const isApiRouteWithTokenAuth = request.nextUrl.pathname.startsWith('/api/mcp') || 
+                                   request.nextUrl.pathname.startsWith('/api/api-keys')
+
   if (
     !user &&
+    !isApiRouteWithTokenAuth &&
     request.nextUrl.pathname !== '/' &&
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/auth')
