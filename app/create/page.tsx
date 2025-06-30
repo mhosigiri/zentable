@@ -4,38 +4,48 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { SlidesHeader } from '@/components/ui/slides-header';
+import { AppHeader } from '@/components/ui/app-header';
 import { 
   FileText, 
   Sparkles, 
   Upload, 
   Home,
   ArrowRight,
-  Clock
+  Clock,
+  BrainCircuit
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { DatabaseService, Presentation } from '@/lib/database';
+import { createClient } from '@/lib/supabase/client';
+import { formatDistanceToNow } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export default function CreatePage() {
-  const recentPrompts = [
-    {
-      title: "Persuasive presentation",
-      type: "Generate",
-      time: "12 days ago"
-    },
-    {
-      title: "Resume for an influencer",
-      type: "Generate", 
-      time: "12 days ago"
-    },
-    {
-      title: "Introduction",
-      type: "Paste text",
-      time: "3 months ago"
-    }
-  ];
+  const [recentPrompts, setRecentPrompts] = useState<Presentation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecentPrompts = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const dbService = new DatabaseService(supabase);
+        const presentations = await dbService.getUserPresentations(user.id);
+        // get the 3 most recent
+        setRecentPrompts(presentations.slice(0, 3));
+      }
+      setIsLoading(false);
+    };
+
+    fetchRecentPrompts();
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <SlidesHeader title="Create with AI" showHomeButton={true} />
+      <AppHeader />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Main Title */}
@@ -58,7 +68,7 @@ export default function CreatePage() {
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20"></div>
                   <span className="text-4xl font-bold text-white relative z-10">Aa</span>
                 </div>
-                <CardTitle className="text-xl font-semibold">Paste in text</CardTitle>
+                <CardTitle className="text-xl font-semibold">Start with text</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-gray-600">
@@ -89,25 +99,28 @@ export default function CreatePage() {
             </Card>
           </Link>
 
-          {/* Import file or URL */}
-          <Link href="/create/import">
-            <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white/80 backdrop-blur-sm border-0">
+          {/* Brainstorm with AI */}
+          <div className="relative">
+            <Badge className="absolute -top-2 left-4 bg-gray-200 text-gray-800 z-10">
+              COMING SOON
+            </Badge>
+            <Card className="group cursor-not-allowed opacity-60 bg-white/80 backdrop-blur-sm border-0 h-full">
               <CardHeader className="pb-4">
-                <div className="w-full h-40 bg-gradient-to-br from-blue-600 via-green-500 to-orange-400 rounded-lg flex items-center justify-center mb-4 relative overflow-hidden">
+                <div className="w-full h-40 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 rounded-lg flex items-center justify-center mb-4 relative overflow-hidden">
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-lg"></div>
                   <div className="bg-white rounded-lg p-3 relative z-10">
-                    <Upload className="w-6 h-6 text-blue-600" />
+                    <BrainCircuit className="w-6 h-6 text-gray-600" />
                   </div>
                 </div>
-                <CardTitle className="text-xl font-semibold">Import file or URL</CardTitle>
+                <CardTitle className="text-xl font-semibold">Brainstorm with AI</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-gray-600">
-                  Enhance existing docs, presentations, or webpages
+                  Collaborate with an AI partner to generate and refine ideas
                 </CardDescription>
               </CardContent>
             </Card>
-          </Link>
+          </div>
         </div>
 
         {/* Recent Prompts */}
@@ -117,21 +130,33 @@ export default function CreatePage() {
           </h2>
           
           <div className="space-y-3">
-            {recentPrompts.map((prompt, index) => (
-              <Card key={index} className="group cursor-pointer hover:shadow-md transition-all duration-200 bg-white/60 backdrop-blur-sm border-0">
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-1">{prompt.title}</h3>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <span className="mr-3">{prompt.type}</span>
-                      <Clock className="w-3 h-3 mr-1" />
-                      <span>{prompt.time}</span>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
-                </CardContent>
-              </Card>
-            ))}
+            {isLoading ? (
+              <>
+                <Skeleton className="h-20 w-full rounded-lg" />
+                <Skeleton className="h-20 w-full rounded-lg" />
+                <Skeleton className="h-20 w-full rounded-lg" />
+              </>
+            ) : recentPrompts.length > 0 ? (
+              recentPrompts.map((prompt) => (
+                <Link href={`/create/generate/${prompt.id}`} key={prompt.id}>
+                  <Card className="group cursor-pointer hover:shadow-md transition-all duration-200 bg-white/60 backdrop-blur-sm border-0">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 mb-1 truncate">{prompt.prompt}</h3>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <span className="mr-3">{prompt.style}</span>
+                          <Clock className="w-3 h-3 mr-1" />
+                          <span>{formatDistanceToNow(new Date(prompt.created_at), { addSuffix: true })}</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <p className="text-center text-gray-500">You don&apos;t have any recent prompts yet.</p>
+            )}
           </div>
         </div>
       </main>
