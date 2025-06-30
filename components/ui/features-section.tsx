@@ -24,6 +24,7 @@ import {
   Download,
   Share
 } from "lucide-react";
+import Link from "next/link";
 
 export function FeaturesSection() {
   const [activeTab, setActiveTab] = useState("ai-generation");
@@ -253,11 +254,13 @@ export function FeaturesSection() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" variant="secondary" className="px-8 py-4 text-lg bg-white text-purple-600 hover:bg-gray-100">
-                    <Zap className="w-5 h-5 mr-2" />
-                    Start Free Trial
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
+                  <Link href="/dashboard">
+                    <Button size="lg" variant="secondary" className="px-8 py-4 text-lg bg-white text-purple-600 hover:bg-gray-100">
+                      <Zap className="w-5 h-5 mr-2" />
+                      Start Free Trial
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
                   <Button size="lg" variant="outline" className="px-8 py-4 text-lg border-white text-white hover:bg-white/10">
                     <Download className="w-5 h-5 mr-2" />
                     View Examples

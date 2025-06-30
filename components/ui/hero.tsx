@@ -34,7 +34,7 @@ export function Hero() {
             <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
             Introducing AI-Powered Presentation Magic
             <Link
-              href="/create"
+              href="/dashboard"
               className="hover:text-purple-600 ml-2 flex items-center font-semibold transition-colors"
             >
               <div className="absolute inset-0 flex" aria-hidden="true" />
@@ -139,7 +139,7 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 1.2 }}
           className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
         >
-          <Link href="/create">
+          <Link href="/dashboard">
             <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
               <Sparkles className="w-5 h-5 mr-2" />
               Start Creating Magic

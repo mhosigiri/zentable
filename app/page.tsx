@@ -54,7 +54,7 @@ export default function Home() {
               
               <div className="border-t border-gray-700 pt-8">
                 <p className="text-gray-400">
-                  © 2024 Cursor for Presentations. Empowering ideas through AI.
+                  © 2024 Zent. Empowering ideas through AI.
                 </p>
               </div>
             </div>

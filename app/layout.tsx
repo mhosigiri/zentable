@@ -6,8 +6,13 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'PresentAI - AI-Powered Presentation Builder',
-  description: 'Create stunning presentations with AI in seconds',
+  title: 'Zent - AI-Powered Presentation Builder',
+  description: 'Create stunning presentations with AI in seconds. Transform your ideas into captivating visual stories.',
+  icons: {
+    icon: '/assets/Zent_icon.png',
+    shortcut: '/assets/Zent_icon.png',
+    apple: '/assets/Zent_icon.png',
+  },
 };
 
 export default function RootLayout({
@@ -17,6 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/assets/Zent.png" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider>
           {children}
