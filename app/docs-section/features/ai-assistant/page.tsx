@@ -58,7 +58,7 @@ export default function AIAssistantPage() {
       name: 'Delete Slide',
       description: 'Remove slides from your presentation',
       icon: Trash2,
-      usage: '"Remove slide 4, it\'s not needed anymore"'
+      usage: '&quot;Remove slide 4, it&rsquo;s not needed anymore&quot;'
     },
     {
       name: 'Duplicate Slide',
@@ -95,17 +95,17 @@ export default function AIAssistantPage() {
   const conversationExamples = [
     {
       user: 'Add more details about our pricing to slide 4',
-      assistant: 'I\'ll add comprehensive pricing details to slide 4, including different tiers and key features for each plan.',
+      assistant: 'I&rsquo;ll add comprehensive pricing details to slide 4, including different tiers and key features for each plan.',
       action: 'Updates slide content with detailed pricing information'
     },
     {
       user: 'The presentation feels too text-heavy. Can you make it more visual?',
-      assistant: 'I\'ll identify text-heavy slides and add relevant images, change some to visual templates, and break up long text blocks.',
+      assistant: 'I&rsquo;ll identify text-heavy slides and add relevant images, change some to visual templates, and break up long text blocks.',
       action: 'Generates images and switches templates for better visual balance'
     },
     {
       user: 'Create a summary slide at the end',
-      assistant: 'I\'ll create a conclusion slide that summarizes the key points from your presentation.',
+      assistant: 'I&rsquo;ll create a conclusion slide that summarizes the key points from your presentation.',
       action: 'Analyzes presentation content and creates a comprehensive summary slide'
     }
   ];
@@ -114,12 +114,12 @@ export default function AIAssistantPage() {
     {
       type: 'success',
       title: 'Be Specific',
-      content: 'Instead of "improve this slide," try "add bullet points about our key benefits to slide 3"'
+      content: 'Instead of &quot;improve this slide,&quot; try &quot;add bullet points about our key benefits to slide 3&quot;'
     },
     {
       type: 'info',
       title: 'Use Slide Numbers',
-      content: 'Reference specific slides by number (e.g., "slide 2") for precise edits'
+      content: 'Reference specific slides by number (e.g., &quot;slide 2&quot;) for precise edits'
     },
     {
       type: 'warning',
@@ -188,7 +188,7 @@ export default function AIAssistantPage() {
                     <h4 className="font-semibold text-gray-900 mb-2">{tool.name}</h4>
                     <p className="text-sm text-gray-600 mb-3">{tool.description}</p>
                     <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs text-gray-700 italic">Example: "{tool.usage}"</p>
+                      <p className="text-xs text-gray-700 italic">Example: &quot;{tool.usage}&quot;</p>
                     </div>
                   </div>
                 </div>
@@ -212,7 +212,7 @@ export default function AIAssistantPage() {
                       <span className="text-sm font-medium text-blue-600">You</span>
                     </div>
                     <div className="bg-blue-50 rounded-lg p-3 flex-1">
-                      <p className="text-sm text-gray-800">"{example.user}"</p>
+                      <p className="text-sm text-gray-800">&quot;{example.user}&quot;</p>
                     </div>
                   </div>
                   

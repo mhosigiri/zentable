@@ -235,7 +235,7 @@ export default function DocsPage() {
             <CardContent className="p-6 text-center">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Feature Requests</h3>
               <p className="text-gray-600 mb-4">
-                Have an idea? We'd love to hear your suggestions
+                Have an idea? We&rsquo;d love to hear your suggestions
               </p>
               <Button variant="outline" className="bg-white/60 backdrop-blur-sm border-white/20">
                 Submit Feedback
