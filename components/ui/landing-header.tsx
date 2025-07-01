@@ -29,6 +29,9 @@ export function LandingHeader() {
             <Link href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">
               About
             </Link>
+            <Link href="/docs-section" className="text-gray-600 hover:text-gray-900 transition-colors">
+              Docs
+            </Link>
             <Link href="/dashboard">
               <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
                 Get Started
@@ -39,4 +42,4 @@ export function LandingHeader() {
       </div>
     </header>
   );
-} 
+}  

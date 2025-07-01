@@ -110,6 +110,11 @@ const data = {
     // ],
   navSecondary: [
     {
+      title: "Documentation",
+      url: "/docs-section",
+      icon: HelpCircleIcon,
+    },
+    {
       title: "Settings",
       url: "/dashboard/settings",
       icon: SettingsIcon,
