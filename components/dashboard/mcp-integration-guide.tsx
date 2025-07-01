@@ -89,8 +89,8 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
       icon: '⚡',
       description: 'AI-powered code editor',
       steps: [
-        'Open Cursor and create a `.cursor` directory in your project root',
-        'Create a `.cursor/mcp.json` file',
+        'Open Cursor and create a &apos;.cursor&apos; directory in your project root',
+        'Create a &apos;.cursor/mcp.json&apos; file',
         'Add the configuration below',
         'Save and restart Cursor',
         'Navigate to Settings → MCP to verify the connection'
@@ -101,7 +101,7 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
       id: 'windsurf',
       name: 'Windsurf',
       icon: '🌊',
-      description: 'Codeium\'s AI development environment',
+      description: 'Codeium&apos;s AI development environment',
       steps: [
         'Open Windsurf and navigate to the Cascade assistant',
         'Click the hammer (MCP) icon, then Configure',
@@ -115,7 +115,7 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
       id: 'claude-desktop',
       name: 'Claude Desktop',
       icon: '🤖',
-      description: 'Anthropic\'s desktop AI assistant',
+      description: 'Anthropic&apos;s desktop AI assistant',
       steps: [
         'Open Claude Desktop and go to Settings',
         'Under the Developer tab, click Edit Config',
@@ -131,11 +131,11 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
       icon: '📝',
       description: 'GitHub Copilot with MCP support',
       steps: [
-        'Create a `.vscode` directory in your project root',
-        'Create a `.vscode/mcp.json` file',
+        'Create a &apos;.vscode&apos; directory in your project root',
+        'Create a &apos;.vscode/mcp.json&apos; file',
         'Add the configuration below',
         'Open Copilot chat and switch to Agent mode',
-        'You\'ll be prompted to enter your API key when first used'
+        'You&apos;ll be prompted to enter your API key when first used'
       ],
       configFile: '.vscode/mcp.json'
     }
@@ -144,17 +144,17 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
   const usageExamples = [
     {
       tool: 'Cursor/Windsurf',
-      example: 'Create a presentation about "Machine Learning Fundamentals" with 8 slides in professional style',
+      example: 'Create a presentation about &quot;Machine Learning Fundamentals&quot; with 8 slides in professional style',
       description: 'Use natural language to generate presentations'
     },
     {
       tool: 'Claude Desktop',
-      example: '@slides-ai generate a presentation on "Sustainable Energy" with 6 slides',
+      example: '@slides-ai generate a presentation on &quot;Sustainable Energy&quot; with 6 slides',
       description: 'Use the @slides-ai mention to access tools'
     },
     {
       tool: 'VS Code Copilot',
-      example: 'Use MCP tools to create a detailed presentation about "Web Development Best Practices"',
+      example: 'Use MCP tools to create a detailed presentation about &quot;Web Development Best Practices&quot;',
       description: 'Access via Agent mode in Copilot chat'
     }
   ]
@@ -189,7 +189,7 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
         <CardHeader>
           <CardTitle>Setup Instructions</CardTitle>
           <CardDescription>
-            Choose your AI tool and follow the setup instructions. You'll need an API key from the section above.
+            Choose your AI tool and follow the setup instructions. You&apos;ll need an API key from the section above.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -265,7 +265,7 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
         <CardHeader>
           <CardTitle>Usage Examples</CardTitle>
           <CardDescription>
-            Here's how to use the presentation generator once connected to your AI tool.
+            Here&apos;s how to use the presentation generator once connected to your AI tool.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -276,7 +276,7 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
                   <Badge variant="outline">{example.tool}</Badge>
                 </div>
                 <blockquote className="bg-muted/50 p-3 rounded italic text-sm">
-                  "{example.example}"
+                  &quot;{example.example}&quot;
                 </blockquote>
                 <p className="text-xs text-muted-foreground mt-2">{example.description}</p>
               </div>
@@ -351,9 +351,9 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
             <div className="border-l-4 border-blue-500 pl-4">
               <h4 className="font-medium">Tool Not Working</h4>
               <ul className="text-sm text-muted-foreground mt-1 space-y-1">
-                <li>• Ensure you're calling <code className="bg-muted px-1 rounded">create_presentation</code> exactly</li>
-                <li>• Check that the MCP server shows as "active" or "connected"</li>
-                <li>• Try a simple test: "Create a 3-slide presentation about cats"</li>
+                <li>• Ensure you&apos;re calling <code className="bg-muted px-1 rounded">create_presentation</code> exactly</li>
+                <li>• Check that the MCP server shows as &quot;active&quot; or &quot;connected&quot;</li>
+                <li>• Try a simple test: &quot;Create a 3-slide presentation about cats&quot;</li>
               </ul>
             </div>
           </div>

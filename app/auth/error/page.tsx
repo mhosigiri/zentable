@@ -84,7 +84,7 @@ export default function Page({ searchParams }: { searchParams: Promise<{ error: 
                 </div>
                 
                 <p className="text-gray-600">
-                  Don't worry! Let's get you back on track to creating amazing presentations.
+                  Don&apos;t worry! Let&apos;s get you back on track to creating amazing presentations.
                 </p>
                 
                 <div className="space-y-3">

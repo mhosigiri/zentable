@@ -203,7 +203,7 @@ export default function PastePage() {
                   <RadioGroupItem value="preserve" id="action-preserve" className="mr-4 mt-1" />
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">Preserve this exact text</h4>
-                    <p className="text-sm text-gray-600">Create using your text, exactly as you've written it</p>
+                    <p className="text-sm text-gray-600">Create using your text, exactly as you&apos;ve written it</p>
                   </div>
                 </CardContent>
               </Card>
@@ -258,7 +258,7 @@ export default function PastePage() {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             <p className="text-gray-700">
-              Paste in the notes, outline or text content you'd like to use
+              Paste in the notes, outline or text content you&apos;d like to use
             </p>
             {pasteAction === 'preserve' && (
               <Dialog>

@@ -207,7 +207,7 @@ export function ApiKeysSection() {
                         </Button>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        ⚠️ Save this key now - you won't be able to see it again!
+                        ⚠️ Save this key now - you won&apos;t be able to see it again!
                       </p>
                     </div>
                   </AlertDescription>
