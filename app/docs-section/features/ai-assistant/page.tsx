@@ -262,7 +262,7 @@ export default function AIAssistantPage() {
                   <span className="text-xl font-bold text-white">3</span>
                 </div>
                 <h4 className="font-semibold text-gray-900 mb-2">Preview Changes</h4>
-                <p className="text-sm text-gray-600">Review proposed changes before they're applied</p>
+                <p className="text-sm text-gray-600">Review proposed changes before they&rsquo;re applied</p>
               </div>
               
               <div className="text-center">

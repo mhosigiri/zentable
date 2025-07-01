@@ -181,7 +181,7 @@ export default function DocsPage() {
       {/* What's New */}
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">What's New</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">What&rsquo;s New</h2>
           <p className="text-lg text-gray-600">Latest features and improvements</p>
         </div>
         
