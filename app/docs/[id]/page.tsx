@@ -120,7 +120,7 @@ export default function PresentationPage() {
   // Load document data and theme from localStorage
   useEffect(() => {
     const loadDocumentData = () => {
-      const stored = localStorage.getItem(`document_${documentId}`);
+      const stored = localStorage.getItem(documentId);
       if (stored) {
         const data: DocumentData = JSON.parse(stored);
         setDocumentData(data);
@@ -201,7 +201,7 @@ export default function PresentationPage() {
       }
       
       try {
-        localStorage.setItem(`document_${documentId}`, dataString);
+        localStorage.setItem(documentId, dataString);
       } catch (error: any) {
         // Only log errors, not normal saves
         // eslint-disable-next-line no-console
@@ -217,7 +217,7 @@ export default function PresentationPage() {
             const keysToRemove: string[] = [];
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
-              if (key && key.startsWith('document_') && key !== `document_${documentId}`) {
+              if (key && key !== documentId && key.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
                 keysToRemove.push(key);
               }
             }
@@ -228,7 +228,7 @@ export default function PresentationPage() {
             });
             
             // Try saving again after cleanup
-            localStorage.setItem(`document_${documentId}`, dataString);
+            localStorage.setItem(documentId, dataString);
           } catch (cleanupError) {
             // eslint-disable-next-line no-console
             console.error('❌ Failed to save even after cleanup:', cleanupError);
@@ -239,7 +239,7 @@ export default function PresentationPage() {
                 ...documentData,
                 generatedSlides: [] // Remove slides to save space
               };
-              localStorage.setItem(`document_${documentId}`, JSON.stringify(essentialData));
+              localStorage.setItem(documentId, JSON.stringify(essentialData));
               // eslint-disable-next-line no-console
               console.warn('⚠️ Saved essential data only (without slides) due to storage constraints');
             } catch (finalError) {

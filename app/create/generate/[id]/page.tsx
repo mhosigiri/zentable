@@ -203,7 +203,7 @@ export default function OutlinePage() {
   // Load document data and theme from localStorage
   useEffect(() => {
     const loadDocumentData = () => {
-      const stored = localStorage.getItem(`document_${documentId}`);
+      const stored = localStorage.getItem(documentId);
       if (stored) {
         const data: DocumentData = JSON.parse(stored);
         setDocumentData(data);
@@ -241,7 +241,7 @@ export default function OutlinePage() {
     
     const updatedData = { ...documentData, ...data };
     setDocumentData(updatedData);
-    localStorage.setItem(`document_${documentId}`, JSON.stringify(updatedData));
+    localStorage.setItem(documentId, JSON.stringify(updatedData));
   };
 
   // New function: Save to database in background

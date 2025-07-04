@@ -32,7 +32,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
 
   // On mount, clear threadId for this presentation to force new thread on reload
   useEffect(() => {
-    localStorage.removeItem(`threadId_${presentationId}`);
+    localStorage.removeItem(`thread_${presentationId}`);
     setCurrentThreadId(null);
   }, [presentationId]);
 

@@ -30,7 +30,7 @@ export default function PastePage() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const generateDocumentId = () => {
-    return generatePrefixedId('doc');
+    return generateUUID();
   };
 
   const parseTextToSlides = (text: string) => {
@@ -73,7 +73,7 @@ export default function PastePage() {
           status: 'generating'
         };
         
-        localStorage.setItem(`document_${documentId}`, JSON.stringify(documentData));
+        localStorage.setItem(documentId, JSON.stringify(documentData));
         
         // Save to database
         try {
@@ -125,7 +125,7 @@ export default function PastePage() {
           }
         };
         
-        localStorage.setItem(`document_${documentId}`, JSON.stringify(documentData));
+        localStorage.setItem(documentId, JSON.stringify(documentData));
         
         // Save to database
         try {
