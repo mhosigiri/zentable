@@ -45,6 +45,7 @@ interface ToolResultProps {
   toolCall: ToolCallResult;
   onApprove?: (toolCall: ToolCallResult) => void;
   onReject?: (toolCall: ToolCallResult) => void;
+  onUserDecision?: (toolCall: ToolCallResult, decision: 'approved' | 'rejected') => void;
 }
 
 const getToolIcon = (toolName: string) => {
@@ -70,7 +71,7 @@ const getToolIcon = (toolName: string) => {
 
 
 
-export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
+export function ToolResult({ toolCall, onApprove, onReject, onUserDecision }: ToolResultProps) {
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const slideManager = useMyRuntime();
   const { setTheme } = useTheme();
@@ -122,12 +123,16 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
       setStatus('rejected'); // Revert status on failure
     }
 
-    // Commenting out server-side callback for testing UI-only updates
-    // onApprove?.(toolCall);
+    // Notify parent component about user's decision
+    onUserDecision?.(toolCall, 'approved');
+    onApprove?.(toolCall);
   };
   
   const handleReject = () => {
     setStatus('rejected');
+    
+    // Notify parent component about user's decision
+    onUserDecision?.(toolCall, 'rejected');
     onReject?.(toolCall);
   };
 

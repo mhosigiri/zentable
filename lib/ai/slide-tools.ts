@@ -156,13 +156,13 @@ export const proposeSlideUpdate = tool({
       // Return proposed changes without updating database
       return {
         success: true,
-        message: "Slide content update proposed - awaiting approval",
         slideId,
         currentContent: currentSlide.content,
         proposedContent: content,
         contentLength: content.length,
         slideTitle: currentSlide.title,
         requiresApproval: true,
+        stopAfterCall: true, // Signal to stop after this tool call
       };
     } catch (error) {
       console.error("❌ Exception in updateSlideContent tool:", error);
@@ -268,9 +268,9 @@ export const createSlide = tool({
 
     return {
       success: true,
-      message: 'Slide creation proposed. Ready to be added to UI.',
       newSlide,
       requiresApproval: true,
+      stopAfterCall: true, // Signal to stop after this tool call
     };
   },
 });
@@ -319,9 +319,9 @@ export const createSlideWithAI = tool({
 
       return {
         success: true,
-        message: 'Slide creation proposed with AI-generated content. Ready to be added.',
         newSlide,
         requiresApproval: true,
+        stopAfterCall: true, // Signal to stop after this tool call
       };
     } catch (error) {
       console.error('❌ Error creating slide with AI:', error);
@@ -344,9 +344,9 @@ export const deleteSlide = tool({
     // we'll assume the frontend can find the position from the ID.
     return {
       success: true,
-      message: 'Slide deletion proposed.',
       slideId,
       requiresApproval: true,
+      stopAfterCall: true, // Signal to stop after this tool call
     };
   },
 });
@@ -369,10 +369,10 @@ export const duplicateSlide = tool({
 
     return {
       success: true,
-      message: 'Slide duplication proposed.',
       duplicatedSlide,
       originalSlideId: slideId,
       requiresApproval: true,
+      stopAfterCall: true, // Signal to stop after this tool call
     };
   },
 });
@@ -413,10 +413,11 @@ export const applyTheme = tool({
     console.log('✅ Theme found:', theme.name);
     return {
       success: true,
-      message: `Theme "${theme.name}" proposed.`,
+      message: `Theme "${theme.name}" proposed. STOP - DO NOT ADD ANY TEXT AFTER THIS TOOL CALL.`,
       themeId: theme.id,
       themeName: theme.name,
       requiresApproval: true,
+      stopAfterCall: true, // Signal to stop after this tool call
     };
   },
 });

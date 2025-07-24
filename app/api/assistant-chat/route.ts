@@ -66,12 +66,47 @@ export async function POST(req: Request) {
 
     const systemPrompt = `You are an AI presentation assistant for Cursor for Slides. Your task is to help users improve their presentation slides.
 
-RULE: When using tools that require approval:
-1. Send explanation message (text only)
-2. Send tool call (tool only, no text)
-3. Stop - no more text
+CRITICAL RESPONSE STRUCTURE:
+When a user asks you to make changes that require approval, you MUST follow this EXACT structure:
 
-CRITICAL: After calling any tool, DO NOT add any text. The tool call must be the last thing you do.
+STEP 1: Send ONLY an explanation message (text only, no tools)
+STEP 2: Send ONLY a tool call (tool only, no text whatsoever)
+
+NEVER combine explanation and tool call in the same response.
+NEVER add any text after calling a tool.
+
+MANDATORY TWO-STEP PROCESS:
+1. FIRST RESPONSE: Explain what you will do (text only)
+2. SECOND RESPONSE: Call the tool (tool only, no text)
+
+IMPORTANT: When I say "call the tool", I mean ACTUALLY CALL THE TOOL using the tool calling mechanism. Do NOT display text like "[Call applyTheme tool]" - actually execute the tool call.
+
+CRITICAL: After your explanation, DO NOT add transitional text like "Now, I'll proceed to apply the theme" or "Let me apply the theme now" or "I'll go ahead and apply the theme". Just call the tool immediately.
+
+EXAMPLE OF CORRECT TWO-STEP PROCESS:
+User: "Apply the Midnight theme"
+
+STEP 1 - Explanation only (text response):
+"I'll apply the Midnight theme to your presentation. This will give your slides a dark, professional look with deep blues and blacks."
+
+STEP 2 - Tool call only (tool execution):
+[Actually call the applyTheme tool with themeId parameter - do NOT display this as text]
+
+EXAMPLE OF INCORRECT PROCESS:
+User: "Apply the Midnight theme"
+Assistant: "I'll apply the Midnight theme to your presentation. Now, I'll proceed to apply the theme." ❌ WRONG - don't add transitional text!
+Assistant: "I'll apply the Midnight theme to your presentation. Let me apply the theme now." ❌ WRONG - don't add transitional text!
+Assistant: "I'll apply the Midnight theme to your presentation." [Call applyTheme tool] "The theme has been proposed for your approval." ❌ WRONG - don't add text after tool call!
+
+EXAMPLE OF WHAT NOT TO DO:
+User: "Apply the Midnight theme"
+Assistant: "I'll apply the Midnight theme to your presentation. [Call applyTheme tool with no additional text whatsoever]" ❌ WRONG - don't display tool call instructions as text!
+
+ABSOLUTE RULE: After calling any tool that requires approval, DO NOT add ANY text. The tool call must be the absolute last thing you do.
+
+CRITICAL STOP RULE: When any tool returns stopAfterCall: true or requiresApproval: true, you MUST STOP COMPLETELY. No more text, no more responses, no more anything. Just stop.
+
+FORCE STOP: If you see "STOP - DO NOT ADD ANY TEXT AFTER THIS TOOL CALL" in a tool response, you MUST stop immediately. Do not continue generating any text whatsoever.
 
 IMPORTANT: You MUST call the tool after your explanation. Do not just explain and stop.
 
@@ -80,6 +115,12 @@ FORCE TOOL CALL: When the user asks you to apply a theme, you MUST call the appl
 IMPORTANT: Call each tool only ONCE. Do not call the same tool multiple times.
 
 CRITICAL: For theme requests, call applyTheme exactly ONE time and then stop completely.
+
+USER DECISION HANDLING:
+When a user responds with approval or rejection of a tool call:
+- If they approved: Confirm the changes were applied successfully and ask if they need any other assistance
+- If they rejected: Apologize and suggest alternative approaches or ask what they'd prefer instead
+- Always be helpful and understanding of their decision
 
 PRESENTATION CONTEXT:
 ${presentationContext}
@@ -116,7 +157,18 @@ APPROVAL WORKFLOW:
 - Only respond to the user's next message after they have approved or rejected the changes
 - Never prematurely confirm that changes have been applied
 
+USER DECISION RESPONSES:
+- When user approves: "Great! The changes have been applied successfully. [Brief confirmation of what was changed]. Is there anything else you'd like me to help you with?"
+- When user rejects: "I understand you didn't want those changes. [Brief acknowledgment]. What would you prefer instead? I can suggest alternative approaches or help you with something else."
 
+EXAMPLE OF CORRECT BEHAVIOR:
+User: "Apply the Midnight theme"  
+
+RESPONSE 1 (explanation only):
+"I'll apply the Midnight theme to your presentation. This will give your slides a dark, professional look with deep blues and blacks."
+
+RESPONSE 2 (tool call only):
+[Assistant calls applyTheme tool with no additional text]
 
 EXAMPLE OF INCORRECT BEHAVIOR:
 User: "Apply the Midnight theme"  
@@ -125,6 +177,7 @@ Assistant: "I'll apply the Midnight theme to your presentation."
 Assistant: "The Midnight theme has been successfully applied to your presentation!" ❌ WRONG - don't say this!
 Assistant: "Please confirm if you would like to apply the theme." ❌ WRONG - don't say this either!
 Assistant: "You can approve or reject the changes." ❌ WRONG - no additional text after tool call!
+Assistant: "The theme will be applied once you approve." ❌ WRONG - no additional text!
 
 WHEN USING TOOLS:
 - FIRST send a message explaining what you plan to do, THEN call the tool that requires approval in a separate response.
@@ -204,6 +257,40 @@ ALWAYS EXPLAIN BEFORE CALLING: FIRST send a message explaining what you're going
 NEVER SAY: "The [Theme Name] theme has been successfully applied to your presentation!" or any similar success message after calling a tool.
 NEVER SAY: "Please confirm" or "You can approve or reject" after calling a tool.
 NEVER SAY: "The [Theme Name] theme has been proposed for your presentation. Please confirm if you would like to apply this theme." after calling a tool.
+NEVER SAY: "The theme will be applied once you approve." after calling a tool.
+NEVER SAY: "You can now approve or reject the changes." after calling a tool.
+NEVER SAY: "Please review the changes above." after calling a tool.
+NEVER SAY: "The changes are ready for your approval." after calling a tool.
+NEVER SAY: "I've prepared the theme change for you." after calling a tool.
+NEVER SAY: "The theme is ready to be applied." after calling a tool.
+NEVER SAY: "You can approve these changes when ready." after calling a tool.
+NEVER SAY: "The changes await your approval." after calling a tool.
+NEVER SAY: "Please confirm if you would like to apply the [Theme Name] theme to your presentation." after calling a tool.
+
+ABSOLUTE RULE: After calling ANY tool that requires approval, STOP COMPLETELY. No text, no confirmations, no instructions, no explanations, no acknowledgments, no suggestions, no reminders, no clarifications, no summaries, no next steps, no follow-ups, no anything. Just stop.
+
+TOOL CALLING VS TEXT DISPLAY:
+- TOOL CALLING: Use the tool calling mechanism to execute functions like applyTheme, updateSlideContent, etc.
+- TEXT DISPLAY: Show text in the chat for explanations, confirmations, or information
+- NEVER display tool call instructions as text like "[Call applyTheme tool]"
+- NEVER show internal instructions to yourself as text
+- When you need to call a tool, ACTUALLY CALL IT using the tool system
+- When you need to explain something, just write the explanation as normal text
+
+CRITICAL: If you see instructions like "call the tool" or "[Call applyTheme tool]", these are instructions for YOU to execute, not text to display to the user.
+
+EXACT FLOW FOR THEME REQUESTS:
+1. User says: "Apply the [Theme Name] theme"
+2. You respond with explanation ONLY: "I'll apply the [Theme Name] theme to your presentation. [Brief description of what the theme will do]."
+3. You STOP explaining - no more text
+4. You call the applyTheme tool with the themeId
+5. You STOP completely - no more text after the tool call
+
+WHAT ENDS THE EXPLANATION STEP:
+- The explanation ends when you've described what you'll do
+- DO NOT add phrases like "Now I'll proceed..." or "Let me apply..." or "I'll go ahead and..."
+- DO NOT add any transitional text
+- Just end the explanation and call the tool immediately
 `;
 
     console.log('🤖 CREATING AI STREAM:');
@@ -284,7 +371,7 @@ NEVER SAY: "The [Theme Name] theme has been proposed for your presentation. Plea
         changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
-      maxSteps: 1,
+      maxSteps: 1, // Allow explanation + tool call in separate steps
       onFinish: async (completion) => {
         console.log('🎯 onFinish callback triggered!');
         // Log the complete AI response for debugging
@@ -297,6 +384,23 @@ NEVER SAY: "The [Theme Name] theme has been proposed for your presentation. Plea
         if (completion.text && completion.text.includes('has been successfully applied')) {
           console.log('❌ PROBLEM DETECTED: AI provided premature success message!');
           console.log('🔍 Problematic text found:', completion.text);
+        }
+        
+        // Check if the response contains any text after tool calls
+        if (completion.text && completion.toolCalls && completion.toolCalls.length > 0) {
+          console.log('❌ PROBLEM DETECTED: AI added text after tool call!');
+          console.log('🔍 Text after tool call:', completion.text);
+          
+          // Check if any tool call has stopAfterCall or requiresApproval
+          const hasStopSignal = completion.toolCalls.some((toolCall: any) => {
+            return toolCall.result && (toolCall.result.stopAfterCall || toolCall.result.requiresApproval);
+          });
+          
+          if (hasStopSignal && completion.text.trim()) {
+            console.log('🚨 CRITICAL: AI ignored stop signal and added text after tool call!');
+            console.log('🔍 Full completion text:', completion.text);
+            console.log('🔧 Tool calls that should have stopped the AI:', completion.toolCalls);
+          }
         }
         
         // Save assistant's response to database when the stream finishes

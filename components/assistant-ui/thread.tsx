@@ -6,6 +6,7 @@ import {
   ComposerPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
+  useThread,
 } from "@assistant-ui/react";
 import type { FC } from "react";
 import {
@@ -20,6 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
@@ -29,6 +31,32 @@ import { AvatarFallback } from "@radix-ui/react-avatar";
 import { ToolResult } from "@/components/assistant-ui/tool-result";
 
 export const Thread: FC = () => {
+  const thread = useThread();
+  const pendingToolCallRef = useRef<any>(null);
+
+  // Listen for user decisions on tool calls
+  useEffect(() => {
+    const handleUserDecision = (event: CustomEvent) => {
+      const { toolCall, decision, message } = event.detail;
+      
+      // Store the pending tool call for reference
+      pendingToolCallRef.current = toolCall;
+      
+      // Programmatically send the user's decision as a message
+      // We'll use a custom event to trigger the composer
+      const sendEvent = new CustomEvent('send-user-decision', {
+        detail: { message }
+      });
+      window.dispatchEvent(sendEvent);
+    };
+
+    window.addEventListener('assistant-user-decision', handleUserDecision as EventListener);
+    
+    return () => {
+      window.removeEventListener('assistant-user-decision', handleUserDecision as EventListener);
+    };
+  }, [thread]);
+
   return (
     <ThreadPrimitive.Root
       className="bg-white/20 backdrop-blur box-border flex h-full flex-col overflow-hidden rounded-lg border border-white/20 shadow-lg"
@@ -126,14 +154,43 @@ const ThreadWelcomeSuggestions: FC = () => {
 };
 
 const Composer: FC = () => {
+  const [inputValue, setInputValue] = useState("");
+
+  // Listen for programmatic message sending
+  useEffect(() => {
+    const handleSendUserDecision = (event: CustomEvent) => {
+      const { message } = event.detail;
+      
+      // Set the input value and trigger send
+      setInputValue(message);
+      
+      // Use a small delay to ensure the input is set before sending
+      setTimeout(() => {
+        // Trigger the send action
+        const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement;
+        if (sendButton) {
+          sendButton.click();
+        }
+      }, 100);
+    };
+
+    window.addEventListener('send-user-decision', handleSendUserDecision as EventListener);
+    
+    return () => {
+      window.removeEventListener('send-user-decision', handleSendUserDecision as EventListener);
+    };
+  }, []);
+
   return (
     <ComposerPrimitive.Root className="focus-within:border-white/30 focus-within:bg-white focus-within:opacity-100 flex w-full flex-wrap items-end rounded-lg border border-white/20 bg-white/10 px-2.5 shadow transition-colors ease-in backdrop-blur">
-              <ComposerPrimitive.Input
-          rows={1}
-          autoFocus
-          placeholder="Write a message..."
-          className="max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed text-black placeholder:text-black"
-        />
+      <ComposerPrimitive.Input
+        rows={1}
+        autoFocus
+        placeholder="Write a message..."
+        className="max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed text-black placeholder:text-black"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+      />
       <ComposerAction />
     </ComposerPrimitive.Root>
   );
@@ -148,6 +205,7 @@ const ComposerAction: FC = () => {
             tooltip="Send"
             variant="default"
             className="my-2.5 size-8 p-2 transition-opacity ease-in bg-black hover:bg-gray-700"
+            data-send-button
           >
             <SendHorizontalIcon />
           </TooltipIconButton>
@@ -245,6 +303,29 @@ const AssistantMessage: FC = () => {
     }
   };
 
+  const handleUserDecision = (toolCall: any, decision: 'approved' | 'rejected') => {
+    // Send a message to the AI about the user's decision
+    const toolName = getUserFriendlyToolName(toolCall.toolName);
+    
+    let message: string;
+    if (decision === 'approved') {
+      message = `I approved the ${toolName}. The changes have been applied successfully.`;
+    } else {
+      message = `I rejected the ${toolName}. I don't want those changes applied.`;
+    }
+    
+    // Use the ThreadPrimitive to send a message
+    // This will trigger the AI to respond based on the user's decision
+    const event = new CustomEvent('assistant-user-decision', {
+      detail: {
+        toolCall,
+        decision,
+        message
+      }
+    });
+    window.dispatchEvent(event);
+  };
+
   return (
     <MessagePrimitive.Root className="relative grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] py-4">
       <div className="text-foreground col-span-2 col-start-2 row-start-1 my-1.5 max-w-[calc(var(--thread-max-width)*0.8)] break-words leading-7">
@@ -260,6 +341,7 @@ const AssistantMessage: FC = () => {
                     result: props.result
                   }}
                   onApprove={props.toolName === 'updateSlideContent' ? handleApproveSlideUpdate : undefined}
+                  onUserDecision={handleUserDecision}
                 />
               )
             }
@@ -274,6 +356,29 @@ const AssistantMessage: FC = () => {
       </ThreadPrimitive.If>
     </MessagePrimitive.Root>
   );
+};
+
+// Helper function to get user-friendly tool names
+const getUserFriendlyToolName = (toolName: string): string => {
+  const toolNameMap: Record<string, string> = {
+    'updateSlideImage': 'slide image update',
+    'applyTheme': 'theme application',
+    'changeSlideTemplate': 'slide template change',
+    'createSlide': 'slide creation',
+    'createSlideWithAI': 'AI-generated slide creation',
+    'deleteSlide': 'slide deletion',
+    'duplicateSlide': 'slide duplication',
+    'moveSlide': 'slide movement',
+    'getSlideContent': 'slide content viewing',
+    'updateSlideContent': 'slide content update',
+    'getSlideIdByNumber': 'slide content retrieval',
+    'getSlideById': 'slide retrieval',
+    'getAllSlides': 'slide listing',
+    'getOutline': 'outline retrieval',
+    'generateImage': 'image generation',
+  };
+  
+  return toolNameMap[toolName] || toolName;
 };
 
 const AssistantActionBar: FC = () => {
