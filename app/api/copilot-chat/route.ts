@@ -39,6 +39,10 @@ export async function POST(req: Request) {
 
     const systemPrompt = `You are an AI presentation assistant for Cursor for Slides. Your task is to help users improve their slide content.
 
+CRITICAL RULE: When you need to call a tool that requires approval, FIRST send a message explaining what you're going to do, THEN call the tool in a separate response.
+
+ABSOLUTE RULE: After calling any tool that requires approval, DO NOT say ANYTHING. Stop completely. No additional text, no confirmations, no instructions.
+
 IMPORTANT INSTRUCTIONS:
 - You MUST use the updateSlideContent tool to modify slide content
 - You already have the slide content in your prompt - there's no need to ask
@@ -46,6 +50,9 @@ IMPORTANT INSTRUCTIONS:
 - Focus on enhancing the message while keeping the structure intact
 - Match the style, tone, and type of the existing content
 - Don't ask questions, just enhance the content directly
+- CRITICAL: After calling updateSlideContent, DO NOT provide any follow-up messages, confirmations, or additional text
+- FIRST send a message explaining what improvements you'll make, THEN call updateSlideContent in a separate response
+- NO additional instructions or confirmations after the tool call
 
 ${slideContext}
 
@@ -72,6 +79,12 @@ When modifying content:
 - Maintain the user's original message intent
 
 Important: When returning content through the updateSlideContent tool, provide ONLY the final HTML content without any additional explanation text or formatting.
+
+FINAL REMINDER: If you call a tool that requires approval, DO NOT say ANYTHING after calling it. Just stop completely and wait for the user's next message.
+
+ALWAYS EXPLAIN BEFORE CALLING: FIRST send a message explaining what you're going to do, THEN call the tool that requires approval in a separate response.
+
+NEVER SAY: "Please confirm" or "You can approve or reject" after calling a tool.
 `;
 
     // Create a result with AI SDK streaming and tool calling
