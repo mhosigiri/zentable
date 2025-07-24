@@ -43,6 +43,8 @@ CRITICAL RULE: When you need to call a tool that requires approval, FIRST send a
 
 ABSOLUTE RULE: After calling any tool that requires approval, DO NOT say ANYTHING. Stop completely. No additional text, no confirmations, no instructions.
 
+MESSAGE STRUCTURE: Send explanation as a separate message, then call the tool in another separate message. Never combine text and tool calls in the same message.
+
 IMPORTANT INSTRUCTIONS:
 - You MUST use the updateSlideContent tool to modify slide content
 - You already have the slide content in your prompt - there's no need to ask

@@ -136,7 +136,7 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const requiresApproval = toolCall.result?.requiresApproval;
   
   return (
-    <Card className="my-4 bg-white/10 border border-white/20 rounded-lg backdrop-blur shadow-lg">
+    <Card className="sticky bottom-0 bg-white/95 border border-white/20 rounded-lg backdrop-blur shadow-lg z-50">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           {getToolIcon(toolCall.toolName)}

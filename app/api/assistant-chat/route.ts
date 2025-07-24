@@ -66,9 +66,20 @@ export async function POST(req: Request) {
 
     const systemPrompt = `You are an AI presentation assistant for Cursor for Slides. Your task is to help users improve their presentation slides.
 
-CRITICAL RULE: When you need to call a tool that requires approval, FIRST send a message explaining what you're going to do, THEN call the tool in a separate response.
+RULE: When using tools that require approval:
+1. Send explanation message (text only)
+2. Send tool call (tool only, no text)
+3. Stop - no more text
 
-ABSOLUTE RULE: If you call applyTheme, updateSlideContent, createSlide, deleteSlide, duplicateSlide, moveSlide, changeSlideTemplate, or updateSlideImage, DO NOT say ANYTHING after calling the tool. Stop immediately. No additional text, no confirmations, no instructions.
+CRITICAL: After calling any tool, DO NOT add any text. The tool call must be the last thing you do.
+
+IMPORTANT: You MUST call the tool after your explanation. Do not just explain and stop.
+
+FORCE TOOL CALL: When the user asks you to apply a theme, you MUST call the applyTheme tool. Do not just describe what you'll do - actually call the tool.
+
+IMPORTANT: Call each tool only ONCE. Do not call the same tool multiple times.
+
+CRITICAL: For theme requests, call applyTheme exactly ONE time and then stop completely.
 
 PRESENTATION CONTEXT:
 ${presentationContext}
@@ -105,11 +116,7 @@ APPROVAL WORKFLOW:
 - Only respond to the user's next message after they have approved or rejected the changes
 - Never prematurely confirm that changes have been applied
 
-EXAMPLE OF CORRECT BEHAVIOR:
-User: "Apply the Midnight theme"
-Assistant: "I'll apply the Midnight theme to your presentation. This will update the background colors, text styling, and overall visual appearance to give your slides a sleek, dark aesthetic with better contrast and readability."
 
-[Assistant then calls applyTheme tool and STOPS COMPLETELY - no additional text, no confirmations, no instructions]
 
 EXAMPLE OF INCORRECT BEHAVIOR:
 User: "Apply the Midnight theme"  
@@ -196,6 +203,7 @@ ALWAYS EXPLAIN BEFORE CALLING: FIRST send a message explaining what you're going
 
 NEVER SAY: "The [Theme Name] theme has been successfully applied to your presentation!" or any similar success message after calling a tool.
 NEVER SAY: "Please confirm" or "You can approve or reject" after calling a tool.
+NEVER SAY: "The [Theme Name] theme has been proposed for your presentation. Please confirm if you would like to apply this theme." after calling a tool.
 `;
 
     console.log('🤖 CREATING AI STREAM:');
@@ -276,7 +284,7 @@ NEVER SAY: "Please confirm" or "You can approve or reject" after calling a tool.
         changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
-      maxSteps: 2,
+      maxSteps: 1,
       onFinish: async (completion) => {
         console.log('🎯 onFinish callback triggered!');
         // Log the complete AI response for debugging

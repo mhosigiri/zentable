@@ -126,8 +126,7 @@ const updateSlideContentTool = tool({
 });
 
 export const proposeSlideUpdate = tool({
-  description:
-    "Propose an update to slide content with improved HTML. This will show a preview for user approval.\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.",
+  description: "Propose an update to slide content with improved HTML. This will show a preview for user approval.",
   parameters: z.object({
     slideId: z.string().describe("The ID of the slide to update"),
     content: z.string().describe("The new HTML content for the slide"),
@@ -242,7 +241,7 @@ export const getSlideIdByNumber = tool({
 });
 
 export const createSlide = tool({
-  description: 'Create a new slide with a specific template and optional content.\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.',
+  description: 'Create a new slide with a specific template and optional content.',
   parameters: z.object({
     presentationId: z.string().describe('The ID of the presentation to add the slide to'),
     templateType: z.string().describe('The template type for the new slide (e.g., "title-with-bullets")'),
@@ -277,7 +276,7 @@ export const createSlide = tool({
 });
 
 export const createSlideWithAI = tool({
-  description: 'Create a new slide with AI-generated content based on a title and bullet points.\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.',
+  description: 'Create a new slide with AI-generated content based on a title and bullet points.',
   parameters: z.object({
     presentationId: z.string().describe('The ID of the presentation to add the slide to'),
     templateType: z.string().describe('The template type for the new slide (e.g., "title-with-bullets", "image-and-text", "two-columns", etc.)'),
@@ -336,7 +335,7 @@ export const createSlideWithAI = tool({
 });
 
 export const deleteSlide = tool({
-  description: 'Delete a slide from the presentation.\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.',
+  description: 'Delete a slide from the presentation.',
   parameters: z.object({
     slideId: z.string().describe('The ID of the slide to delete'),
   }),
@@ -353,7 +352,7 @@ export const deleteSlide = tool({
 });
 
 export const duplicateSlide = tool({
-  description: 'Duplicate an existing slide.\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.',
+  description: 'Duplicate an existing slide.',
   parameters: z.object({
     slideId: z.string().describe('The ID of the slide to duplicate'),
   }),
@@ -379,7 +378,7 @@ export const duplicateSlide = tool({
 });
 
 export const moveSlide = tool({
-  description: 'Move a slide to a new position.\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.',
+  description: 'Move a slide to a new position.',
   parameters: z.object({
     slideId: z.string().describe('The ID of the slide to move'),
     newPosition: z.number().describe('The new position for the slide (0-indexed)'),
@@ -400,7 +399,7 @@ const themeListForDescription = themes
   .join('\n');
 
 export const applyTheme = tool({
-  description: `Apply a theme to the presentation. The user can specify a theme by name. Use the following list to find the correct theme ID. Available themes:\n${themeListForDescription}\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.`,
+  description: `Apply a theme to the presentation. Available themes:\n${themeListForDescription}`,
   parameters: z.object({
     themeId: z.string().describe('The ID of the theme to apply from the list in the description.'),
   }),
@@ -423,7 +422,7 @@ export const applyTheme = tool({
 });
 
 export const updateSlideImage = tool({
-  description: 'Generate or update the image for a slide\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.',
+  description: 'Generate or update the image for a slide',
   parameters: z.object({
     slideId: z.string().describe('The ID of the slide to update the image for'),
     imagePrompt: z.string().describe('The prompt to generate a new image'),
@@ -440,7 +439,7 @@ export const updateSlideImage = tool({
 });
 
 export const changeSlideTemplate = tool({
-  description: 'Change the template of a specific slide.\n\nIMPORTANT: After calling this tool, DO NOT provide any follow-up messages. The user will see an approval interface.',
+  description: 'Change the template of a specific slide.',
   parameters: z.object({
     slideId: z.string().describe('The ID of the slide to change'),
     newTemplateType: z.string().describe('The new template type for the slide'),
