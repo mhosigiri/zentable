@@ -17,6 +17,7 @@ import {
   PencilIcon,
   RefreshCwIcon,
   SendHorizontalIcon,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,17 @@ export const Thread: FC = () => {
             AssistantMessage: AssistantMessage,
           }}
         />
+
+        {/* Loading indicator when AI is generating response */}
+        <ThreadPrimitive.If running={true}>
+          <div className="flex w-full max-w-[var(--thread-max-width)] items-start gap-3 py-1">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-pulse"></div>
+              <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          </div>
+        </ThreadPrimitive.If>
 
         <ThreadPrimitive.If empty={false}>
           <div className="min-h-8 flex-grow" />
@@ -257,7 +269,9 @@ const AssistantMessage: FC = () => {
 
       <AssistantActionBar />
 
-      <BranchPicker className="col-start-2 row-start-2 -ml-2 mr-2" />
+      <ThreadPrimitive.If running={false}>
+        <BranchPicker className="col-start-2 row-start-2 -ml-2 mr-2" />
+      </ThreadPrimitive.If>
     </MessagePrimitive.Root>
   );
 };
