@@ -33,6 +33,24 @@ import { ToolResult } from "@/components/assistant-ui/tool-result";
 export const Thread: FC = () => {
   const thread = useThread();
   const pendingToolCallRef = useRef<any>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    const scrollToBottom = () => {
+      if (viewportRef.current) {
+        viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
+      }
+    };
+
+    // Scroll immediately
+    scrollToBottom();
+    
+    // Also scroll after a short delay to handle async content loading
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [thread.messages]); // Re-run when messages change
 
   // Listen for user decisions on tool calls
   useEffect(() => {
@@ -64,7 +82,10 @@ export const Thread: FC = () => {
         ["--thread-max-width" as string]: "42rem",
       }}
     >
-      <ThreadPrimitive.Viewport className="flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8 pb-10 scrollbar-hide">
+      <ThreadPrimitive.Viewport 
+        ref={viewportRef}
+        className="flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8 pb-10 scrollbar-hide"
+      >
         <ThreadWelcome />
 
         <ThreadPrimitive.Messages
@@ -155,23 +176,22 @@ const ThreadWelcomeSuggestions: FC = () => {
 
 const Composer: FC = () => {
   const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Listen for programmatic message sending
   useEffect(() => {
     const handleSendUserDecision = (event: CustomEvent) => {
       const { message } = event.detail;
       
-      // Set the input value and trigger send
-      setInputValue(message);
-      
-      // Use a small delay to ensure the input is set before sending
-      setTimeout(() => {
+      // Set the input value programmatically
+      if (inputRef.current) {
+        inputRef.current.value = message;
         // Trigger the send action
         const sendButton = document.querySelector('[data-send-button]') as HTMLButtonElement;
         if (sendButton) {
           sendButton.click();
         }
-      }, 100);
+      }
     };
 
     window.addEventListener('send-user-decision', handleSendUserDecision as EventListener);
@@ -184,12 +204,11 @@ const Composer: FC = () => {
   return (
     <ComposerPrimitive.Root className="focus-within:border-white/30 focus-within:bg-white focus-within:opacity-100 flex w-full flex-wrap items-end rounded-lg border border-white/20 bg-white/10 px-2.5 shadow transition-colors ease-in backdrop-blur">
       <ComposerPrimitive.Input
+        ref={inputRef}
         rows={1}
         autoFocus
         placeholder="Write a message..."
         className="max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed text-black placeholder:text-black"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
       />
       <ComposerAction />
     </ComposerPrimitive.Root>
