@@ -147,7 +147,7 @@ const ComposerAction: FC = () => {
           <TooltipIconButton
             tooltip="Send"
             variant="default"
-            className="my-2.5 size-8 p-2 transition-opacity ease-in"
+            className="my-2.5 size-8 p-2 transition-opacity ease-in bg-black hover:bg-gray-700"
           >
             <SendHorizontalIcon />
           </TooltipIconButton>
