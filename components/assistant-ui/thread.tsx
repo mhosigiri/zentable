@@ -31,7 +31,7 @@ import { ToolResult } from "@/components/assistant-ui/tool-result";
 export const Thread: FC = () => {
   return (
     <ThreadPrimitive.Root
-      className="bg-white/10 backdrop-blur box-border flex h-full flex-col overflow-hidden rounded-lg border border-white/20 shadow-lg"
+      className="bg-white/20 backdrop-blur box-border flex h-full flex-col overflow-hidden rounded-lg border border-white/20 shadow-lg"
       style={{
         ["--thread-max-width" as string]: "42rem",
       }}
@@ -127,13 +127,13 @@ const ThreadWelcomeSuggestions: FC = () => {
 
 const Composer: FC = () => {
   return (
-    <ComposerPrimitive.Root className="focus-within:border-white/30 flex w-full flex-wrap items-end rounded-lg border border-white/20 bg-white/10 px-2.5 shadow transition-colors ease-in backdrop-blur">
-      <ComposerPrimitive.Input
-        rows={1}
-        autoFocus
-        placeholder="Write a message..."
-        className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
-      />
+    <ComposerPrimitive.Root className="focus-within:border-white/30 focus-within:bg-white focus-within:opacity-100 flex w-full flex-wrap items-end rounded-lg border border-white/20 bg-white/10 px-2.5 shadow transition-colors ease-in backdrop-blur">
+              <ComposerPrimitive.Input
+          rows={1}
+          autoFocus
+          placeholder="Write a message..."
+          className="max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed text-black placeholder:text-black"
+        />
       <ComposerAction />
     </ComposerPrimitive.Root>
   );
