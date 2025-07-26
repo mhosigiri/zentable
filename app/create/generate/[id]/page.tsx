@@ -183,6 +183,7 @@ export default function OutlinePage() {
   const [documentData, setDocumentData] = useState<DocumentData | null>(null);
   const [generatedOutline, setGeneratedOutline] = useState<GeneratedOutline | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDatabaseReady, setIsDatabaseReady] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [cardCount, setCardCount] = useState('8');
   const [style, setStyle] = useState('professional');
@@ -199,6 +200,38 @@ export default function OutlinePage() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Check if database record is ready
+  useEffect(() => {
+    const checkDatabaseReady = async () => {
+      const stored = localStorage.getItem(documentId);
+      if (stored) {
+        const data: DocumentData = JSON.parse(stored);
+        if (data.databaseId) {
+          try {
+            // Try to fetch the presentation from database to confirm it exists
+            const presentation = await db.getPresentation(data.databaseId);
+            if (presentation) {
+              console.log('✅ Database record confirmed ready:', data.databaseId);
+              setIsDatabaseReady(true);
+            } else {
+              // Record doesn't exist yet, retry after a short delay
+              console.log('⏳ Database record not found, retrying in 500ms...');
+              setTimeout(() => checkDatabaseReady(), 500);
+            }
+          } catch (error) {
+            console.warn('⚠️ Database check failed, retrying in 1000ms:', error);
+            setTimeout(() => checkDatabaseReady(), 1000);
+          }
+        } else {
+          // No database ID, assume legacy mode
+          setIsDatabaseReady(true);
+        }
+      }
+    };
+
+    checkDatabaseReady();
+  }, [documentId]);
 
   // Load document data and theme from localStorage
   useEffect(() => {
@@ -225,15 +258,21 @@ export default function OutlinePage() {
         
         if (data.outline) {
           setGeneratedOutline(data.outline);
-        } else if (data.status === 'generating') {
-          // Start generating if not already done
-          generateOutline(data);
         }
+        // Note: Outline generation moved to separate effect below
       }
     };
 
     loadDocumentData();
   }, [documentId]);
+
+  // Generate outline only after database is ready and document data is loaded
+  useEffect(() => {
+    if (documentData && isDatabaseReady && !generatedOutline && !isGenerating) {
+      console.log('🚀 Starting outline generation - database ready and no existing outline');
+      generateOutline(documentData);
+    }
+  }, [documentData, isDatabaseReady, generatedOutline, isGenerating]);
 
   // Save document data to localStorage
   const saveDocumentData = (data: Partial<DocumentData>) => {

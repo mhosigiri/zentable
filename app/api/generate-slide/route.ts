@@ -227,11 +227,11 @@ export async function POST(req: Request) {
       'de': 'German'
     };
 
-    // Map content length to specific guidelines
+    // Map content length to specific word count guidelines
     const contentLengthMap: Record<string, string> = {
-      'brief': 'VERY BRIEF - Bullet points: 1 line max (6-12 words). Paragraphs: 1-2 sentences max.',
-      'medium': 'MODERATE - Bullet points: 1-2 lines (12-20 words). Paragraphs: 2-3 sentences max.',
-      'detailed': 'COMPREHENSIVE - Bullet points: 2-3 lines (20-30 words). Paragraphs: 3-4 sentences max.'
+      'brief': 'VERY BRIEF - Bullet points: 1 line max (4-8 words). Paragraphs: 1-2 sentences max. Maximum 100 words total across all content.',
+      'medium': 'MODERATE - Bullet points: 1-2 lines (8-16 words). Paragraphs: 2-3 sentences max. Maximum 150 words total across all content.',
+      'detailed': 'COMPREHENSIVE - Bullet points: 2-3 lines (16-24 words). Paragraphs: 3-4 sentences max. Maximum 200 words total across all content.'
     };
 
     const writingStyle = styleMap[style] || 'professional and clear';
@@ -273,7 +273,26 @@ IMAGE STYLE REQUIREMENTS:
 CONTENT LENGTH GUIDELINES:
 - Titles: 3-8 words maximum
 - Headings: 2-4 words maximum
-- Content follows the ${contentLength} guidelines above
+- Total content word count: ${contentLength} (Brief: <100 words, Medium: 150 words, Detailed: 200 words)
+- Be concise and impactful - every word must earn its place on the slide
+
+Example of brief slide that is less than 100 words (without formatting):
+Effective Student Assessments
+
+Assessments are vital. Key principles include:
+Clear learning objectives.
+Formative and summative assessments.
+Incorporate technology.
+Offer timely feedback.
+
+Example of medium slide that is less than 150 words (without formatting):
+Effective Student Assessments
+
+Assessments are vital for measuring learning and guiding instruction. Key principles include:
+Align with clear learning objectives.
+Use both formative and summative assessments.
+Incorporate technology to enhance engagement.
+Offer timely feedback for student growth.
 
 Template: ${templateType}
 
