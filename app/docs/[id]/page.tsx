@@ -33,6 +33,7 @@ import { defaultTheme } from '@/lib/themes';
 import { getSlideById } from '@/lib/slides';
 import { exportSlidesToPDF } from '@/lib/export';
 import { fetchGeneratedSlide, fetchGeneratedImage } from '@/lib/ai/generation';
+import { createClient } from '@/lib/supabase/client';
 import { useSlideNavigation } from '@/hooks/useSlideNavigation';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useMyRuntime } from './MyRuntimeProvider';
@@ -421,6 +422,25 @@ export default function PresentationPage() {
       
       // Update slide with generated image
       updateSlide(slideIndex, { imageUrl, isGeneratingImage: false });
+
+      if (imageUrl && documentData?.databaseId) {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          import('@/lib/image-storage').then(({ imageStorage }) => {
+            imageStorage.uploadAndSaveImage(
+              imageUrl,
+              slides[slideIndex]?.id,
+              imagePrompt,
+              user.id,
+              documentData.databaseId!
+            ).catch(error => {
+              console.error('Background image upload failed:', error)
+            })
+          })
+        }
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('❌ Image generation failed for slide:', slideIndex, error);

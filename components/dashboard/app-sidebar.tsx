@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import {
   // ArrowUpCircleIcon,
   // BarChartIcon,
-  // CameraIcon,
+  CameraIcon,
   // ClipboardListIcon,
   // DatabaseIcon,
   // FileCodeIcon,
@@ -69,6 +69,11 @@ const data = {
       title: "Dashboard",
         url: "/dashboard",
       icon: LayoutDashboardIcon,
+    },
+    {
+      title: "Generated Images",
+      url: "/dashboard/images",
+      icon: CameraIcon,
     },
       // {
       //   title: "Lifecycle",
