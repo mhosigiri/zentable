@@ -283,13 +283,13 @@ export const getThemesByCategory = (category: Theme['category']): Theme[] => {
 export const applyAndPersistTheme = async (theme: Theme, documentId: string) => {
   try {
     // Get current document data from localStorage
-    const stored = localStorage.getItem(`document_${documentId}`);
+    const stored = localStorage.getItem(documentId);
     if (stored) {
       const documentData = JSON.parse(stored);
       
       // Update localStorage immediately
       const updatedData = { ...documentData, theme: theme.id };
-      localStorage.setItem(`document_${documentId}`, JSON.stringify(updatedData));
+      localStorage.setItem(documentId, JSON.stringify(updatedData));
       // eslint-disable-next-line no-console
       console.log('✅ Updated theme in localStorage:', theme.id);
       
@@ -306,4 +306,4 @@ export const applyAndPersistTheme = async (theme: Theme, documentId: string) => 
     // eslint-disable-next-line no-console
     console.warn('⚠️ Failed to update and persist theme:', error);
   }
-}; 
+};  

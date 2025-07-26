@@ -34,7 +34,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setCurrentTheme(theme);
     if (documentId) {
       // Store theme per document
-      localStorage.setItem(`document-theme-${documentId}`, theme.id);
+      localStorage.setItem(`theme_${documentId}`, theme.id);
     } else {
       // Fallback global theme
       localStorage.setItem('selected-theme', theme.id);
@@ -42,7 +42,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   };
 
   const getThemeForDocument = (documentId: string): Theme => {
-    const savedThemeId = localStorage.getItem(`document-theme-${documentId}`);
+    const savedThemeId = localStorage.getItem(`theme_${documentId}`);
     if (savedThemeId) {
       return getThemeById(savedThemeId);
     }
@@ -72,4 +72,4 @@ export function useTheme() {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-} 
+}  

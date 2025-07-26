@@ -77,7 +77,7 @@ export default function GeneratePage() {
   ];
 
   const generateDocumentId = () => {
-    return generatePrefixedId('doc');
+    return generateUUID();
   };
 
   const handleGenerateOutline = async () => {
@@ -86,9 +86,9 @@ export default function GeneratePage() {
     setIsGenerating(true);
     
     try {
-      // Generate both IDs - UUID for database, custom for localStorage
-      const documentId = generateDocumentId(); // Keep for localStorage compatibility
-      const databaseId = generateUUID(); // Proper UUID for database
+      // Generate UUID for both localStorage and database
+      const documentId = generateDocumentId(); // Pure UUID for consistency
+      const databaseId = documentId; // Use same UUID for database
       
       // Store the initial document data in localStorage (keep existing)
       const documentData = {
@@ -102,7 +102,7 @@ export default function GeneratePage() {
         status: 'generating'
       };
       
-      localStorage.setItem(`document_${documentId}`, JSON.stringify(documentData));
+      localStorage.setItem(documentId, JSON.stringify(documentData));
       
       // Also save to database in the background (new addition)
       try {

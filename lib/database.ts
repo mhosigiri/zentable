@@ -490,7 +490,7 @@ export class DatabaseService {
       if (error) throw error
 
       // Remove from localStorage
-      localStorage.removeItem(`document_${id}`)
+      localStorage.removeItem(id)
       this.removeSyncMark(id)
 
       return true
@@ -498,7 +498,7 @@ export class DatabaseService {
       console.warn('Failed to delete from Supabase:', error)
 
       // Mark as deleted locally (for sync later)
-      localStorage.removeItem(`document_${id}`)
+      localStorage.removeItem(id)
       localStorage.setItem(`deleted_${id}`, 'true')
 
       return false
@@ -621,7 +621,7 @@ export class DatabaseService {
 
   private saveToLocalStorage(id: string, data: any) {
     try {
-      localStorage.setItem(`document_${id}`, JSON.stringify(data))
+      localStorage.setItem(id, JSON.stringify(data))
     } catch (error) {
       console.warn('Failed to save to localStorage:', error)
     }
@@ -629,7 +629,7 @@ export class DatabaseService {
 
   private getFromLocalStorage(id: string): DocumentData | null {
     try {
-      const stored = localStorage.getItem(`document_${id}`)
+      const stored = localStorage.getItem(id)
       return stored ? JSON.parse(stored) : null
     } catch (error) {
       console.warn('Failed to load from localStorage:', error)
