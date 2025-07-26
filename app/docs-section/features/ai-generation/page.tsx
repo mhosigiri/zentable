@@ -1,7 +1,9 @@
+import { Metadata } from 'next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { generatePageMetadata, PageSEO } from '@/components/seo/page-seo';
 import { 
   Zap, 
   ArrowRight, 
@@ -14,7 +16,43 @@ import {
   Lightbulb
 } from 'lucide-react';
 
+export const metadata: Metadata = generatePageMetadata({
+  title: 'AI Generation - Create Presentations from Prompts',
+  description: 'Learn how to use Zent\'s AI generation feature to create professional presentations from simple prompts. Transform ideas into slides in seconds.',
+  path: '/docs-section/features/ai-generation',
+  keywords: ['AI generation', 'prompt to slides', 'automatic presentation', 'AI slides']
+})
+
 export default function AIGenerationPage() {
+  const faqData = {
+    faqs: [
+      {
+        '@type': 'Question',
+        name: 'How does AI generation work?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'AI analyzes your prompt to create logical slide flow and hierarchy, automatically selecting the best templates and generating relevant content.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'What makes a good prompt?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Be specific in your prompts. Instead of "marketing presentation," try "social media marketing strategies for restaurants in 2024". Keep prompts between 10-50 words for best results.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'Can I customize the generated slides?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes, all generated slides are fully editable. You can modify content, change templates, adjust themes, and add or remove slides as needed.'
+        }
+      }
+    ]
+  }
+
   const creationMethods = [
     {
       title: 'Generate from Prompt',
@@ -80,9 +118,11 @@ export default function AIGenerationPage() {
   ];
 
   return (
-    <div className="space-y-12">
-      {/* Header */}
-      <div className="space-y-4">
+    <>
+      <PageSEO schemaType="FAQPage" schemaData={faqData} />
+      <div className="space-y-12">
+        {/* Header */}
+        <div className="space-y-4">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
             <Zap className="w-6 h-6 text-white" />
@@ -267,6 +307,7 @@ export default function AIGenerationPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

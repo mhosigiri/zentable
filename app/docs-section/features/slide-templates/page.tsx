@@ -1,8 +1,10 @@
 import React from 'react';
+import { Metadata } from 'next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { generatePageMetadata, PageSEO } from '@/components/seo/page-seo';
 import { 
   Palette, 
   ArrowRight, 
@@ -15,7 +17,35 @@ import {
   Sparkles
 } from 'lucide-react';
 
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Slide Templates - 14+ Professional Layouts',
+  description: 'Explore Zent\'s comprehensive collection of slide templates including columns, images, text, and accent designs. Perfect layouts for every presentation need.',
+  path: '/docs-section/features/slide-templates',
+  keywords: ['slide templates', 'presentation layouts', 'slide designs', 'template gallery']
+})
+
 export default function SlideTemplatesPage() {
+  const faqData = {
+    faqs: [
+      {
+        '@type': 'Question',
+        name: 'How many slide templates are available?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Zent offers 14+ professional slide templates across 5 categories: Basic Templates, Column Layouts, Image & Text Combinations, Accent Templates, and Text-Focused Templates.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'Can I customize the templates?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes, all templates are fully customizable. You can modify colors, fonts, layouts, and content to match your brand and presentation needs.'
+        }
+      }
+    ]
+  }
+
   const templateCategories = [
     {
       title: 'Basic Templates',
@@ -210,7 +240,9 @@ export default function SlideTemplatesPage() {
   ];
 
   return (
-    <div className="space-y-12">
+    <>
+      <PageSEO schemaType="FAQPage" schemaData={faqData} />
+      <div className="space-y-12">
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center space-x-3">
@@ -391,6 +423,7 @@ export default function SlideTemplatesPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

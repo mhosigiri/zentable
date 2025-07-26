@@ -1,7 +1,9 @@
+import { Metadata } from 'next'
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { generatePageMetadata } from '@/components/seo/page-seo';
 import { 
   Zap, 
   Palette, 
@@ -15,6 +17,13 @@ import {
   Brain,
   Wand2
 } from 'lucide-react';
+
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Documentation - Learn Zent AI Presentations',
+  description: 'Complete guide to using Zent\'s AI-powered presentation builder. Learn about features, templates, AI generation, and advanced editing capabilities.',
+  path: '/docs-section',
+  keywords: ['documentation', 'user guide', 'tutorial', 'help', 'features']
+})
 
 export default function DocsPage() {
   const quickStartSteps = [

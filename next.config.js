@@ -3,7 +3,12 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  images: { unoptimized: true },
+  images: { 
+    unoptimized: false,
+    formats: ['image/webp', 'image/avif'],
+  },
+  compress: true,
+  poweredByHeader: false,
   // Removed output: "export" to allow dynamic API routes
   webpack(config) {
     // 1a) Add this warning to the ignore list

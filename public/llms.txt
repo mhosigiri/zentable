@@ -1,0 +1,64 @@
+# Zent - AI-Powered Presentation Builder
+
+Zent is an AI-powered presentation creation platform that transforms simple prompts into professional slide decks.
+
+## Key Features
+- AI-powered slide generation from text prompts
+- 14+ professional slide templates
+- Real-time collaborative editing
+- AI assistant for content refinement
+- Multiple export formats (PDF, etc.)
+- Presentation mode with presenter view
+
+## Technology Stack
+- Next.js 13+ with App Router
+- React 18 with TypeScript
+- Tailwind CSS for styling
+- OpenAI GPT-4 for content generation
+- Replicate for image generation
+- Supabase for data storage
+
+## Use Cases
+- Business presentations and pitch decks
+- Educational content and training materials
+- Marketing presentations and proposals
+- Creative storytelling and visual narratives
+
+## AI Generation Process
+1. User provides a descriptive prompt
+2. AI analyzes content requirements and structure
+3. Intelligent template selection based on content type
+4. Automatic slide generation with relevant images
+5. User can edit and customize all generated content
+
+## Template Categories
+- Basic Templates: Blank card, bullets, paragraph
+- Column Layouts: 2, 3, 4 columns with optional headings
+- Image & Text Combinations: Various image-text arrangements
+- Accent Templates: Visually prominent designs with emphasis
+- Text-Focused Templates: Typography-centered layouts
+
+## Supported Languages
+- English (US)
+- Spanish
+- French
+- German
+
+## Content Styles
+- Professional: Business-focused presentations
+- Friendly: Approachable and engaging tone
+- Fun: Creative and entertaining content
+- Casual: Relaxed and informal approach
+- Formal: Academic and structured style
+
+## Export Options
+- PDF with high-quality rendering
+- Theme preservation in exports
+- Multiple slide formats supported
+
+## Accessibility Features
+- Semantic HTML structure
+- ARIA labels and landmarks
+- Keyboard navigation support
+- Screen reader compatibility
+- Responsive design for all devices

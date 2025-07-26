@@ -108,7 +108,7 @@ export function ShowcaseSection() {
             See It In Action
           </div>
           
-          <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h2 id="showcase-heading" className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               From Concept
             </span>
@@ -299,4 +299,4 @@ export function ShowcaseSection() {
       </div>
     </section>
   );
-} 
+}  

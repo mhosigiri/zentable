@@ -5,20 +5,27 @@ import { Hero } from '@/components/ui/hero';
 import { FeaturesSection } from '@/components/ui/features-section';
 import { ShowcaseSection } from '@/components/ui/showcase-section';
 import { TracingBeam } from '@/components/ui/tracing-beam';
+import { SchemaMarkup } from '@/components/seo/schema-markup';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
-      <LandingHeader />
-      
-      {/* Hero Section with Canvas Animation */}
-      <Hero />
-      
-      {/* Features Section with Advanced Animations */}
-      <FeaturesSection />
-      
-      {/* Showcase Section with Slide Examples */}
-      <ShowcaseSection />
+    <>
+      <SchemaMarkup type="SoftwareApplication" />
+      <SchemaMarkup type="WebApplication" />
+      <div className="min-h-screen bg-white">
+        <LandingHeader />
+        
+        <main role="main" aria-label="Main content">
+          <Hero />
+          
+          <section aria-labelledby="features-heading">
+            <FeaturesSection />
+          </section>
+          
+          <section aria-labelledby="showcase-heading">
+            <ShowcaseSection />
+          </section>
+        </main>
       
       {/* Footer with Tracing Beam */}
       <TracingBeam className="py-20">
@@ -74,6 +81,7 @@ export default function Home() {
           </div>
         </footer>
       </TracingBeam>
-    </div>
+      </div>
+    </>
   );
 }

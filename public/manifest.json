@@ -1,0 +1,23 @@
+{
+  "name": "Zent - AI Presentation Builder",
+  "short_name": "Zent",
+  "description": "Create stunning presentations with AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "/assets/Zent_icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/Zent_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "lang": "en"
+}
