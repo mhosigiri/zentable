@@ -141,7 +141,7 @@ export function ToolResult({ toolCall, onApprove, onReject, onUserDecision }: To
   const requiresApproval = toolCall.result?.requiresApproval;
   
   return (
-    <Card className="sticky bottom-0 bg-white/95 border border-white/20 rounded-lg backdrop-blur shadow-lg z-50">
+    <Card className="sticky bottom-0 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg shadow-lg z-50">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           {getToolIcon(toolCall.toolName)}
@@ -227,12 +227,12 @@ export function ToolResult({ toolCall, onApprove, onReject, onUserDecision }: To
             </div>
           )}
           {status === 'approved' && (
-            <div className="text-sm text-green-600 font-medium">
+            <div className="text-sm text-green-400 font-medium">
               ✅ Changes applied to slide
             </div>
           )}
           {status === 'rejected' && (
-            <div className="text-sm text-red-600 font-medium">
+            <div className="text-sm text-red-400 font-medium">
               ❌ Changes rejected
             </div>
           )}
