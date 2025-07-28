@@ -13,6 +13,7 @@ import {
   // FileTextIcon,
   // FolderIcon,
   HelpCircleIcon,
+  ImageIcon,
   LayoutDashboardIcon,
   // ListIcon,
   SearchIcon,
@@ -70,44 +71,12 @@ const data = {
         url: "/dashboard",
       icon: LayoutDashboardIcon,
     },
-      // {
-      //   title: "Lifecycle",
-      //   url: "#",
-      //   icon: ListIcon,
-      // },
-      // {
-      //   title: "Analytics",
-      //   url: "#",
-      //   icon: BarChartIcon,
-      // },
-      // {
-      //   title: "Projects",
-      //   url: "#",
-      //   icon: FolderIcon,
-      // },
-      // {
-      //   title: "Team",
-      //   url: "#",
-      //   icon: UsersIcon,
-      // },
+    {
+      title: "Generated Images",
+      url: "/dashboard/images",
+      icon: ImageIcon,
+    },
   ],
-    // documents: [
-    //   {
-    //     name: "Data Library",
-    //     url: "#",
-    //     icon: DatabaseIcon,
-    //   },
-    //   {
-    //     name: "Reports",
-    //     url: "#",
-    //     icon: ClipboardListIcon,
-    //   },
-    //   {
-    //     name: "Word Assistant",
-    //     url: "#",
-    //     icon: FileIcon,
-    //   },
-    // ],
   navSecondary: [
     {
       title: "Documentation",
@@ -121,14 +90,14 @@ const data = {
     },
     {
       title: "Get Help",
-      url: "#",
+      url: "/docs-section",
       icon: HelpCircleIcon,
     },
-    {
-      title: "Search",
-      url: "#",
-      icon: SearchIcon,
-    },
+    // {
+    //   title: "Search",
+    //   url: "#",
+    //   icon: SearchIcon,
+    // },
   ],
   }
 

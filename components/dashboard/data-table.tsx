@@ -127,6 +127,112 @@ interface ActionsCellProps {
 
 function ActionsCell({ presentation }: ActionsCellProps) {
   const router = useRouter()
+  const supabase = createClient()
+  const dbService = new DatabaseService(supabase)
+
+  const handleRename = async () => {
+    const newTitle = prompt("Enter new presentation title:", presentation.title)
+    if (newTitle && newTitle.trim() !== presentation.title) {
+      try {
+        await dbService.updatePresentation(presentation.id, { title: newTitle.trim() })
+        toast.success("Presentation renamed successfully")
+        // Refresh the page to show updated title
+        window.location.reload()
+      } catch (error) {
+        console.error('Error renaming presentation:', error)
+        toast.error("Failed to rename presentation")
+      }
+    }
+  }
+
+  const handleDuplicate = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: originalSlides } = await supabase
+        .from('slides')
+        .select('*')
+        .eq('presentation_id', presentation.id)
+        .order('position', { ascending: true })
+
+      const newPresentation = await dbService.createPresentation({
+        prompt: presentation.prompt,
+        cardCount: presentation.card_count,
+        style: presentation.style,
+        themeId: presentation.theme_id,
+        userId: user.id
+      })
+      
+      // Update title after creation
+      await dbService.updatePresentation(newPresentation.id, { 
+        title: `${presentation.title} (Copy)` 
+      })
+
+      if (originalSlides && originalSlides.length > 0) {
+        await Promise.all(
+          originalSlides.map((slide) => 
+            dbService.createSlide({
+              presentation_id: newPresentation.id,
+              title: slide.title,
+              content: slide.content,
+              bullet_points: slide.bullet_points,
+              template_type: slide.template_type,
+              position: slide.position,
+              image_url: slide.image_url,
+              image_prompt: slide.image_prompt,
+              is_hidden: slide.is_hidden,
+              is_generating: slide.is_generating,
+              is_generating_image: slide.is_generating_image,
+              images_metadata: slide.images_metadata,
+              has_multiple_images: slide.has_multiple_images,
+              primary_image_id: slide.primary_image_id
+            })
+          )
+        )
+      }
+
+      toast.success("Presentation duplicated successfully")
+      router.push(`/docs/${newPresentation.id}`)
+    } catch (error) {
+      console.error('Error duplicating presentation:', error)
+      toast.error("Failed to duplicate presentation")
+    }
+  }
+
+  const handleSendToTrash = async () => {
+    const confirmed = confirm("Are you sure you want to send this presentation to trash?")
+    if (confirmed) {
+      try {
+        await dbService.updatePresentation(presentation.id, { status: 'trashed' as any })
+        toast.success("Presentation sent to trash")
+        window.location.reload()
+      } catch (error) {
+        console.error('Error sending to trash:', error)
+        toast.error("Failed to send to trash")
+      }
+    }
+  }
+
+  const handleHardDelete = async () => {
+    const confirmed = confirm("Are you sure you want to permanently delete this presentation? This action cannot be undone.")
+    if (confirmed) {
+      try {
+        await dbService.deletePresentation(presentation.id)
+        toast.success("Presentation permanently deleted")
+        window.location.reload()
+      } catch (error) {
+        console.error('Error deleting presentation:', error)
+        toast.error("Failed to delete presentation")
+      }
+    }
+  }
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/docs/${presentation.id}`
+    navigator.clipboard.writeText(url)
+    toast.success("Link copied to clipboard")
+  }
 
   return (
     <DropdownMenu>
@@ -142,17 +248,27 @@ function ActionsCell({ presentation }: ActionsCellProps) {
         >
           Open Presentation
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            navigator.clipboard.writeText(presentation.id)
-            toast.success("Presentation ID copied to clipboard")
-          }}
-        >
-          Copy ID
+        <DropdownMenuItem onClick={handleRename}>
+          Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleCopyLink}>
+          Copy Link
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleDuplicate}>
+          Duplicate
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-destructive">
-          Delete
+        <DropdownMenuItem 
+          className="text-destructive" 
+          onClick={handleSendToTrash}
+        >
+          Send to Trash
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          className="text-destructive font-semibold" 
+          onClick={handleHardDelete}
+        >
+          Delete Permanently
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -199,9 +315,9 @@ const columns: ColumnDef<Presentation>[] = [
           <div className="w-10 h-8 bg-gradient-to-br from-primary/10 to-primary/20 rounded flex items-center justify-center">
             <IconComponent className={`w-4 h-4 ${iconData.color}`} />
           </div>
-          <div className="flex flex-col">
-            <div className="font-medium line-clamp-1">{presentation.title}</div>
-            <div className="text-sm text-muted-foreground line-clamp-1">
+          <div className="flex flex-col min-w-0">
+            <div className="font-medium line-clamp-1 max-w-xs md:max-w-sm lg:max-w-md">{presentation.title}</div>
+            <div className="text-sm text-muted-foreground line-clamp-1 max-w-xs md:max-w-sm lg:max-w-md">
               {presentation.prompt}
             </div>
           </div>

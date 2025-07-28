@@ -15,7 +15,15 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PlusIcon, FileTextIcon, CalendarIcon } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { toast } from "sonner"
+import { PlusIcon, FileTextIcon, CalendarIcon, MoreVerticalIcon } from "lucide-react"
 
 interface PresentationWithFirstSlide extends Presentation {
   firstSlide?: any
@@ -96,6 +104,109 @@ export function SectionCards() {
 
   const handlePresentationClick = (presentationId: string) => {
     router.push(`/docs/${presentationId}`)
+  }
+
+  const handleRename = async (presentation: PresentationWithFirstSlide) => {
+    const newTitle = prompt("Enter new presentation title:", presentation.title)
+    if (newTitle && newTitle.trim() !== presentation.title) {
+      try {
+        await dbService.updatePresentation(presentation.id, { title: newTitle.trim() })
+        toast.success("Presentation renamed successfully")
+        window.location.reload()
+      } catch (error) {
+        console.error('Error renaming presentation:', error)
+        toast.error("Failed to rename presentation")
+      }
+    }
+  }
+
+  const handleDuplicate = async (presentation: PresentationWithFirstSlide) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: originalSlides } = await supabase
+        .from('slides')
+        .select('*')
+        .eq('presentation_id', presentation.id)
+        .order('position', { ascending: true })
+
+      const newPresentation = await dbService.createPresentation({
+        prompt: presentation.prompt,
+        cardCount: presentation.card_count,
+        style: presentation.style,
+        themeId: presentation.theme_id,
+        userId: user.id
+      })
+      
+      // Update title after creation
+      await dbService.updatePresentation(newPresentation.id, { 
+        title: `${presentation.title} (Copy)` 
+      })
+
+      if (originalSlides && originalSlides.length > 0) {
+        await Promise.all(
+          originalSlides.map((slide) => 
+            dbService.createSlide({
+              presentation_id: newPresentation.id,
+              title: slide.title,
+              content: slide.content,
+              bullet_points: slide.bullet_points,
+              template_type: slide.template_type,
+              position: slide.position,
+              image_url: slide.image_url,
+              image_prompt: slide.image_prompt,
+              is_hidden: slide.is_hidden,
+              is_generating: slide.is_generating,
+              is_generating_image: slide.is_generating_image,
+              images_metadata: slide.images_metadata,
+              has_multiple_images: slide.has_multiple_images,
+              primary_image_id: slide.primary_image_id
+            })
+          )
+        )
+      }
+
+      toast.success("Presentation duplicated successfully")
+      router.push(`/docs/${newPresentation.id}`)
+    } catch (error) {
+      console.error('Error duplicating presentation:', error)
+      toast.error("Failed to duplicate presentation")
+    }
+  }
+
+  const handleSendToTrash = async (presentation: PresentationWithFirstSlide) => {
+    const confirmed = confirm("Are you sure you want to send this presentation to trash?")
+    if (confirmed) {
+      try {
+        await dbService.updatePresentation(presentation.id, { status: 'trashed' as any })
+        toast.success("Presentation sent to trash")
+        window.location.reload()
+      } catch (error) {
+        console.error('Error sending to trash:', error)
+        toast.error("Failed to send to trash")
+      }
+    }
+  }
+
+  const handleHardDelete = async (presentation: PresentationWithFirstSlide) => {
+    const confirmed = confirm("Are you sure you want to permanently delete this presentation? This action cannot be undone.")
+    if (confirmed) {
+      try {
+        await dbService.deletePresentation(presentation.id)
+        toast.success("Presentation permanently deleted")
+        window.location.reload()
+      } catch (error) {
+        console.error('Error deleting presentation:', error)
+        toast.error("Failed to delete presentation")
+      }
+    }
+  }
+
+  const handleCopyLink = (presentationId: string) => {
+    const url = `${window.location.origin}/docs/${presentationId}`
+    navigator.clipboard.writeText(url)
+    toast.success("Link copied to clipboard")
   }
 
   const handleCreateNew = () => {
@@ -184,7 +295,76 @@ export function SectionCards() {
                   )}
                 </div>
 
-                {/* Status Badge */}
+                {/* 3-dot Menu - Top Left */}
+                <div className="absolute left-4 top-4 z-10">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        className="h-8 w-8 p-0 bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="sr-only">Open menu</span>
+                        <MoreVerticalIcon className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/docs/${presentation.id}`)
+                        }}
+                      >
+                        Open Presentation
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRename(presentation)
+                        }}
+                      >
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleCopyLink(presentation.id)
+                        }}
+                      >
+                        Copy Link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDuplicate(presentation)
+                        }}
+                      >
+                        Duplicate
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleSendToTrash(presentation)
+                        }}
+                      >
+                        Send to Trash
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-destructive font-semibold"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleHardDelete(presentation)
+                        }}
+                      >
+                        Delete Permanently
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* Status Badge - Adjusted position */}
                 <div className="absolute right-4 top-4">
                   <Badge 
                     variant="outline" 
@@ -195,11 +375,11 @@ export function SectionCards() {
                 </div>
 
                 {/* Presentation Info - Flexible content area */}
-                <div className="flex-1 flex flex-col">
-                  <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors mb-1">
+                <div className="flex-1 flex flex-col min-w-0 w-full">
+                  <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors mb-1 break-words max-w-full">
                     {presentation.title}
                   </CardTitle>
-                  <CardDescription className="text-sm line-clamp-2 flex-1">
+                  <CardDescription className="text-sm line-clamp-2 flex-1 break-words max-w-full">
                     {presentation.prompt}
                   </CardDescription>
                 </div>

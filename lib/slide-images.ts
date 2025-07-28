@@ -280,3 +280,66 @@ export async function migrateLegacySlideImage(slideId: string): Promise<void> {
       .eq('id', slideId)
   }
 }
+
+/**
+ * Get all images for a user across all their presentations
+ */
+export async function getUserImages(userId: string): Promise<Array<{
+  id: string;
+  image_url: string | null;
+  image_prompt: string | null;
+  image_type: string | null;
+  aspect_ratio: string | null;
+  created_at: string;
+  updated_at: string | null;
+  slide_id: string;
+  slide_title: string | null;
+  presentation_id: string;
+  presentation_title: string;
+  slide_position: number;
+}>> {
+  const { data, error } = await supabase
+    .from('slides')
+    .select(`
+      id,
+      title,
+      position,
+      presentation_id,
+      image_url,
+      image_prompt,
+      created_at,
+      updated_at,
+      presentations!slides_presentation_id_fkey(
+        id,
+        title,
+        user_id
+      )
+    `)
+    .eq('presentations.user_id', userId)
+    .not('image_url', 'is', null)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching user images:', error)
+    throw error
+  }
+
+  return data?.map(item => {
+    const presentation = item.presentations ? (Array.isArray(item.presentations) ? item.presentations[0] : item.presentations) : null;
+    
+    return {
+      id: item.id,
+      image_url: item.image_url,
+      image_prompt: item.image_prompt,
+      image_type: 'legacy', // Default type for images stored directly in slides
+      aspect_ratio: '16:9', // Default aspect ratio
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      slide_id: item.id,
+      slide_title: item.title || null,
+      presentation_id: item.presentation_id || '',
+      presentation_title: presentation?.title || 'Untitled Presentation',
+      slide_position: item.position || 0
+    };
+  }) || []
+}
