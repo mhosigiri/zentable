@@ -112,79 +112,10 @@ export function SectionCards() {
       try {
         await dbService.updatePresentation(presentation.id, { title: newTitle.trim() })
         toast.success("Presentation renamed successfully")
-        window.location.reload()
+        await fetchUserPresentations()
       } catch (error) {
         console.error('Error renaming presentation:', error)
         toast.error("Failed to rename presentation")
-      }
-    }
-  }
-
-  const handleDuplicate = async (presentation: PresentationWithFirstSlide) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: originalSlides } = await supabase
-        .from('slides')
-        .select('*')
-        .eq('presentation_id', presentation.id)
-        .order('position', { ascending: true })
-
-      const newPresentation = await dbService.createPresentation({
-        prompt: presentation.prompt,
-        cardCount: presentation.card_count,
-        style: presentation.style,
-        themeId: presentation.theme_id,
-        userId: user.id
-      })
-      
-      // Update title after creation
-      await dbService.updatePresentation(newPresentation.id, { 
-        title: `${presentation.title} (Copy)` 
-      })
-
-      if (originalSlides && originalSlides.length > 0) {
-        await Promise.all(
-          originalSlides.map((slide) => 
-            dbService.createSlide({
-              presentation_id: newPresentation.id,
-              title: slide.title,
-              content: slide.content,
-              bullet_points: slide.bullet_points,
-              template_type: slide.template_type,
-              position: slide.position,
-              image_url: slide.image_url,
-              image_prompt: slide.image_prompt,
-              is_hidden: slide.is_hidden,
-              is_generating: slide.is_generating,
-              is_generating_image: slide.is_generating_image,
-              images_metadata: slide.images_metadata,
-              has_multiple_images: slide.has_multiple_images,
-              primary_image_id: slide.primary_image_id
-            })
-          )
-        )
-      }
-
-      toast.success("Presentation duplicated successfully")
-      router.push(`/docs/${newPresentation.id}`)
-    } catch (error) {
-      console.error('Error duplicating presentation:', error)
-      toast.error("Failed to duplicate presentation")
-    }
-  }
-
-  const handleSendToTrash = async (presentation: PresentationWithFirstSlide) => {
-    const confirmed = confirm("Are you sure you want to send this presentation to trash?")
-    if (confirmed) {
-      try {
-        await dbService.updatePresentation(presentation.id, { status: 'trashed' as any })
-        toast.success("Presentation sent to trash")
-        window.location.reload()
-      } catch (error) {
-        console.error('Error sending to trash:', error)
-        toast.error("Failed to send to trash")
       }
     }
   }
@@ -195,7 +126,7 @@ export function SectionCards() {
       try {
         await dbService.deletePresentation(presentation.id)
         toast.success("Presentation permanently deleted")
-        window.location.reload()
+        await fetchUserPresentations()
       } catch (error) {
         console.error('Error deleting presentation:', error)
         toast.error("Failed to delete presentation")
@@ -252,13 +183,13 @@ export function SectionCards() {
           return (
             <Card 
               key={presentation.id}
-              className="cursor-pointer hover:border-primary transition-colors group w-full max-w-sm mx-auto h-80 min-w-0 flex flex-col"
+              className="cursor-pointer hover:border-primary transition-colors group w-full max-w-sm mx-auto h-80 min-w-0 flex flex-col overflow-hidden"
               onClick={() => handlePresentationClick(presentation.id)}
             >
-              <CardHeader className="relative p-4 flex-1 flex flex-col">
+              <CardHeader className="relative p-4 flex-1 flex flex-col min-h-0">
                 {/* Slide Preview - Themed background, no shadow, uniform size */}
                 <div 
-                  className="w-full aspect-video rounded-md mb-3 overflow-hidden relative"
+                  className="w-full aspect-video rounded-md mb-3 overflow-hidden relative flex-shrink-0"
                   style={{ background: theme.background }}
                 >
                   {presentation.firstSlide ? (
@@ -333,26 +264,9 @@ export function SectionCards() {
                       >
                         Copy Link
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDuplicate(presentation)
-                        }}
-                      >
-                        Duplicate
-                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         className="text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleSendToTrash(presentation)
-                        }}
-                      >
-                        Send to Trash
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-destructive font-semibold"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleHardDelete(presentation)
@@ -375,26 +289,26 @@ export function SectionCards() {
                 </div>
 
                 {/* Presentation Info - Flexible content area */}
-                <div className="flex-1 flex flex-col min-w-0 w-full">
-                  <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors mb-1 break-words max-w-full">
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                  <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors mb-1 break-words">
                     {presentation.title}
                   </CardTitle>
-                  <CardDescription className="text-sm line-clamp-2 flex-1 break-words max-w-full">
+                  <CardDescription className="text-sm line-clamp-2 flex-1 break-words overflow-hidden">
                     {presentation.prompt}
                   </CardDescription>
                 </div>
               </CardHeader>
               
-              <CardFooter className="flex items-center justify-between text-xs text-muted-foreground p-4 pt-0 mt-auto">
-                <div className="flex items-center gap-1">
-                  <CalendarIcon className="w-3 h-3" />
-                  {formatDate(presentation.created_at)}
+              <CardFooter className="flex items-center justify-between text-xs text-muted-foreground p-4 pt-0 mt-auto gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1 min-w-0 flex-shrink">
+                  <CalendarIcon className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{formatDate(presentation.created_at)}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Badge variant="outline" className="text-xs px-1.5 py-0.5">
                     {presentation.card_count} slides
                   </Badge>
-                  <Badge variant="outline" className="text-xs capitalize">
+                  <Badge variant="outline" className="text-xs capitalize px-1.5 py-0.5">
                     {presentation.style}
                   </Badge>
                 </div>
