@@ -48,9 +48,32 @@ CREATE TABLE brainstorming_sessions (
     template_id UUID REFERENCES brainstorming_templates(id),
     canvas_data JSONB, -- Mind map/canvas state
     settings JSONB, -- AI preferences, privacy settings
+    thread_id UUID REFERENCES copilot_threads(id), -- Link to conversation thread
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     archived_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Option 1: Reuse existing copilot tables with type distinction
+-- Add to copilot_threads table (or use existing):
+-- thread_type VARCHAR(50) DEFAULT 'copilot' -- 'copilot' or 'brainstorming'
+
+-- Option 2: Create dedicated brainstorming conversation tables
+CREATE TABLE brainstorming_conversations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL REFERENCES brainstorming_sessions(id),
+    user_id UUID NOT NULL REFERENCES auth.users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE brainstorming_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID NOT NULL REFERENCES brainstorming_conversations(id),
+    role VARCHAR(50) NOT NULL, -- 'user', 'assistant', 'system'
+    content TEXT NOT NULL,
+    tool_calls JSONB, -- MCP tool calls made by AI
+    generated_ideas JSONB, -- Ideas generated in this message
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Idea Bank
@@ -131,17 +154,20 @@ export class BrainstormingDatabaseService {
   async getUserSessions(userId: string): Promise<BrainstormingSession[]>
   async getSession(sessionId: string, userId: string): Promise<BrainstormingSession | null>
   
+  // Conversation management (Option 1: Reuse copilot tables)
+  async createConversationThread(sessionId: string, userId: string): Promise<string | null>
+  async saveMessage(threadId: string, role: string, content: string, toolCalls?: any): Promise<string | null>
+  async getConversationHistory(threadId: string): Promise<CopilotMessage[]>
+  
   // Idea management  
   async createIdea(sessionId: string, userId: string, content: string): Promise<Idea | null>
-  async getSessionIdeas(sessionId: string, userId: string): Promise<Idea[]>
+  async addIdeaToCanvas(sessionId: string, ideaContent: string, position: {x: number, y: number}): Promise<Idea | null>
+  async getCanvasIdeas(sessionId: string, userId: string): Promise<Idea[]> // Only canvas ideas
   async updateIdea(ideaId: string, updates: IdeaUpdate): Promise<boolean>
   
   // AI integration
   async generateIdeasFromPrompt(sessionId: string, userId: string, prompt: string): Promise<Idea[]>
   async generateTagsForIdea(ideaId: string, content: string): Promise<IdeaTag[]>
-  
-  // Search
-  async searchIdeas(userId: string, query: string, sessionId?: string): Promise<Idea[]>
   
   // Export
   async exportSessionToPresentation(sessionId: string, userId: string): Promise<string>
@@ -199,6 +225,7 @@ CREATE TABLE brainstorming_sessions (
     user_id UUID NOT NULL REFERENCES auth.users(id),
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    thread_id UUID REFERENCES copilot_threads(id), -- Link to conversation
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -305,49 +332,44 @@ export type IdeaUpdate = Database['public']['Tables']['ideas']['Update']
 
 ### Step 3: Basic UI Components (Week 3)
 
-#### 3.1 Session Management UI
+#### 3.1 Create Page Integration & Routing
 **Implementation:**
 ```typescript
-// components/brainstorming/SessionList.tsx - Uses brainstormingDb.getUserSessions()
-// components/brainstorming/CreateSessionDialog.tsx - Uses brainstormingDb.createSession()
-// app/brainstorming/page.tsx - Server-side data fetching
-```
+// app/create/page.tsx - Update third card to enable brainstorming
+// Remove disabled state from "Start with AI Brainstorming" card
+// Link to /create/brainstorm
 
-**Automated Tests:**
-```typescript
-// __tests__/components/SessionList.test.tsx
-describe('SessionList', () => {
-  test('renders sessions from database service', async () => {});
-  test('handles create session via service', async () => {});
-  test('handles delete session via service', async () => {});
-});
+// app/create/brainstorm/page.tsx - New brainstorming page
+// Main entry point for brainstorming feature
+// Creates new session automatically on load
 ```
 
 **Manual Tests:**
-- Navigate to `/brainstorming`
-- Create new session through UI
-- Edit session title
-- Delete session
-- Verify all operations persist in database
+- Navigate to /create page
+- Click "Start with AI Brainstorming" (third card)
+- Verify redirects to /create/brainstorm
+- Verify new session is created automatically
 
-**Success Criteria:** ✅ Users can manage sessions through UI using database service
+**Success Criteria:** ✅ Brainstorming accessible from /create page third card
 
-#### 3.2 Basic Idea Canvas
+#### 3.3 Basic Brainstorming Canvas Structure
 **Implementation:**
 ```typescript
-// components/brainstorming/BrainstormingCanvas.tsx - Uses brainstormingDb.getSessionIdeas()
-// components/brainstorming/IdeaCard.tsx - Uses brainstormingDb.updateIdea()
-// app/brainstorming/[sessionId]/page.tsx - Server-side session loading
+// components/brainstorming/BrainstormingCanvas.tsx
+// Split screen: AI conversation on left, ideas canvas on right
+// Uses brainstormingDb.getSessionIdeas() for canvas ideas only
+
+// app/create/brainstorm/[sessionId]/page.tsx
+// Main brainstorming interface with both AI chat and canvas
 ```
 
 **Manual Tests:**
-- Open a session
-- Add ideas through text input (calls brainstormingDb.createIdea())
-- See ideas appear on canvas
-- Edit and delete ideas (calls brainstormingDb.updateIdea/deleteIdea())
-- Verify changes save automatically to database
+- Navigate to /create/brainstorm/[sessionId]
+- Verify split screen layout appears
+- Verify AI conversation panel on left
+- Verify ideas canvas on right
 
-**Success Criteria:** ✅ Basic idea management works in browser using database service
+**Success Criteria:** ✅ Basic brainstorming interface structure is ready
 
 ### Step 4: Source Tracking Foundation (Week 4)
 
@@ -404,27 +426,32 @@ async generateIdeasFromPrompt(
 ): Promise<Idea[]> {
   // Use existing Groq integration from lib/ai/generation.ts
   // Generate 3-5 ideas
-  // Save directly to database
-  // Return created ideas
+  // Save to conversation history (not directly to canvas)
+  // Return created ideas for user to drag to canvas
+}
+
+// Ideas only saved to canvas when user drags them
+async addIdeaToCanvas(
+  sessionId: string,
+  userId: string, 
+  ideaContent: string,
+  position: { x: number, y: number }
+): Promise<Idea | null> {
+  // Save idea with canvas position
+  // This is what gets used for presentation generation
 }
 ```
 
-**Automated Tests:**
-```typescript
-describe('AI Idea Generation', () => {
-  test('generates and saves ideas from prompt', async () => {});
-  test('handles AI API errors gracefully', async () => {});
-  test('ideas belong to correct session and user', async () => {});
-});
-```
+**Note:** Only ideas explicitly added to the canvas (via drag-drop) will be used for presentation generation.
 
 **Manual Tests:**
 - Enter prompt "Marketing strategies for coffee shop"
-- Click "Generate Ideas" 
-- Verify 3-5 relevant ideas appear in database and UI
-- Test with different prompts
+- Verify AI generates 3-5 ideas in conversation
+- Drag one idea to canvas
+- Verify only canvas idea persists in database
+- Verify only canvas ideas appear in export
 
-**Success Criteria:** ✅ AI can generate and save relevant ideas from prompts using database service
+**Success Criteria:** ✅ AI generates ideas in conversation, user controls which go to canvas
 
 #### 5.2 AI-Powered Tagging
 **Implementation:**
@@ -514,11 +541,29 @@ async createAIConversation(
   toolCalls?: any[],
   sources?: string[]
 }> {
-  // Send user message to AI (Groq)
-  // AI can call MCP tools for live data
-  // AI can generate ideas as JSON
-  // Save conversation to database
-  // Return response with ideas for drag-drop
+  // Get or create conversation thread
+  const session = await this.getSession(sessionId, userId);
+  let threadId = session.thread_id;
+  
+  if (!threadId) {
+    // Create thread using existing DatabaseService
+    threadId = await db.createThread(sessionId, 'Brainstorming Session', userId);
+    // Update session with thread_id
+  }
+  
+  // Save user message
+  await db.createMessage(threadId, 'user', userMessage);
+  
+  // Send to AI (Groq)
+  const aiResponse = await generateAIResponse(userMessage);
+  
+  // Save AI response with tool calls and generated ideas
+  await db.createMessage(threadId, 'assistant', aiResponse.content, {
+    toolCalls: aiResponse.toolCalls,
+    generatedIdeas: aiResponse.ideas
+  });
+  
+  return aiResponse;
 }
 ```
 
@@ -586,7 +631,7 @@ async getConversationContext(sessionId: string): Promise<{
 
 ### Step 8: Export to Presentations (Week 8)
 
-#### 8.1 Basic Export Functionality
+#### 8.1 Export Using Existing Generation Flow
 **Implementation:**
 ```typescript
 // Add to lib/brainstorming-database.ts
@@ -599,21 +644,34 @@ async exportSessionToPresentation(
     slideCount?: number
   }
 ): Promise<string> {
-  // Get session ideas using this.getSessionIdeas()
-  // Convert ideas to presentation outline
-  // Use existing db.createPresentation() and db.saveSlides()
-  // Return presentation ID
+  // Get ONLY canvas ideas (not all conversation ideas)
+  const canvasIdeas = await this.getCanvasIdeas(sessionId, userId);
+  
+  // Convert canvas ideas to prompt
+  const prompt = this.convertIdeasToPrompt(canvasIdeas);
+  
+  // Use existing flow from /create/generate:
+  // 1. Generate outline using existing AI tools
+  // 2. Generate slides from outline
+  // 3. Use existing db.createPresentation() and db.saveSlides()
+  
+  // Alternative: Use existing MCP create_presentation tool
+  // await mcpServer.tools.create_presentation({ prompt, ... })
+  
+  return presentationId;
 }
 ```
 
-**Manual Tests:**
-- Create brainstorming session with 5+ ideas via database service
-- Call brainstormingDb.exportSessionToPresentation()
-- Verify presentation is created in database
-- Check presentation appears in dashboard
-- Verify ideas are properly structured as slides
+**Note:** Reuses well-tested code from `/create/generate` flow for outline → presentation generation.
 
-**Success Criteria:** ✅ Brainstorming sessions convert to presentations using database service
+**Manual Tests:**
+- Add 5+ ideas to canvas (drag from AI conversation)
+- Click "Export to Presentation"
+- Verify uses same generation flow as /create/generate
+- Verify only canvas ideas are included
+- Check presentation quality matches existing flow
+
+**Success Criteria:** ✅ Canvas ideas export using proven generation pipeline
 
 ### Step 9: Polish and Integration (Week 9)
 
