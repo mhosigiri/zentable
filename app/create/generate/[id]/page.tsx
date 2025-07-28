@@ -39,6 +39,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { db, DocumentData } from '@/lib/database';
 import { themes, getThemesByCategory, Theme, defaultTheme } from '@/lib/themes';
+import { AppHeader } from '@/components/ui/app-header';
 
 interface OutlineSection {
   id: string;
@@ -90,18 +91,11 @@ function SortableOutlineCard({ section, index, onEdit }: {
 
   return (
     <div ref={setNodeRef} style={style} className="group">
-      <Card className="bg-white/90 backdrop-blur-sm border border-blue-200/50 hover:border-blue-300/70 transition-all">
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-200/50 hover:border-blue-300/70 transition-all shadow-sm hover:shadow-md">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
-                {index + 1}
-              </div>
-              <div 
-                {...attributes} 
-                {...listeners}
-                className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-              >
+            <div className="flex items-center gap-2 pt-1">
+              <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing opacity-60 hover:opacity-100 transition-opacity">
                 <GripVertical className="w-4 h-4 text-gray-400" />
               </div>
             </div>
@@ -120,7 +114,7 @@ function SortableOutlineCard({ section, index, onEdit }: {
                         setIsEditingTitle(false);
                       }
                     }}
-                    className="font-medium text-gray-900 text-sm"
+                    className="font-semibold text-gray-900 text-base h-9"
                     autoFocus
                   />
                 </div>
@@ -129,10 +123,10 @@ function SortableOutlineCard({ section, index, onEdit }: {
                   className="flex items-start justify-between mb-3 group/title cursor-pointer"
                   onClick={() => setIsEditingTitle(true)}
                 >
-                  <h3 className="font-medium text-gray-900 text-sm leading-tight pr-2">
+                  <h3 className="font-semibold text-gray-800 text-base leading-tight pr-2">
                     {section.title}
                   </h3>
-                  <Edit3 className="w-3 h-3 text-gray-400 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
+                  <Edit3 className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
                 </div>
               )}
 
@@ -147,24 +141,24 @@ function SortableOutlineCard({ section, index, onEdit }: {
                       setIsEditingBullets(false);
                     }
                   }}
-                  className="text-sm text-gray-600 min-h-[80px] resize-none"
+                  className="text-sm text-gray-600 min-h-[80px] resize-none bg-blue-50/50 rounded-md p-2"
                   placeholder="Enter bullet points (one per line)"
                   autoFocus
                 />
               ) : (
                 <div 
-                  className="group/bullets cursor-pointer relative"
+                  className="group/bullets cursor-pointer relative min-h-[40px] rounded-md p-2 hover:bg-gray-100/70 transition-colors"
                   onClick={() => setIsEditingBullets(true)}
                 >
-                  <ul className="space-y-1">
+                  <ul className="space-y-1.5">
                     {(section.bulletPoints || []).map((point, pointIndex) => (
-                      <li key={pointIndex} className="text-sm text-gray-600 flex items-start">
-                        <span className="w-1 h-1 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                      <li key={pointIndex} className="text-sm text-gray-700 flex items-start">
+                        <span className="w-1 h-1 bg-gray-400 rounded-full mt-2 mr-2.5 flex-shrink-0"></span>
                         <span className="leading-relaxed">{point}</span>
                       </li>
                     ))}
                   </ul>
-                  <Edit3 className="w-3 h-3 text-gray-400 opacity-0 group-hover/bullets:opacity-100 transition-opacity absolute top-0 right-0" />
+                  <Edit3 className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover/bullets:opacity-100 transition-opacity absolute top-2 right-2" />
                 </div>
               )}
             </div>
@@ -473,12 +467,12 @@ export default function OutlinePage() {
 
   if (!documentData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="min-h-screen bg-gray-50">
         <SlidesHeader title="Generate Outline" showHomeButton={true} />
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-700" />
-            <p className="text-gray-600">Loading document...</p>
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-500" />
+            <p className="text-gray-500">Loading document...</p>
           </div>
         </div>
       </div>
@@ -486,91 +480,59 @@ export default function OutlinePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <SlidesHeader title="Generate Outline" showHomeButton={true} />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-purple-950 dark:to-slate-900">
+      <AppHeader />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Prompt Section */}
-        <div className="text-center mb-8">
-          <div className="inline-block mb-6">
-            <div className="text-sm text-gray-600 mb-2">Prompt</div>
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-4">
-              <Select value={cardCount} onValueChange={setCardCount}>
-                <SelectTrigger className="w-full sm:w-32 bg-white/80 backdrop-blur-sm border-gray-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">3 cards</SelectItem>
-                  <SelectItem value="5">5 cards</SelectItem>
-                  <SelectItem value="8">8 cards</SelectItem>
-                  <SelectItem value="10">10 cards</SelectItem>
-                  <SelectItem value="15">15 cards</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={style} onValueChange={setStyle}>
-                <SelectTrigger className="w-full sm:w-40 bg-white/80 backdrop-blur-sm border-gray-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="friendly">Friendly</SelectItem>
-                  <SelectItem value="fun">Fun</SelectItem>
-                  <SelectItem value="casual">Casual</SelectItem>
-                  <SelectItem value="formal">Formal</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="w-full sm:w-40 bg-white/80 backdrop-blur-sm border-gray-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English (US)</SelectItem>
-                  <SelectItem value="es">Spanish</SelectItem>
-                  <SelectItem value="fr">French</SelectItem>
-                  <SelectItem value="de">German</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Card className="bg-white/80 backdrop-blur-sm border-gray-200 mb-6">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <Input
-                  placeholder="Describe what you'd like to make"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="text-lg bg-transparent border-none text-gray-700 placeholder:text-gray-400 flex-1"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !isGenerating) {
-                      handleRegenerateOutline();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleRegenerateOutline}
-                  disabled={isGenerating}
-                  variant="ghost"
-                  size="sm"
-                >
-                  {isGenerating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            Finalize Your Presentation
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            Review your outline, choose a style, and generate your slides.
+          </p>
         </div>
 
-        {/* Outline Section */}
-        {(generatedOutline || isGenerating) && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 text-center">Outline</h2>
-            
+        <Card className="bg-white/80 backdrop-blur-sm border-gray-200/80 mb-8 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <Input
+                placeholder="Describe what you'd like to make"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="text-lg bg-transparent border-none text-gray-800 placeholder:text-gray-400 flex-1 focus-visible:ring-0 focus-visible:ring-offset-0"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isGenerating) {
+                    handleRegenerateOutline();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleRegenerateOutline}
+                disabled={isGenerating}
+                variant="ghost"
+                size="sm"
+                className="text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Regenerate
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          {/* Left Column: Outline */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Presentation Outline</h2>
             {generatedOutline && !isGenerating ? (
               <DndContext
                 sensors={sensors}
@@ -581,9 +543,9 @@ export default function OutlinePage() {
                   items={generatedOutline.sections.map(s => s.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-col gap-4 md:gap-6 max-w-3xl mx-auto">
+                  <div className="space-y-4">
                     {generatedOutline.sections
-                      .filter(section => section && section.title) // Only render sections with titles
+                      .filter(section => section && section.title)
                       .map((section, index) => (
                         <SortableOutlineCard
                           key={section.id}
@@ -596,149 +558,103 @@ export default function OutlinePage() {
                 </SortableContext>
               </DndContext>
             ) : (
-              // Show streaming progress
-              <div className="space-y-4 max-w-3xl mx-auto">
-                {generatedOutline?.sections?.filter(section => section && section.title).map((section, index) => (
-                  <Card key={section.id || index} className="bg-white/90 backdrop-blur-sm border border-blue-200/50 animate-pulse">
+              <div className="space-y-4">
+                {(generatedOutline?.sections && generatedOutline.sections.length > 0 ? generatedOutline.sections : Array.from({ length: 5 }, (_, i) => ({ id: `skeleton-${i}` }))).map((section, index) => (
+                  <Card key={section?.id || index} className="bg-white/90 backdrop-blur-sm border border-blue-200/50 animate-pulse">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 text-sm leading-tight mb-3">
-                            {section.title || 'Generating...'}
-                          </h3>
-                          <ul className="space-y-1">
-                            {(section.bulletPoints && section.bulletPoints.length > 0) ? 
-                              section.bulletPoints.map((point, pointIndex) => (
-                                <li key={pointIndex} className="text-sm text-gray-600 flex items-start">
-                                  <span className="w-1 h-1 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                  <span className="leading-relaxed">{point}</span>
-                                </li>
-                              )) : (
-                                <li className="text-sm text-gray-400 flex items-start">
-                                  <span className="w-1 h-1 bg-gray-300 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                  <span className="leading-relaxed">Generating bullet points...</span>
-                                </li>
-                              )
-                            }
-                          </ul>
+                        <div className="w-6 h-6 bg-gray-200 rounded-md flex-shrink-0"></div>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-3 bg-gray-200 rounded w-full"></div>
+                          <div className="h-3 bg-gray-200 rounded w-5/6"></div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                )) || (
-                  // Show loading state when no sections yet
-                  <div className="text-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-                    <p className="text-gray-600">Generating your outline...</p>
-                  </div>
-                )}
+                ))}
               </div>
             )}
           </div>
-        )}
 
-        {/* Separator */}
-        {generatedOutline && !isGenerating && (
-          <div className="w-full flex justify-center my-10">
-            <div className="h-0.5 w-64 bg-gray-200 rounded-full" />
-          </div>
-        )}
-
-        {/* Content Configuration Card */}
-        {generatedOutline && !isGenerating && (
-          <div className="mb-8">
-            <Card className="bg-white/80 backdrop-blur-sm border-gray-200">
-              <CardContent className="p-4 sm:p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Content Configuration</h3>
+          {/* Right Column: Configuration */}
+          <div className="lg:col-span-1 space-y-6 sticky top-24">
+            <Card className="bg-white/80 backdrop-blur-sm border-gray-200/80 shadow-sm">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Configuration</h3>
                 
-                {/* Content Length Selector */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Content Length</label>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {[
-                      { value: 'brief', label: 'Brief', desc: 'Concise points' },
-                      { value: 'medium', label: 'Medium', desc: 'Balanced detail' },
-                      { value: 'detailed', label: 'Detailed', desc: 'Comprehensive' }
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => handleContentLengthChange(option.value)}
-                        className={`flex-1 p-3 rounded-lg border text-center transition-all ${
-                          contentLength === option.value
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="font-medium text-sm">{option.label}</div>
-                        <div className="text-xs text-gray-500 mt-1">{option.desc}</div>
-                      </button>
-                    ))}
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Content Length</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: 'brief', label: 'Brief' },
+                        { value: 'medium', label: 'Medium' },
+                        { value: 'detailed', label: 'Detailed' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => handleContentLengthChange(option.value)}
+                          className={`flex-1 py-2 px-2 rounded-md border text-center text-sm transition-all ${
+                            contentLength === option.value
+                              ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
+                              : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-600'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Theme Selection Grid */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Theme</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
-                    {themes.map((theme) => (
-                      <button
-                        key={theme.id}
-                        onClick={() => handleThemeChange(theme)}
-                        className={`relative aspect-square rounded-lg border-2 transition-all hover:scale-105 ${
-                          selectedTheme.id === theme.id
-                            ? 'border-blue-500 ring-2 ring-blue-200'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        style={{
-                          background: theme.background
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
-                        <div className="absolute bottom-1 left-1 right-1">
-                          <div className="text-xs font-medium text-white drop-shadow-sm truncate">
-                            {theme.name}
-                          </div>
-                        </div>
-                        {selectedTheme.id === theme.id && (
-                          <div className="absolute top-1 right-1 w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
-                          </div>
-                        )}
-                      </button>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {themes.map((theme) => (
+                        <button
+                          key={theme.id}
+                          onClick={() => handleThemeChange(theme)}
+                          className={`relative aspect-square rounded-md border-2 transition-all hover:scale-105 ${
+                            selectedTheme.id === theme.id
+                              ? 'border-blue-500 ring-2 ring-blue-200'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          style={{ background: theme.background }}
+                        >
+                          {selectedTheme.id === theme.id && (
+                            <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Image Style Input */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Image Style (Optional)</label>
-                  <Textarea
-                    placeholder="Describe the visual style for generated images (e.g., 'modern minimalist illustrations', 'photorealistic', 'hand-drawn sketches')"
-                    value={imageStyle}
-                    onChange={(e) => handleImageStyleChange(e.target.value)}
-                    className="min-h-[80px] resize-none text-sm"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Image Style (Optional)</label>
+                    <Textarea
+                      placeholder="e.g., 'modern minimalist', 'photorealistic'"
+                      value={imageStyle}
+                      onChange={(e) => handleImageStyleChange(e.target.value)}
+                      className="min-h-[80px] resize-none text-sm"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
 
-        {/* Generate Slides Button */}
-        {generatedOutline && !isGenerating && (
-          <div className="text-center">
-            <Button 
-              onClick={handleGenerateSlides}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full"
-            >
-              <Sparkles className="w-5 h-5 mr-2" />
-              Generate Slides
-            </Button>
+            {generatedOutline && !isGenerating && (
+              <Button 
+                onClick={handleGenerateSlides}
+                size="lg"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+              >
+                <Sparkles className="w-5 h-5 mr-2" />
+                Generate Slides
+              </Button>
+            )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

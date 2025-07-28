@@ -36,7 +36,7 @@ import { fetchGeneratedSlide, fetchGeneratedImage } from '@/lib/ai/generation';
 import { useSlideNavigation } from '@/hooks/useSlideNavigation';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useMyRuntime } from './MyRuntimeProvider';
-import { generateUUID } from '@/lib/uuid';
+import { generateUUID, isValidUUID } from '@/lib/uuid';
 
 interface OutlineSection {
   id: string;
@@ -117,11 +117,90 @@ export default function PresentationPage() {
     })
   );
 
-  // Load document data and theme from localStorage
+  // Load document data and theme from database first, then localStorage as fallback
   useEffect(() => {
-    const loadDocumentData = () => {
+    const loadDocumentData = async () => {
+      // First try to load from database if we have a valid UUID
+      if (isValidUUID(documentId)) {
+        try {
+          console.log('🔍 Loading presentation from database:', documentId);
+          const presentation = await db.getPresentation(documentId);
+          
+          if (presentation) {
+            console.log('✅ Found presentation in database:', presentation.id);
+            
+            // Convert database data to DocumentData format
+            const data: DocumentData = {
+              id: documentId,
+              databaseId: presentation.id,
+              userId: presentation.user_id,
+              prompt: presentation.prompt,
+              cardCount: presentation.card_count,
+              style: presentation.style,
+              language: presentation.language || 'en',
+              createdAt: presentation.created_at,
+              status: presentation.status,
+              outline: presentation.outline,
+              contentLength: presentation.content_length || 'medium',
+              theme: presentation.theme_id || 'default',
+              imageStyle: presentation.image_style || ''
+            };
+            
+            // If presentation has slides in database, convert and use them
+            if (presentation.slides && presentation.slides.length > 0) {
+              console.log('📋 Found', presentation.slides.length, 'slides in database');
+              const dbSlides = presentation.slides
+                .sort((a, b) => a.position - b.position)
+                .map(slide => ({
+                  id: slide.id,
+                  templateType: slide.template_type,
+                  title: slide.title || '',
+                  content: slide.content || '',
+                  bulletPoints: slide.bullet_points || [],
+                  imageUrl: slide.image_url || '',
+                  imagePrompt: slide.image_prompt || '',
+                  isGenerating: slide.is_generating || false,
+                  isGeneratingImage: slide.is_generating_image || false
+                }));
+              
+              data.generatedSlides = dbSlides;
+              setAllSlides(dbSlides);
+              console.log('✅ Loaded existing slides from database');
+            }
+            
+            setDocumentData(data);
+            
+            // Load theme
+            let themeToUse = defaultTheme;
+            if (data.theme) {
+              const themes = require('@/lib/themes').themes;
+              const dbTheme = themes.find((t: any) => t.id === data.theme);
+              if (dbTheme) {
+                themeToUse = dbTheme;
+              }
+            }
+            setTheme(themeToUse, documentId);
+            
+            // Only generate slides if none exist in database and we have an outline
+            if ((!presentation.slides || presentation.slides.length === 0) && data.outline) {
+              if (!initRef.current) {
+                initRef.current = true;
+                console.log('🔄 No slides in database, generating from outline');
+                initializeSlides(data.outline, data.cardCount);
+              }
+            }
+            
+            return; // Successfully loaded from database
+          }
+        } catch (error) {
+          console.warn('⚠️ Failed to load from database, trying localStorage:', error);
+        }
+      }
+      
+      // Fallback to localStorage loading
       const stored = localStorage.getItem(documentId);
       if (stored) {
+        console.log('📦 Loading from localStorage:', documentId);
         const data: DocumentData = JSON.parse(stored);
         setDocumentData(data);
         
@@ -217,7 +296,7 @@ export default function PresentationPage() {
             const keysToRemove: string[] = [];
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
-              if (key && key !== documentId && key.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+              if (key && key !== documentId && isValidUUID(key)) {
                 keysToRemove.push(key);
               }
             }

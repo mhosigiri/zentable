@@ -140,65 +140,50 @@ export default function GeneratePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-purple-950 dark:to-slate-900">
       <AppHeader />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         {/* Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Generate</h1>
-          <p className="text-xl text-gray-600">
-            What would you like to create today?
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            Generate Your Presentation
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            Describe what you want to create and let AI do the magic
           </p>
         </div>
 
-        {/* Content Type Selection */}
-        {/* <div className="flex justify-center mb-8">
-          <div className="flex bg-white/60 backdrop-blur-sm rounded-lg p-2 border border-white/20">
-            <button
-              onClick={() => setSelectedType('presentation')}
-              className={`flex items-center px-4 py-2 rounded-md transition-all ${
-                selectedType === 'presentation'
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Presentation
-            </button>
-          </div>
-        </div> */}
-
-        {/* Options Row */}
-        <div className="flex justify-center gap-4 mb-8">
+        {/* Configuration Options - Modern Chips */}
+        <div className="flex flex-wrap gap-4 mb-8 justify-center">
           <Select value={cardCount} onValueChange={setCardCount}>
-            <SelectTrigger className="w-32 bg-white/60 backdrop-blur-sm border-white/20">
+            <SelectTrigger className="w-32 bg-gradient-to-r from-white/80 to-white/60 dark:from-zinc-800/80 dark:to-zinc-700/60 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="3">3 cards</SelectItem>
-              <SelectItem value="5">5 cards</SelectItem>
-              <SelectItem value="8">8 cards</SelectItem>
-              <SelectItem value="10">10 cards</SelectItem>
-              <SelectItem value="15">15 cards</SelectItem>
+              <SelectItem value="6">6 slides</SelectItem>
+              <SelectItem value="8">8 slides</SelectItem>
+              <SelectItem value="10">10 slides</SelectItem>
+              <SelectItem value="12">12 slides</SelectItem>
+              <SelectItem value="15">15 slides</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={style} onValueChange={setStyle}>
-            <SelectTrigger className="w-40 bg-white/60 backdrop-blur-sm border-white/20">
+            <SelectTrigger className="w-40 bg-gradient-to-r from-white/80 to-white/60 dark:from-zinc-800/80 dark:to-zinc-700/60 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="professional">Professional</SelectItem>
-              <SelectItem value="friendly">Friendly</SelectItem>
-              <SelectItem value="fun">Fun</SelectItem>
-              <SelectItem value="casual">Casual</SelectItem>
+              <SelectItem value="creative">Creative</SelectItem>
+              <SelectItem value="minimalist">Minimalist</SelectItem>
+              <SelectItem value="playful">Playful</SelectItem>
               <SelectItem value="formal">Formal</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger className="w-40 bg-white/60 backdrop-blur-sm border-white/20">
+            <SelectTrigger className="w-40 bg-gradient-to-r from-white/80 to-white/60 dark:from-zinc-800/80 dark:to-zinc-700/60 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -210,87 +195,95 @@ export default function GeneratePage() {
           </Select>
         </div>
 
-        {/* Prompt Input */}
+        {/* Prompt Input - Modern Floating */}
         <div className="mb-8">
-          <Card className="bg-white/60 backdrop-blur-sm border-white/20">
+          <Card className="bg-gradient-to-r from-white/90 to-white/80 dark:from-zinc-800/90 dark:to-zinc-700/80 backdrop-blur-2xl border-2 border-white/30 dark:border-white/20 shadow-2xl rounded-2xl">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <Input
-                  placeholder="Describe what you'd like to make"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="text-lg bg-transparent border-none text-gray-700 placeholder:text-gray-400 flex-1"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !isGenerating) {
-                      handleGenerateOutline();
-                    }
-                  }}
-                />
-                <RefreshCw className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Describe what you'd like to create..."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="text-xl bg-transparent border-none text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 flex-1 focus:outline-none focus:ring-0"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isGenerating) {
+                        handleGenerateOutline();
+                      }
+                    }}
+                  />
+                </div>
+                <RefreshCw className="w-6 h-6 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 cursor-pointer transition-colors duration-300 hover:rotate-180" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Generate Button */}
-        <div className="text-center mb-8">
+        {/* Generate Button - Modern Gradient */}
+        <div className="text-center mb-12">
           <Button 
             onClick={handleGenerateOutline}
             disabled={!prompt.trim() || isGenerating}
             size="lg" 
-            className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full"
+            className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white px-12 py-4 rounded-full shadow-2xl hover:shadow-purple-500/30 transition-all duration-500 transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Generating Outline...
+                <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                <span className="text-lg">Generating Outline...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5 mr-2" />
-                Generate Outline
+                <Sparkles className="w-6 h-6 mr-3" />
+                <span className="text-lg">Generate Outline</span>
               </>
             )}
           </Button>
         </div>
 
-        {/* Example Prompts */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center mb-6">
-            <div className="flex-1 h-px bg-gray-300"></div>
-            <span className="px-4 text-gray-500 font-medium">Example prompts</span>
-            <div className="flex-1 h-px bg-gray-300"></div>
+        {/* Example Prompts - Modern Grid */}
+        <div className="mb-12">
+          <div className="flex items-center justify-center mb-8">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+            <span className="px-6 text-gray-500 font-medium bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full py-2">
+              Example prompts
+            </span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {examplePrompts.map((example, index) => (
               <Card 
                 key={index} 
-                className="bg-white/60 backdrop-blur-sm border-white/20 cursor-pointer hover:shadow-md transition-all group"
+                className="bg-gradient-to-br from-white/90 to-white/80 dark:from-zinc-800/90 dark:to-zinc-700/80 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer group transform hover:scale-[1.02] hover:-translate-y-1 rounded-2xl"
                 onClick={() => setPrompt(example.title)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                      <example.icon className="w-4 h-4 text-blue-600" />
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-800/50 dark:to-purple-800/50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                      <example.icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{example.category}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
                         {example.title}
                       </p>
                     </div>
-                    <Plus className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    <Plus className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-all duration-300 transform group-hover:rotate-90 group-hover:scale-110 flex-shrink-0" />
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Shuffle Button */}
+          {/* Shuffle Button - Modern */}
           <div className="text-center">
-            <Button variant="outline" className="bg-white/60 backdrop-blur-sm border-white/20">
-              <Shuffle className="w-4 h-4 mr-2" />
-              Shuffle
+            <Button 
+              variant="outline" 
+              className="bg-gradient-to-r from-white/80 to-white/60 dark:from-zinc-800/80 dark:to-zinc-700/60 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              <Shuffle className="w-5 h-5 mr-2" />
+              Shuffle Prompts
             </Button>
           </div>
         </div>

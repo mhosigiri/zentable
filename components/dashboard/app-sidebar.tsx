@@ -103,7 +103,7 @@ const data = {
 
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="offcanvas" className="bg-gradient-to-b from-indigo-100 via-purple-50 to-pink-100 dark:from-indigo-900/40 dark:via-purple-900/30 dark:to-pink-900/40 border-r-0 shadow-xl" {...props}>
       <SidebarHeader>
         {/* <SidebarMenu>
           <SidebarMenuItem>

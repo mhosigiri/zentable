@@ -165,12 +165,12 @@ export function SectionCards() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-screen-2xl px-4 lg:px-6">
         {/* Create New Presentation Card */}
         <Card 
-          className="cursor-pointer border-dashed border-2 hover:border-primary/50 transition-colors group w-full max-w-sm mx-auto h-80 min-w-0 flex flex-col"
+          className="group cursor-pointer overflow-hidden flex flex-col h-full bg-gradient-to-br from-white/90 to-gray-50/80 dark:from-zinc-900/90 dark:to-zinc-800/90 backdrop-blur-xl border-2 border-white/20 dark:border-white/10 shadow-lg hover:shadow-2xl hover:shadow-primary/20 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02]"
           onClick={handleCreateNew}
         >
           <CardHeader className="flex flex-col items-center justify-center flex-1 text-center p-6">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-              <PlusIcon className="w-6 h-6 text-primary" />
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-3 group-hover:from-emerald-300 group-hover:to-teal-400 transition-all duration-300 shadow-lg group-hover:shadow-xl animate-pulse">
+              <PlusIcon className="w-6 h-6 text-white" />
             </div>
             <CardTitle className="text-lg">Create New Presentation</CardTitle>
             <CardDescription>Start building your next presentation</CardDescription>
@@ -183,14 +183,14 @@ export function SectionCards() {
           return (
             <Card 
               key={presentation.id}
-              className="cursor-pointer hover:border-primary transition-colors group w-full max-w-sm mx-auto h-80 min-w-0 flex flex-col overflow-hidden"
+              className="cursor-pointer hover:border-primary transition-all duration-300 group w-full max-w-sm mx-auto h-80 min-w-0 flex flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 shadow-lg hover:shadow-xl hover:shadow-purple-200/30 dark:hover:shadow-purple-900/20 border border-blue-200 dark:border-blue-700 rounded-xl transform hover:scale-[1.02] hover:-translate-y-1"
               onClick={() => handlePresentationClick(presentation.id)}
             >
               <CardHeader className="relative p-4 flex-1 flex flex-col min-h-0">
                 {/* Slide Preview - Themed background, no shadow, uniform size */}
                 <div 
-                  className="w-full aspect-video rounded-md mb-3 overflow-hidden relative flex-shrink-0"
-                  style={{ background: theme.background }}
+                  className="w-full aspect-video rounded-lg mb-3 overflow-hidden relative flex-shrink-0 border-2 border-white/50 dark:border-white/10 shadow-lg"
+                  style={{ background: `linear-gradient(135deg, ${theme.background}, ${theme.background}dd)` }}
                 >
                   {presentation.firstSlide ? (
                     <div
@@ -232,7 +232,7 @@ export function SectionCards() {
                     <DropdownMenuTrigger asChild>
                       <Button 
                         variant="ghost" 
-                        className="h-8 w-8 p-0 bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800"
+                        className="h-8 w-8 p-0 bg-gradient-to-br from-white/95 to-pink-50/90 dark:from-zinc-700/95 dark:to-purple-800/90 hover:from-pink-50 hover:to-rose-100 dark:hover:from-purple-600 dark:hover:to-indigo-700 border border-pink-200/60 dark:border-purple-600/50 shadow-lg rounded-lg backdrop-blur-md transition-all duration-200"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <span className="sr-only">Open menu</span>
@@ -282,7 +282,7 @@ export function SectionCards() {
                 <div className="absolute right-4 top-4">
                   <Badge 
                     variant="outline" 
-                    className={`text-xs ${getStatusColor(presentation.status)}`}
+                    className={`text-xs border-yellow-200/70 dark:border-yellow-600/50 bg-gradient-to-r from-yellow-100/90 to-orange-100/90 dark:from-yellow-800/80 dark:to-orange-800/80 backdrop-blur-md shadow-lg rounded-full ${getStatusColor(presentation.status)}`}
                   >
                     {presentation.status}
                   </Badge>
@@ -305,10 +305,10 @@ export function SectionCards() {
                   <span className="truncate">{formatDate(presentation.created_at)}</span>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                  <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-800/60 dark:to-emerald-800/60 border-green-300 dark:border-green-600 text-green-800 dark:text-green-300 shadow-sm">
                     {presentation.card_count} slides
                   </Badge>
-                  <Badge variant="outline" className="text-xs capitalize px-1.5 py-0.5">
+                  <Badge variant="outline" className="text-xs capitalize px-1.5 py-0.5 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-800/60 dark:to-cyan-800/60 border-blue-300 dark:border-blue-600 text-blue-800 dark:text-blue-300 shadow-sm">
                     {presentation.style}
                   </Badge>
                 </div>

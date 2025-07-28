@@ -312,7 +312,7 @@ const columns: ColumnDef<Presentation>[] = [
       
       return (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-8 bg-gradient-to-br from-primary/10 to-primary/20 rounded flex items-center justify-center">
+          <div className="w-10 h-8 bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 dark:from-pink-800/40 dark:via-purple-800/40 dark:to-indigo-800/40 border border-purple-200 dark:border-purple-600 rounded-lg flex items-center justify-center shadow-lg">
             <IconComponent className={`w-4 h-4 ${iconData.color}`} />
           </div>
           <div className="flex flex-col min-w-0">
@@ -332,7 +332,7 @@ const columns: ColumnDef<Presentation>[] = [
     cell: ({ row }) => (
       <Badge
         variant="outline"
-        className={`flex gap-1 px-2 py-1 text-xs ${getStatusColor(row.original.status)}`}
+        className={`flex gap-1 px-2 py-1 text-xs bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-800/50 dark:to-teal-800/50 border-emerald-300 dark:border-emerald-600 shadow-md rounded-full ${getStatusColor(row.original.status)}`}
       >
         {row.original.status === "completed" && (
           <CheckCircle2Icon className="w-3 h-3" />
@@ -348,7 +348,7 @@ const columns: ColumnDef<Presentation>[] = [
     accessorKey: "style",
     header: "Style",
     cell: ({ row }) => (
-      <Badge variant="outline" className="capitalize">
+      <Badge variant="outline" className="capitalize bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-800/50 dark:to-cyan-800/50 border-blue-300 dark:border-blue-600 shadow-md rounded-full text-blue-800 dark:text-blue-300">
         {row.original.style}
       </Badge>
     ),
@@ -441,7 +441,7 @@ export function DataTable() {
           <div className="h-8 w-48 bg-muted rounded animate-pulse"></div>
           <div className="h-8 w-32 bg-muted rounded animate-pulse"></div>
         </div>
-        <div className="rounded-md border">
+        <div className="rounded-xl border-2 border-indigo-200 dark:border-indigo-700 bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 dark:from-zinc-800 dark:via-blue-900/20 dark:to-indigo-900/30 shadow-xl overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -479,7 +479,7 @@ export function DataTable() {
             onChange={(event) =>
               table.getColumn("title")?.setFilterValue(event.target.value)
             }
-            className="max-w-sm"
+            className="max-w-sm bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/30 dark:to-purple-900/30 border-2 border-pink-200 dark:border-pink-700 shadow-lg rounded-lg focus:border-purple-400 dark:focus:border-purple-500 transition-all duration-200"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -510,13 +510,13 @@ export function DataTable() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Button onClick={() => router.push('/create')} className="ml-4">
+        <Button onClick={() => router.push('/create')} className="ml-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg border-none text-white rounded-lg transform hover:scale-105 transition-all duration-200">
           <PlusIcon className="mr-2 h-4 w-4" />
           New Presentation
         </Button>
       </div>
       
-      <div className="rounded-md border">
+      <div className="rounded-xl border-2 border-indigo-200 dark:border-indigo-700 bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 dark:from-zinc-800 dark:via-blue-900/20 dark:to-indigo-900/30 shadow-xl overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -542,7 +542,7 @@ export function DataTable() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-gradient-to-r hover:from-purple-50/50 hover:via-pink-50/30 hover:to-blue-50/50 dark:hover:from-purple-900/20 dark:hover:via-pink-900/10 dark:hover:to-blue-900/20 transition-all duration-300 border-b border-indigo-200/30 dark:border-indigo-700/30"
                   onClick={() => router.push(`/docs/${row.original.id}`)}
                 >
                   {row.getVisibleCells().map((cell) => (
