@@ -102,27 +102,26 @@ export default function CreatePage() {
           </Link>
 
           {/* Brainstorm with AI */}
-          <div className="relative">
-            <Badge className="absolute -top-3 left-6 bg-gradient-to-r from-gray-500 to-gray-600 text-white border-none shadow-lg z-10">
-              COMING SOON
-            </Badge>
-            <Card className="group cursor-not-allowed opacity-60 bg-gradient-to-br from-gray-100/90 to-gray-200/90 dark:from-gray-800/90 dark:to-gray-700/90 backdrop-blur-xl border-2 border-gray-300/20 dark:border-gray-600/20 rounded-2xl h-full">
+          <Link href="/create/brainstorm" className="group">
+            <Card className="group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white/90 via-emerald-50/80 to-teal-50/90 dark:from-zinc-800/90 dark:via-emerald-900/50 dark:to-teal-900/50 backdrop-blur-xl border-2 border-white/20 dark:border-white/10 shadow-xl hover:shadow-emerald-500/20 rounded-2xl transform hover:scale-[1.03]">
+              <Badge className="absolute -top-3 left-6 bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-none shadow-lg z-10">
+                🧠 NEW
+              </Badge>
               <CardHeader className="pb-4">
-                <div className="w-full h-48 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 rounded-xl flex items-center justify-center mb-4 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-xl"></div>
-                  <div className="bg-white/90 rounded-xl p-4 relative z-10">
-                    <BrainCircuit className="w-12 h-12 text-gray-600" />
-                  </div>
+                <div className="w-full h-48 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 rounded-xl flex items-center justify-center mb-4 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/30 via-emerald-500/30 to-teal-500/30 animate-pulse"></div>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
+                  <BrainCircuit className="w-16 h-16 text-white relative z-10 drop-shadow-2xl" />
                 </div>
-                <CardTitle className="text-2xl font-bold text-gray-600">Brainstorm with AI</CardTitle>
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Brainstorm with AI</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-gray-500 dark:text-gray-400 text-lg">
+                <CardDescription className="text-gray-600 dark:text-gray-300 text-lg">
                   Collaborate with an AI partner to generate and refine ideas
                 </CardDescription>
               </CardContent>
             </Card>
-          </div>
+          </Link>
         </div>
 
         {/* Recent Prompts - Modern Carousel */}

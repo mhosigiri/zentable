@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,14 +24,17 @@ import {
 import { db } from '@/lib/database';
 import { generateUUID, generatePrefixedId } from '@/lib/uuid';
 import { createClient } from '@/lib/supabase/client';
+import { PresentationExamples, type Example } from '@/components/presentation-examples';
 
 export default function GeneratePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedType, setSelectedType] = useState('presentation');
   const [prompt, setPrompt] = useState('');
-  const [cardCount, setCardCount] = useState('8');
+  const [cardCount, setCardCount] = useState('5');
   const [style, setStyle] = useState('professional');
   const [language, setLanguage] = useState('en');
+  const [contentLength, setContentLength] = useState('brief');
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
@@ -41,40 +44,20 @@ export default function GeneratePage() {
       console.log('👤 User on page load:', user);
     };
     fetchUser();
-  }, []);
-
-  const examplePrompts = [
-    {
-      icon: FileText,
-      title: "Developing and delivering workshops or training programs on specific topics or skills",
-      category: "Training"
-    },
-    {
-      icon: GraduationCap,
-      title: "Student learning assessments",
-      category: "Education"
-    },
-    {
-      icon: Waves,
-      title: "Monsters of the deep oceans",
-      category: "Science"
-    },
-    {
-      icon: MessageSquare,
-      title: "The best and worst slang gen Z",
-      category: "Culture"
-    },
-    {
-      icon: Flask,
-      title: "Research proposal",
-      category: "Academic"
-    },
-    {
-      icon: DollarSign,
-      title: "Sales proposal for professional web services",
-      category: "Business"
+    
+    // Check for prompt parameter from brainstorming
+    const urlPrompt = searchParams.get('prompt');
+    if (urlPrompt) {
+      setPrompt(decodeURIComponent(urlPrompt));
     }
-  ];
+  }, [searchParams]);
+
+  const handleSelectExample = (example: Example) => {
+    setPrompt(example.prompt);
+    setCardCount(String(example.cardCount));
+    setStyle(example.style);
+    setContentLength('brief'); // Default to brief for examples
+  };
 
   const generateDocumentId = () => {
     return generateUUID();
@@ -120,7 +103,7 @@ export default function GeneratePage() {
           cardCount: parseInt(cardCount),
           style,
           language,
-          contentLength: 'medium',
+          contentLength,
           themeId: 'default',
           imageStyle: '',
           userId: userId // Pass the user ID
@@ -155,36 +138,48 @@ export default function GeneratePage() {
         </div>
 
         {/* Configuration Options - Modern Chips */}
-        <div className="flex flex-wrap gap-4 mb-8 justify-center">
+        <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
           <Select value={cardCount} onValueChange={setCardCount}>
-            <SelectTrigger className="w-32 bg-gradient-to-r from-white/80 to-white/60 dark:from-zinc-800/80 dark:to-zinc-700/60 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
-              <SelectValue />
+            <SelectTrigger className="w-[140px] h-12 text-base bg-white/80 backdrop-blur-sm border-gray-200/80">
+              <SelectValue placeholder="Number of slides" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="6">6 slides</SelectItem>
-              <SelectItem value="8">8 slides</SelectItem>
-              <SelectItem value="10">10 slides</SelectItem>
-              <SelectItem value="12">12 slides</SelectItem>
-              <SelectItem value="15">15 slides</SelectItem>
+              {Array.from({ length: 20 }, (_, i) => i + 1).map(num => (
+                <SelectItem key={num} value={String(num)}>{num} slide{num > 1 ? 's' : ''}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
           <Select value={style} onValueChange={setStyle}>
-            <SelectTrigger className="w-40 bg-gradient-to-r from-white/80 to-white/60 dark:from-zinc-800/80 dark:to-zinc-700/60 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
-              <SelectValue />
+            <SelectTrigger className="w-[150px] h-12 text-base bg-white/80 backdrop-blur-sm border-gray-200/80">
+              <SelectValue placeholder="Style" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="professional">Professional</SelectItem>
               <SelectItem value="creative">Creative</SelectItem>
               <SelectItem value="minimalist">Minimalist</SelectItem>
+              <SelectItem value="modern">Modern</SelectItem>
+              <SelectItem value="classic">Classic</SelectItem>
               <SelectItem value="playful">Playful</SelectItem>
-              <SelectItem value="formal">Formal</SelectItem>
+              <SelectItem value="elegant">Elegant</SelectItem>
+              <SelectItem value="corporate">Corporate</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={contentLength} onValueChange={setContentLength}>
+            <SelectTrigger className="w-[130px] h-12 text-base bg-white/80 backdrop-blur-sm border-gray-200/80">
+              <SelectValue placeholder="Length" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="brief">Brief</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="detailed">Detailed</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger className="w-40 bg-gradient-to-r from-white/80 to-white/60 dark:from-zinc-800/80 dark:to-zinc-700/60 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
-              <SelectValue />
+            <SelectTrigger className="w-[150px] h-12 text-base bg-white/80 backdrop-blur-sm border-gray-200/80">
+              <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="en">English (US)</SelectItem>
@@ -243,49 +238,7 @@ export default function GeneratePage() {
 
         {/* Example Prompts - Modern Grid */}
         <div className="mb-12">
-          <div className="flex items-center justify-center mb-8">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-            <span className="px-6 text-gray-500 font-medium bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full py-2">
-              Example prompts
-            </span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {examplePrompts.map((example, index) => (
-              <Card 
-                key={index} 
-                className="bg-gradient-to-br from-white/90 to-white/80 dark:from-zinc-800/90 dark:to-zinc-700/80 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer group transform hover:scale-[1.02] hover:-translate-y-1 rounded-2xl"
-                onClick={() => setPrompt(example.title)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-800/50 dark:to-purple-800/50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                      <example.icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{example.category}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
-                        {example.title}
-                      </p>
-                    </div>
-                    <Plus className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-all duration-300 transform group-hover:rotate-90 group-hover:scale-110 flex-shrink-0" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Shuffle Button - Modern */}
-          <div className="text-center">
-            <Button 
-              variant="outline" 
-              className="bg-gradient-to-r from-white/80 to-white/60 dark:from-zinc-800/80 dark:to-zinc-700/60 backdrop-blur-xl border-2 border-white/30 dark:border-white/20 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              <Shuffle className="w-5 h-5 mr-2" />
-              Shuffle Prompts
-            </Button>
-          </div>
+          <PresentationExamples onSelectExample={handleSelectExample} />
         </div>
       </main>
     </div>

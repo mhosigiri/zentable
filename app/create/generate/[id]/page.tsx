@@ -37,8 +37,10 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { db, DocumentData } from '@/lib/database';
+import { DatabaseService, DocumentData, PresentationUpdate } from '@/lib/database';
 import { themes, getThemesByCategory, Theme, defaultTheme } from '@/lib/themes';
+
+const db = new DatabaseService();
 import { AppHeader } from '@/components/ui/app-header';
 
 interface OutlineSection {
@@ -235,9 +237,9 @@ export default function OutlinePage() {
         const data: DocumentData = JSON.parse(stored);
         setDocumentData(data);
         setPrompt(data.prompt);
-        setCardCount(data.cardCount.toString());
-        setStyle(data.style);
-        setLanguage(data.language);
+        setCardCount(String(data.cardCount || '5'));
+        setStyle(data.style || 'professional');
+        setLanguage(data.language || 'en');
         
         // Load new configuration values
         setContentLength(data.contentLength || 'brief');
@@ -279,28 +281,29 @@ export default function OutlinePage() {
 
   // New function: Save to database in background
   const saveToDatabase = async (data: Partial<DocumentData>) => {
-    try {
-      // Use the database ID if available, otherwise skip database sync
-      const databaseId = documentData?.databaseId;
-      if (!databaseId) {
-        console.log('No database ID available, skipping database sync');
-        return;
-      }
+    if (!documentData?.databaseId) {
+      console.warn('Cannot save to database without a databaseId');
+      return;
+    }
 
-      await db.updatePresentation(databaseId, {
-        prompt: data.prompt || documentData?.prompt,
-        card_count: data.cardCount || documentData?.cardCount,
-        style: (data.style || documentData?.style) as any,
-        language: data.language || documentData?.language,
-        content_length: (data.contentLength || documentData?.contentLength) as any,
-        theme_id: data.theme || documentData?.theme || 'default',
-        image_style: data.imageStyle || documentData?.imageStyle || null,
-        status: (data.status || documentData?.status) as any,
-        outline: data.outline || documentData?.outline
-      });
-      console.log('✅ Data synced to database with UUID:', databaseId);
+    try {
+      const updates: PresentationUpdate = {};
+      if (data.prompt) updates.prompt = data.prompt;
+      if (data.cardCount) updates.card_count = data.cardCount;
+      if (data.style) updates.style = data.style as any;
+      if (data.language) updates.language = data.language;
+      if (data.contentLength) updates.content_length = data.contentLength as any;
+      if (data.theme) updates.theme_id = data.theme;
+      if (data.imageStyle) updates.image_style = data.imageStyle;
+      if (data.status) updates.status = data.status as any;
+      if (data.outline) updates.outline = data.outline;
+
+      if (Object.keys(updates).length > 0) {
+        await db.updatePresentation(documentData.databaseId, updates);
+        console.log('✅ Changes saved to database in background:', Object.keys(data).join(', '));
+      }
     } catch (error) {
-      console.warn('⚠️ Database sync failed:', error);
+      console.error('❌ Failed to save changes to database:', error);
     }
   };
 
@@ -431,17 +434,33 @@ export default function OutlinePage() {
   };
 
   // Add immediate saving when configuration changes
+  const handleCardCountChange = (value: string) => {
+    const newCardCount = parseInt(value, 10);
+    setCardCount(value);
+    saveDocumentData({ cardCount: newCardCount });
+    saveToDatabase({ cardCount: newCardCount });
+  };
+
+  const handleStyleChange = (value: string) => {
+    setStyle(value);
+    saveDocumentData({ style: value });
+    saveToDatabase({ style: value });
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    saveDocumentData({ language: value });
+    saveToDatabase({ language: value });
+  };
+
   const handleContentLengthChange = (value: string) => {
     setContentLength(value);
-    // Immediately save to localStorage and database
-    const updatedData = { contentLength: value };
-    saveDocumentData(updatedData);
-    saveToDatabase(updatedData);
+    saveDocumentData({ contentLength: value });
+    saveToDatabase({ contentLength: value });
   };
 
   const handleThemeChange = (theme: Theme) => {
     setSelectedTheme(theme);
-    // Immediately save to localStorage and database
     const updatedData = { theme: theme.id };
     saveDocumentData(updatedData);
     saveToDatabase(updatedData);
@@ -583,7 +602,38 @@ export default function OutlinePage() {
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Configuration</h3>
                 
-                <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Slides</label>
+                      <Select value={cardCount} onValueChange={handleCardCountChange}>
+                        <SelectTrigger className="w-full h-10 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 20 }, (_, i) => i + 1).map(num => (
+                            <SelectItem key={num} value={String(num)}>{num} slide{num > 1 ? 's' : ''}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                      <Select value={language} onValueChange={handleLanguageChange}>
+                        <SelectTrigger className="w-full h-10 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">English (US)</SelectItem>
+                          <SelectItem value="es">Spanish</SelectItem>
+                          <SelectItem value="fr">French</SelectItem>
+                          <SelectItem value="de">German</SelectItem>
+                          <SelectItem value="ja">Japanese</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Content Length</label>
                     <div className="flex gap-2">
@@ -605,6 +655,25 @@ export default function OutlinePage() {
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
+                    <Select value={style} onValueChange={handleStyleChange}>
+                      <SelectTrigger className="w-full h-10 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="creative">Creative</SelectItem>
+                        <SelectItem value="minimalist">Minimalist</SelectItem>
+                        <SelectItem value="modern">Modern</SelectItem>
+                        <SelectItem value="classic">Classic</SelectItem>
+                        <SelectItem value="playful">Playful</SelectItem>
+                        <SelectItem value="elegant">Elegant</SelectItem>
+                        <SelectItem value="corporate">Corporate</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>

@@ -19,6 +19,7 @@ import {
   SearchIcon,
   SettingsIcon,
   // UsersIcon,
+  Brain,
 } from "lucide-react"
 
 // import { NavDocuments } from "@/components/dashboard/nav-documents"

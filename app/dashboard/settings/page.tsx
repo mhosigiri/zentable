@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/dashboard/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ApiKeysSection } from "@/components/dashboard/api-keys-section"
 import { McpIntegrationGuide } from "@/components/dashboard/mcp-integration-guide"
+import { MCPToolsManager } from "@/components/dashboard/MCPToolsManager"
 import { useState, useEffect } from "react"
 
 export default function SettingsPage() {
@@ -28,6 +29,7 @@ export default function SettingsPage() {
             </div>
             <div className="grid gap-6">
               <ApiKeysSection />
+              <MCPToolsManager />
               <McpIntegrationGuide 
                 serverUrl={serverUrl} 
               />
