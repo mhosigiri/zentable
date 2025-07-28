@@ -353,15 +353,17 @@ const AssistantMessage: FC = () => {
             Text: MarkdownText,
             tools: {
               Fallback: (props: any) => (
-                <ToolResult
-                  toolCall={{
-                    toolName: props.toolName,
-                    args: props.args,
-                    result: props.result
-                  }}
-                  onApprove={props.toolName === 'updateSlideContent' ? handleApproveSlideUpdate : undefined}
-                  onUserDecision={handleUserDecision}
-                />
+                <div className="mt-4">
+                  <ToolResult
+                    toolCall={{
+                      toolName: props.toolName,
+                      args: props.args,
+                      result: props.result
+                    }}
+                    onApprove={props.toolName === 'updateSlideContent' ? handleApproveSlideUpdate : undefined}
+                    onUserDecision={handleUserDecision}
+                  />
+                </div>
               )
             }
           }}
