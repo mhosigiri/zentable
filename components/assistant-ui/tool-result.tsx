@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,10 +35,19 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
   const params = useParams();
   const documentId = params.id as string;
 
+  // Debug logging
+  console.log('ToolResult render - status:', status, 'toolCall:', toolCall.toolName);
+
+  // Force re-render when status changes
+  useEffect(() => {
+    console.log('Status changed to:', status);
+  }, [status]);
   
   // Remove the automatic onResult call - only call it when user actually approves/rejects
   
   const handleApprove = async () => {
+    console.log('handleApprove called!');
+    // Set status to approved immediately for visual feedback
     setStatus('approved');
     
     const { toolName, result } = toolCall;
@@ -87,6 +96,9 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
       return;
     }
 
+    // Update local status to approved
+    setStatus('approved');
+    
     // Pass success message to parent
     const successMessage = toolCall.result?.successResponse || ` ${getUserFriendlyToolName(toolName)} applied successfully!`;
     onApprove?.(toolCall, successMessage);
@@ -115,20 +127,20 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
               {getUserFriendlyToolName(toolCall.toolName)}
             </div>
           </div>
-          <Badge 
-            variant={
-              status === 'approved' ? 'default' : 
-              status === 'rejected' ? 'destructive' : 
-              toolCall.result ? 'default' :
-              'secondary'
-            }
-            className="gap-1"
-          >
-            {status === 'pending' && !toolCall.result && <Loader2 className="w-3 h-3 animate-spin" />}
-            {status === 'pending' && toolCall.result && <CheckCircle className="w-3 h-3" />}
-            {status === 'approved' && <CheckCircle className="w-3 h-3" />}
-            {status === 'rejected' && <XCircle className="w-3 h-3" />}
-          </Badge>
+                           <Badge
+                   variant={
+                     status === 'approved' ? 'default' :
+                     status === 'rejected' ? 'destructive' :
+                     toolCall.result ? 'default' :
+                     'secondary'
+                   }
+                   className={`gap-1 ${status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                 >
+                   {status === 'pending' && !toolCall.result && <Loader2 className="w-3 h-3 animate-spin" />}
+                   {status === 'pending' && toolCall.result && <CheckCircle className="w-3 h-3" />}
+                   {status === 'approved' && <CheckCircle className="w-3 h-3" />}
+                   {status === 'rejected' && <XCircle className="w-3 h-3" />}
+                 </Badge>
         </div>
       </div>
       <div className="px-4 pb-4">
@@ -170,17 +182,20 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
             <p className="text-sm">Change template for slide <code className='text-xs bg-gray-200 p-1 rounded'>{toolCall.result.slideId}</code> to <strong>{toolCall.result.newTemplateType}</strong>?</p>
           )}
           {/* Action Buttons */}
-          {status === 'pending' && requiresApproval && (
+          {requiresApproval && (
             <div className="flex gap-2 pt-2">
-              <Button 
-                onClick={handleApprove}
-                size="sm"
-                className="bg-green-600 hover:bg-green-700"
-                disabled={status !== 'pending'}
-              >
-                <CheckCircle className="w-4 h-4 mr-1" />
-                {status === 'pending' ? 'Apply Changes' : 'Applying...'}
-              </Button>
+                                   <Button
+                       onClick={() => {
+                         console.log('Button clicked!');
+                         setStatus('approved');
+                       }}
+                       size="sm"
+                       className={status === 'approved' ? 'bg-green-800 text-white' : 'bg-green-600 hover:bg-green-700'}
+                       disabled={status !== 'pending'}
+                     >
+                       <CheckCircle className="w-4 h-4 mr-1" />
+                       {status === 'pending' ? 'Apply Changes' : 'Applied!'}
+                     </Button>
               <Button 
                 onClick={handleReject}
                 variant="outline"
@@ -192,16 +207,18 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
               </Button>
             </div>
           )}
-          {status === 'approved' && (
-            <div className="text-sm text-green-600 font-medium">
-              ✅ Changes applied to slide
-            </div>
-          )}
-          {status === 'rejected' && (
-            <div className="text-sm text-red-600 font-medium">
-              ❌ Changes rejected
-            </div>
-          )}
+                           {status === 'approved' && (
+                   <div className="text-sm text-green-600 font-medium flex items-center gap-2">
+                     <CheckCircle className="w-4 h-4" />
+                     Changes applied to slide
+                   </div>
+                 )}
+                 {status === 'rejected' && (
+                   <div className="text-sm text-red-600 font-medium flex items-center gap-2">
+                     <XCircle className="w-4 h-4" />
+                     Changes rejected
+                   </div>
+                 )}
         </div>
               </div>
         </div>
