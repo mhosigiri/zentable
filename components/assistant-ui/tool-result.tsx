@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -104,15 +103,17 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
   const requiresApproval = toolCall.result?.requiresApproval;
   
   return (
-    <Card className="my-4">
-      <GlassContainer className="rounded-lg">
-      <CardHeader className="pb-3">
+    <div className="my-4">
+      <div className="bg-white/85 backdrop-blur-2xl border border-white/50 rounded-xl p-0 overflow-hidden shadow-2xl relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/30 rounded-xl"></div>
+        <div className="relative z-10">
+      <div className="p-4 pb-3">
         <div className="flex items-center gap-3">
           {getToolIcon(toolCall.toolName)}
           <div className="flex-1">
-            <CardTitle className="text-base font-medium">
+            <div className="text-base font-medium">
               {getUserFriendlyToolName(toolCall.toolName)}
-            </CardTitle>
+            </div>
           </div>
           <Badge 
             variant={
@@ -129,9 +130,8 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
             {status === 'rejected' && <XCircle className="w-3 h-3" />}
           </Badge>
         </div>
-      </CardHeader>
-      
-      <CardContent>
+      </div>
+      <div className="px-4 pb-4">
         <div className="space-y-3">
           {/* For slide content viewing */}
           {isGetSlideContent && toolCall.result?.success && (
@@ -203,8 +203,9 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
             </div>
           )}
         </div>
-      </CardContent>
-      </GlassContainer>
-    </Card>
+              </div>
+        </div>
+      </div>
+    </div>
   );
 }
