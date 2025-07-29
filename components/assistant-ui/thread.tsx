@@ -8,6 +8,7 @@ import {
   ThreadPrimitive,
 } from "@assistant-ui/react";
 import type { FC } from "react";
+import { useState } from "react";
 import {
   ArrowDownIcon,
   CheckIcon,
@@ -27,6 +28,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { AvatarFallback } from "@radix-ui/react-avatar";
 import { ToolResult } from "@/components/assistant-ui/tool-result";
 import { CircleStopIcon, XIcon } from "./shared";
+
 
 export const Thread: FC = () => {
   return (
@@ -206,6 +208,9 @@ const EditComposer: FC = () => {
 };
 
 const AssistantMessage: FC = () => {
+  const [pendingApprovals, setPendingApprovals] = useState<Set<string>>(new Set());
+  const [successMessages, setSuccessMessages] = useState<string[]>([]);
+  
   const handleApproveSlideUpdate = async (toolCall: any) => {
     try {
       // Commenting out database write for testing UI-only updates
@@ -234,6 +239,23 @@ const AssistantMessage: FC = () => {
     }
   };
 
+
+
+  const handleToolApproval = (toolCall: any, successMessage?: string) => {
+    setPendingApprovals(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(toolCall.toolName);
+      return newSet;
+    });
+    
+    // If we have a success message, store it to display in the thread
+    if (successMessage) {
+      setSuccessMessages(prev => [...prev, successMessage]);
+    }
+  };
+
+
+
   return (
     <MessagePrimitive.Root className="relative grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] py-4">
       <div className="text-foreground col-span-2 col-start-2 row-start-1 my-1.5 max-w-[calc(var(--thread-max-width)*0.8)] break-words leading-7">
@@ -248,12 +270,24 @@ const AssistantMessage: FC = () => {
                     args: props.args,
                     result: props.result
                   }}
-                  onApprove={props.toolName === 'updateSlideContent' ? handleApproveSlideUpdate : undefined}
+                  onApprove={(toolCall, successMessage) => {
+                    handleToolApproval(toolCall, successMessage);
+                    if (props.toolName === 'updateSlideContent') {
+                      handleApproveSlideUpdate(toolCall);
+                    }
+                  }}
                 />
               )
             }
           }}
         />
+        
+        {/* Display success messages */}
+        {successMessages.map((message, index) => (
+          <div key={index} className="mt-2 text-foreground">
+            {message}
+          </div>
+        ))}
       </div>
 
       <AssistantActionBar />

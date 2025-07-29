@@ -415,6 +415,8 @@ export const applyTheme = tool({
       themeId: theme.id,
       themeName: theme.name,
       requiresApproval: true,
+      successResponse: `The "${theme.name}" theme has been successfully applied to your presentation!`,
+      failureResponse: `Failed to apply the "${theme.name}" theme. Please try again.`,
     };
   },
 });

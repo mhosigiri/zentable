@@ -13,6 +13,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { getThemeById, applyAndPersistTheme } from '@/lib/themes';
 import { getUserFriendlyToolName, getToolIcon, GlassContainer } from './shared';
 
+
 interface ToolCallResult {
   toolName: string;
   args: Record<string, any>;
@@ -21,18 +22,22 @@ interface ToolCallResult {
 
 interface ToolResultProps {
   toolCall: ToolCallResult;
-  onApprove?: (toolCall: ToolCallResult) => void;
-  onReject?: (toolCall: ToolCallResult) => void;
+  onApprove?: (toolCall: ToolCallResult, successMessage?: string) => void;
+  onReject?: (toolCall: ToolCallResult, failureMessage?: string) => void;
+  onResult?: (toolCall: ToolCallResult) => void;
 }
 
 
 
-export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
+export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResultProps) {
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const slideManager = useMyRuntime();
   const { setTheme } = useTheme();
   const params = useParams();
   const documentId = params.id as string;
+
+  
+  // Remove the automatic onResult call - only call it when user actually approves/rejects
   
   const handleApprove = async () => {
     setStatus('approved');
@@ -77,15 +82,21 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
     } catch (e) {
       console.error(`Failed to apply ${toolName} on client`, e);
       setStatus('rejected'); // Revert status on failure
+      // Pass failure message to parent
+      const failureMessage = toolCall.result?.failureResponse || `Failed to apply ${getUserFriendlyToolName(toolName)}. Please try again.`;
+      onApprove?.(toolCall, failureMessage);
+      return;
     }
 
-    // Commenting out server-side callback for testing UI-only updates
-    // onApprove?.(toolCall);
+    // Pass success message to parent
+    const successMessage = toolCall.result?.successResponse || ` ${getUserFriendlyToolName(toolName)} applied successfully!`;
+    onApprove?.(toolCall, successMessage);
   };
   
   const handleReject = () => {
     setStatus('rejected');
-    onReject?.(toolCall);
+    const failureMessage = toolCall.result?.failureResponse || ` ${getUserFriendlyToolName(toolCall.toolName)} was rejected.`;
+    onReject?.(toolCall, failureMessage);
   };
 
   const isUpdateSlideContent = toolCall.toolName === 'updateSlideContent';
@@ -165,14 +176,16 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
                 onClick={handleApprove}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700"
+                disabled={status !== 'pending'}
               >
                 <CheckCircle className="w-4 h-4 mr-1" />
-                Apply Changes
+                {status === 'pending' ? 'Apply Changes' : 'Applying...'}
               </Button>
               <Button 
                 onClick={handleReject}
                 variant="outline"
                 size="sm"
+                disabled={status !== 'pending'}
               >
                 <XCircle className="w-4 h-4 mr-1" />
                 Reject
