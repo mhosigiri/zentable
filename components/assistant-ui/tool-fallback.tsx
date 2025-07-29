@@ -1,6 +1,7 @@
 'use client';
 
 import { FC } from "react";
+import { ToolContainer, ToolHeader, getToolIcon, getUserFriendlyToolName } from "./shared";
 
 interface ToolFallbackProps {
   name: string;
@@ -17,21 +18,12 @@ export const ToolFallback: FC<ToolFallbackProps> = ({
   output
 }) => {
   return (
-    <div className="mt-2 rounded-md border bg-muted/50 p-2 text-xs">
-      <div className="mb-1 flex items-center gap-2">
-        <span className="font-medium">{name}</span>
-        <span
-          className={`rounded-full px-1.5 py-0.5 text-[10px] ${
-            status === "running"
-              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-              : status === "success"
-              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-          }`}
-        >
-          {status}
-        </span>
-      </div>
+    <ToolContainer>
+      <ToolHeader 
+        title={getUserFriendlyToolName(name)} 
+        status={status} 
+        icon={getToolIcon(name)}
+      />
 
       {status === "running" && (
         <div className="animate-pulse text-muted-foreground">
@@ -60,6 +52,6 @@ export const ToolFallback: FC<ToolFallbackProps> = ({
           )}
         </>
       )}
-    </div>
+    </ToolContainer>
   );
 };

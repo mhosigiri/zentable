@@ -4,6 +4,7 @@ import { FC, useState } from 'react';
 import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
 import { Button } from '@/components/ui/button';
 import { UseSlidesReturn } from '@/hooks/useSlides';
+import { ToolContainer, ToolHeader, getToolIcon, getUserFriendlyToolName } from './shared';
 
 // Define the structure of arguments for each tool
 type ToolArguments = {
@@ -59,7 +60,7 @@ export const ClientSideToolUI: FC<SlideUpdateToolProps> = ({ toolName, args, onD
   if (status === 'success') {
     return (
         <div className="mt-2 rounded-md border bg-green-900/20 p-2 text-xs text-green-400">
-            ✓ {toolName} executed successfully.
+            ✓ {getUserFriendlyToolName(toolName)} executed successfully.
         </div>
     );
   }
@@ -73,8 +74,12 @@ export const ClientSideToolUI: FC<SlideUpdateToolProps> = ({ toolName, args, onD
   }
 
   return (
-    <div className="mt-2 rounded-md border bg-muted/50 p-3 text-sm">
-      <div className="mb-2 font-medium">Approval Required</div>
+    <ToolContainer className="p-3 text-sm">
+      <ToolHeader 
+        title="Approval Required" 
+        status="pending" 
+        icon={getToolIcon(toolName)}
+      />
       <div className="mb-3 text-xs text-muted-foreground">
         The assistant wants to run the following command:
         <pre className="mt-1 rounded bg-black/20 p-2 font-mono text-white">
@@ -87,6 +92,6 @@ export const ClientSideToolUI: FC<SlideUpdateToolProps> = ({ toolName, args, onD
           {status === 'running' ? 'Running...' : 'Approve'}
         </Button>
       </div>
-    </div>
+    </ToolContainer>
   );
 }; 
