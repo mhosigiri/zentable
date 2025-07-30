@@ -13,10 +13,10 @@ export const dynamic = 'force-dynamic'
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; imageId: string } }
+  { params }: { params: Promise<{ id: string; imageId: string }> }
 ) {
   try {
-    const imageId = params.imageId
+    const { imageId } = await params
     const body = await request.json()
     
     const updates: SlideImageUpdate = {}
@@ -46,10 +46,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; imageId: string } }
+  { params }: { params: Promise<{ id: string; imageId: string }> }
 ) {
   try {
-    const imageId = params.imageId
+    const { imageId } = await params
     
     await deleteSlideImage(imageId)
     

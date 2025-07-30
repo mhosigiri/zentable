@@ -18,10 +18,10 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const slideId = params.id
+    const { id: slideId } = await params
     const images = await getSlideImages(slideId)
     
     return NextResponse.json({ images })
@@ -40,10 +40,10 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const slideId = params.id
+    const { id: slideId } = await params
     const body = await request.json()
     
     const slideImageData: SlideImageInsert = {
@@ -74,10 +74,10 @@ export async function POST(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const slideId = params.id
+    const { id: slideId } = await params
     const body = await request.json()
     
     if (body.action === 'reorder' && body.imageIds) {

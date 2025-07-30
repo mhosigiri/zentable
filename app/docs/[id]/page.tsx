@@ -146,27 +146,8 @@ export default function PresentationPage() {
               imageStyle: presentation.image_style || ''
             };
             
-            // If presentation has slides in database, convert and use them
-            if (presentation.slides && presentation.slides.length > 0) {
-              console.log('📋 Found', presentation.slides.length, 'slides in database');
-              const dbSlides = presentation.slides
-                .sort((a, b) => a.position - b.position)
-                .map(slide => ({
-                  id: slide.id,
-                  templateType: slide.template_type,
-                  title: slide.title || '',
-                  content: slide.content || '',
-                  bulletPoints: slide.bullet_points || [],
-                  imageUrl: slide.image_url || '',
-                  imagePrompt: slide.image_prompt || '',
-                  isGenerating: slide.is_generating || false,
-                  isGeneratingImage: slide.is_generating_image || false
-                }));
-              
-              data.generatedSlides = dbSlides;
-              setAllSlides(dbSlides);
-              console.log('✅ Loaded existing slides from database');
-            }
+            // Note: Slides are loaded separately via the slides API
+            console.log('📋 Presentation loaded from database, slides will be loaded separately');
             
             setDocumentData(data);
             
@@ -181,8 +162,8 @@ export default function PresentationPage() {
             }
             setTheme(themeToUse, documentId);
             
-            // Only generate slides if none exist in database and we have an outline
-            if ((!presentation.slides || presentation.slides.length === 0) && data.outline) {
+            // Only generate slides if we have an outline
+            if (data.outline) {
               if (!initRef.current) {
                 initRef.current = true;
                 console.log('🔄 No slides in database, generating from outline');
