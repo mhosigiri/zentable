@@ -31,7 +31,7 @@ import { db, DocumentData, PresentationUpdate } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
 import { defaultTheme } from '@/lib/themes';
 import { getSlideById } from '@/lib/slides';
-import { exportSlidesToPDF } from '@/lib/export';
+import { ExportMenu } from '@/components/ui/export-menu';
 import { fetchGeneratedSlide, fetchGeneratedImage } from '@/lib/ai/generation';
 import { useSlideNavigation } from '@/hooks/useSlideNavigation';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -89,7 +89,6 @@ export default function PresentationPage() {
   const [generatingImages, setGeneratingImages] = useState(new Set<number>());
   const [generatingSlides, setGeneratingSlides] = useState(new Set<number>());
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   
   const { handleSlideSelect } = useSlideNavigation(slides, currentSlideIndex, setCurrentSlideIndex);
   const presentationMode = usePresentationMode({ slides, initialSlideIndex: currentSlideIndex });
@@ -947,10 +946,6 @@ export default function PresentationPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // PDF Download functionality
-  const handleDownloadPDF = async () => {
-    await exportSlidesToPDF(slides, documentData, setIsPdfGenerating);
-  };
 
   if (!documentData || slides.length === 0) {
     return (
@@ -1031,16 +1026,7 @@ export default function PresentationPage() {
             >
               {presentationMode.isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDownloadPDF}
-              disabled={isPdfGenerating}
-              className="text-gray-600 hover:text-gray-900"
-              title="Download as PDF"
-            >
-              {isPdfGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            </Button>
+            <ExportMenu presentationId={documentData?.databaseId || documentId} disabled={isGenerating || isSyncing} />
             <Button
               variant="ghost"
               size="sm"
