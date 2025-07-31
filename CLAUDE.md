@@ -101,3 +101,10 @@ REPLICATE_API_TOKEN
 - MCP integration allows usage from any MCP-compatible tool
 - Cost optimization: Image generation happens post-streaming
 - RLS policies enforce multi-tenancy in Supabase
+
+### Avatar Storage Setup
+To enable avatar uploads in user profile settings, create a storage bucket in Supabase:
+1. Go to Supabase Dashboard > Storage
+2. Create a new bucket named "avatars"
+3. Set the bucket to public (for avatar URLs to work)
+4. Add RLS policies to allow authenticated users to upload their own avatars

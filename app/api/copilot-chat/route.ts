@@ -2,6 +2,8 @@ import { createAzure } from '@ai-sdk/azure';
 import { streamText } from 'ai';
 import { getSlideById } from '@/lib/slides';
 import { slideTools } from '@/lib/ai/slide-tools';
+import { createClient } from '@/lib/supabase/server';
+import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +21,34 @@ export async function POST(req: Request) {
 
     const { messages, slideId } = JSON.parse(bodyText);
     console.log('Parsed request:', { messages, slideId });
+
+    // Get user from session
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check and deduct credits for chat message
+    const creditResult = await withCreditCheck(user.id, 'chat_message', {
+      slideId,
+      messageCount: messages.length
+    });
+
+    if (!creditResult.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: creditResult.error,
+          creditsRequired: 2,
+          currentBalance: creditResult.currentBalance
+        }),
+        { status: 402, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     let slideContext = '';
     let currentSlide = null;

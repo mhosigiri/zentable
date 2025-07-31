@@ -2,6 +2,8 @@ import { createGroq } from '@ai-sdk/groq';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { generateUUID } from '@/lib/uuid';
+import { createClient } from '@/lib/supabase/server';
+import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
@@ -229,6 +231,30 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
+    // Get user from session
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check and deduct credits for presentation creation
+    const creditResult = await withCreditCheck(user.id, 'presentation_create', {
+      prompt: prompt.substring(0, 100), // Store first 100 chars for tracking
+      cardCount,
+      style,
+      language
+    });
+
+    if (!creditResult.success) {
+      return Response.json({ 
+        error: creditResult.error,
+        creditsRequired: 10,
+        currentBalance: creditResult.currentBalance
+      }, { status: 402 }); // Payment Required
+    }
+
     // Map style to writing tone
     const styleMap: Record<string, string> = {
       'professional': 'professional and clear',
@@ -315,7 +341,10 @@ The outline should create a compelling ${cardCount}-slide presentation with maxi
 
     console.log('Generated outline:', JSON.stringify(finalObject, null, 2));
     
-    return Response.json(finalObject);
+    return Response.json({
+      ...finalObject,
+      creditsRemaining: creditResult.newBalance
+    });
 
   } catch (error) {
     console.error('Error generating outline:', error);

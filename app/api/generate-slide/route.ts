@@ -1,6 +1,8 @@
 import { createGroq } from '@ai-sdk/groq';
 import { generateObject } from 'ai';
 import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
+import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
@@ -203,6 +205,30 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Get user from session
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check and deduct credits for slide generation
+    const creditResult = await withCreditCheck(user.id, 'slide_generate', {
+      sectionTitle: sectionTitle.substring(0, 50),
+      templateType,
+      style,
+      language
+    });
+
+    if (!creditResult.success) {
+      return Response.json({ 
+        error: creditResult.error,
+        creditsRequired: 5,
+        currentBalance: creditResult.currentBalance
+      }, { status: 402 }); // Payment Required
+    }
+
     // Check if GROQ_API_KEY is available
     if (!process.env.GROQ_API_KEY) {
       console.log('❌ GROQ_API_KEY not found');
@@ -317,6 +343,7 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
         success: true,
         data: result.object,
         usage: result.usage,
+        creditsRemaining: creditResult.newBalance
       });
 
     } catch (generateError) {

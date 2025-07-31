@@ -20,6 +20,7 @@ import {
   SettingsIcon,
   // UsersIcon,
   Brain,
+  Zap,
 } from "lucide-react"
 
 // import { NavDocuments } from "@/components/dashboard/nav-documents"
@@ -39,10 +40,13 @@ import { type Profile } from "@/lib/database"
 import { LogoutButton } from "./logout-button"
 import { DropdownMenuItem } from "../ui/dropdown-menu"
 import { LogOutIcon } from "lucide-react"
+import { getCreditStatsClient } from "@/lib/credits-client"
+import { Badge } from "../ui/badge"
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [profile, setProfile] = React.useState<Profile | null>(null)
+  const [creditBalance, setCreditBalance] = React.useState<number | null>(null)
   
   React.useEffect(() => {
     const fetchProfile = async () => {
@@ -55,6 +59,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           .eq('id', user.id)
           .single()
         setProfile(profileData)
+        
+        // Fetch credit stats
+        const creditStats = await getCreditStatsClient()
+        setCreditBalance(creditStats.balance)
       }
     }
     fetchProfile()
@@ -104,7 +112,7 @@ const data = {
 
 
   return (
-    <Sidebar collapsible="offcanvas" className="bg-gradient-to-b from-indigo-100 via-purple-50 to-pink-100 dark:from-indigo-900/40 dark:via-purple-900/30 dark:to-pink-900/40 border-r-0 shadow-xl" {...props}>
+    <Sidebar collapsible="offcanvas" className="border-r-0 [&_[data-sidebar='sidebar']]:rounded-xl [&_[data-sidebar='sidebar']]:bg-white/50 [&_[data-sidebar='sidebar']]:dark:bg-zinc-900/50 [&_[data-sidebar='sidebar']]:backdrop-blur-sm" {...props}>
       <SidebarHeader>
         {/* <SidebarMenu>
           <SidebarMenuItem>
@@ -125,6 +133,23 @@ const data = {
         {/* <NavDocuments items={data.documents} /> */}
       </SidebarContent>
       <SidebarFooter>
+        {/* Credit Balance Display */}
+        {creditBalance !== null && (
+          <div className="px-2 py-2">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-50 border border-yellow-200">
+              <Zap className="h-4 w-4 text-yellow-600" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-yellow-800">
+                  {creditBalance} credits
+                </div>
+                <div className="text-xs text-yellow-600">
+                  Available balance
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <NavSecondary items={data.navSecondary} />
         <NavUser user={data.user}>
           <DropdownMenuItem asChild>

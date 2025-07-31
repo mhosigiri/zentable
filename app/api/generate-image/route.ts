@@ -1,5 +1,7 @@
 import { replicate } from '@ai-sdk/replicate';
 import { experimental_generateImage as generateImage } from 'ai';
+import { createClient } from '@/lib/supabase/server';
+import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +18,30 @@ export async function POST(req: Request) {
     if (!prompt) {
       console.log('❌ No prompt provided');
       return Response.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    // Get user from session
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check and deduct credits for image generation
+    const creditResult = await withCreditCheck(user.id, 'image_generate', {
+      prompt: prompt.substring(0, 100),
+      templateType,
+      theme,
+      imageStyle
+    });
+
+    if (!creditResult.success) {
+      return Response.json({ 
+        error: creditResult.error,
+        creditsRequired: 2,
+        currentBalance: creditResult.currentBalance
+      }, { status: 402 }); // Payment Required
     }
 
     // Check if REPLICATE_API_TOKEN is configured
@@ -120,7 +146,8 @@ export async function POST(req: Request) {
 
     const response = { 
       imageUrl,
-      prompt: enhancedPrompt
+      prompt: enhancedPrompt,
+      creditsRemaining: creditResult.newBalance
     };
 
     console.log('✅ Sending successful response');

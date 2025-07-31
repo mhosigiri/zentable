@@ -15,7 +15,7 @@ export interface Database {
           email: string
           full_name: string | null
           avatar_url: string | null
-          subscription_tier: string
+          subscription_status: string
           created_at: string
           updated_at: string
         }
@@ -24,14 +24,14 @@ export interface Database {
           email: string
           full_name?: string | null
           avatar_url?: string | null
-          subscription_tier?: string
+          subscription_status?: string
         }
         Update: {
           id?: string
           email?: string
           full_name?: string | null
           avatar_url?: string | null
-          subscription_tier?: string
+          subscription_status?: string
         }
       }
       presentations: {

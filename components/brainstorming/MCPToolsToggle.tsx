@@ -53,7 +53,7 @@ export function MCPToolsToggle({ sessionId, onToolsChange }: MCPToolsToggleProps
       
       const [tools, settings] = await Promise.all([
         mcpService.getUserMCPTools(user.id),
-        mcpService.getBrainstormingMCPSettings(user.id, sessionId || null)
+        mcpService.getBrainstormingMCPSettings(user.id, sessionId || undefined)
       ]);
       
       setMcpTools(tools.filter(tool => tool.is_enabled));
@@ -203,7 +203,6 @@ export function MCPToolsToggle({ sessionId, onToolsChange }: MCPToolsToggleProps
                         <Switch
                           checked={isActive}
                           onCheckedChange={(checked) => handleToggle(tool, checked)}
-                          size="sm"
                         />
                       </div>
                     </div>

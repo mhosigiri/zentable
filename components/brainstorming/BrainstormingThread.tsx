@@ -292,9 +292,9 @@ const AssistantMessage: FC<AssistantMessageProps> = ({ onIdeaSaved }) => {
           'Creative brainstorming with AI assistance',
           'general'
         );
-        if (session) {
+        if (session && session.id) {
           sessionId = session.id;
-          window.sessionStorage.setItem('brainstorming-session-id', sessionId);
+          window.sessionStorage.setItem('brainstorming-session-id', session.id);
         }
       }
       
@@ -342,22 +342,24 @@ const AssistantMessage: FC<AssistantMessageProps> = ({ onIdeaSaved }) => {
           components={{
             Text: MarkdownText,
             tools: {
-              suggestIdeas: (props: any) => (
-                <BrainstormingToolResult
-                  toolName="suggestIdeas"
-                  result={props.result}
-                  args={props.args}
-                  onSaveIdea={handleSaveIdea}
-                />
-              ),
-              createIdea: (props: any) => (
-                <BrainstormingToolResult
-                  toolName="createIdea"
-                  result={props.result}
-                  args={props.args}
-                  onSaveIdea={handleSaveIdea}
-                />
-              ),
+              by_name: {
+                suggestIdeas: (props: any) => (
+                  <BrainstormingToolResult
+                    toolName="suggestIdeas"
+                    result={props.result}
+                    args={props.args}
+                    onSaveIdea={handleSaveIdea}
+                  />
+                ),
+                createIdea: (props: any) => (
+                  <BrainstormingToolResult
+                    toolName="createIdea"
+                    result={props.result}
+                    args={props.args}
+                    onSaveIdea={handleSaveIdea}
+                  />
+                ),
+              },
               Fallback: (props: any) => (
                 <BrainstormingToolResult
                   toolName={props.toolName}

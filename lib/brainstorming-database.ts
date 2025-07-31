@@ -1,23 +1,24 @@
 import { createClient } from '@/lib/supabase/client';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '@/lib/database.types';
+// import { Database } from '@/lib/supabase';
 
-type BrainstormingSession = Database['public']['Tables']['brainstorming_sessions']['Row'];
-type BrainstormingSessionInsert = Database['public']['Tables']['brainstorming_sessions']['Insert'];
-type BrainstormingSessionUpdate = Database['public']['Tables']['brainstorming_sessions']['Update'];
+// Temporarily using any types until Database types are updated with brainstorming tables
+type BrainstormingSession = any;
+type BrainstormingSessionInsert = any;
+type BrainstormingSessionUpdate = any;
 
-type Idea = Database['public']['Tables']['ideas']['Row'];
-type IdeaInsert = Database['public']['Tables']['ideas']['Insert'];
-type IdeaUpdate = Database['public']['Tables']['ideas']['Update'];
+type Idea = any;
+type IdeaInsert = any;
+type IdeaUpdate = any;
 
-type IdeaSource = Database['public']['Tables']['idea_sources']['Row'];
-type IdeaSourceInsert = Database['public']['Tables']['idea_sources']['Insert'];
+type IdeaSource = any;
+type IdeaSourceInsert = any;
 
-type IdeaTag = Database['public']['Tables']['idea_tags']['Row'];
-type IdeaTagInsert = Database['public']['Tables']['idea_tags']['Insert'];
+type IdeaTag = any;
+type IdeaTagInsert = any;
 
-type BrainstormingThread = Database['public']['Tables']['brainstorming_threads']['Row'];
-type BrainstormingMessage = Database['public']['Tables']['brainstorming_messages']['Row'];
+type BrainstormingThread = any;
+type BrainstormingMessage = any;
 
 export class BrainstormingDatabaseService {
   private supabaseClient: SupabaseClient;

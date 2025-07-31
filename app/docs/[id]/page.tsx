@@ -3,6 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
 import { useTheme } from '@/contexts/ThemeContext';
 import { SlideRenderer, SlideData } from '@/components/slides/SlideRenderer';
 import { ThemedLayout } from '@/components/ui/themed-layout';
@@ -124,7 +131,7 @@ export default function PresentationPage() {
       if (isValidUUID(documentId)) {
         try {
           console.log('🔍 Loading presentation from database:', documentId);
-          const presentation = await db.getPresentation(documentId);
+          const presentation = await db.getPresentation(documentId) as any;
           
           if (presentation) {
             console.log('✅ Found presentation in database:', presentation.id);
@@ -150,8 +157,8 @@ export default function PresentationPage() {
             if (presentation.slides && presentation.slides.length > 0) {
               console.log('📋 Found', presentation.slides.length, 'slides in database');
               const dbSlides = presentation.slides
-                .sort((a, b) => a.position - b.position)
-                .map(slide => ({
+                .sort((a: any, b: any) => a.position - b.position)
+                .map((slide: any) => ({
                   id: slide.id,
                   templateType: slide.template_type,
                   title: slide.title || '',
@@ -1031,16 +1038,26 @@ export default function PresentationPage() {
             >
               {presentationMode.isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDownloadPDF}
-              disabled={isPdfGenerating}
-              className="text-gray-600 hover:text-gray-900"
-              title="Download as PDF"
-            >
-              {isPdfGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-900"
+                  title="Download options"
+                >
+                  {isPdfGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleDownloadPDF} disabled={isPdfGenerating}>
+                  <div className="flex items-center justify-between w-full">
+                    <span>Download as PDF</span>
+                    <Badge variant="secondary" className="ml-2 text-xs">experimental</Badge>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="ghost"
               size="sm"

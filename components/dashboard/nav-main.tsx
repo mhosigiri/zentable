@@ -30,7 +30,7 @@ export function NavMain({
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
               tooltip="Quick Create"
-              className="min-w-8 bg-gradient-to-r from-emerald-500 to-teal-500 text-white duration-300 ease-out hover:from-emerald-600 hover:to-teal-600 hover:shadow-lg active:from-emerald-700 active:to-teal-700 shadow-lg border-none rounded-xl transform hover:scale-105"
+              className="min-w-8 bg-gradient-to-r from-emerald-400/80 to-teal-400/80 text-white duration-300 ease-out hover:from-emerald-500 hover:to-teal-500 active:from-emerald-600 active:to-teal-600 border-none rounded-lg backdrop-blur-sm"
               onClick={() => router.push('/create')}
             >
               <PlusCircleIcon />
@@ -49,7 +49,7 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title} onClick={() => router.push(item.url)} className="hover:bg-gradient-to-r hover:from-blue-100 hover:via-purple-50 hover:to-pink-100 dark:hover:from-blue-800/30 dark:hover:via-purple-800/20 dark:hover:to-pink-800/30 transition-all duration-300 rounded-lg transform hover:scale-[1.02]">
+              <SidebarMenuButton tooltip={item.title} onClick={() => router.push(item.url)} className="hover:bg-gradient-to-r hover:from-blue-100/80 hover:to-purple-100/80 dark:hover:from-blue-900/50 dark:hover:to-purple-900/50 transition-all duration-200 rounded-lg">
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>

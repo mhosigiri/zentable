@@ -1,12 +1,11 @@
 "use client"
 
-import { AppSidebar } from "@/components/dashboard/app-sidebar"
-import { SiteHeader } from "@/components/dashboard/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ApiKeysSection } from "@/components/dashboard/api-keys-section"
 import { McpIntegrationGuide } from "@/components/dashboard/mcp-integration-guide"
 import { MCPToolsManager } from "@/components/dashboard/MCPToolsManager"
+import { UserProfileSection } from "@/components/dashboard/user-profile-section"
 import { useState, useEffect } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function SettingsPage() {
   const [serverUrl, setServerUrl] = useState('')
@@ -18,25 +17,34 @@ export default function SettingsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-purple-950 dark:to-slate-900">
-      <SidebarProvider>
-        <AppSidebar variant="inset" />
-        <SidebarInset>
-          <SiteHeader />
-          <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-            <div className="flex items-center">
-              <h1 className="text-lg font-semibold md:text-2xl">Settings</h1>
-            </div>
-            <div className="grid gap-6">
-              <ApiKeysSection />
-              <MCPToolsManager />
-              <McpIntegrationGuide 
-                serverUrl={serverUrl} 
-              />
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+        <p className="text-gray-600 mt-1">Manage your account and application settings</p>
+      </div>
+      
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="profile" className="space-y-6">
+          <UserProfileSection />
+        </TabsContent>
+        
+        <TabsContent value="api-keys" className="space-y-6">
+          <ApiKeysSection />
+        </TabsContent>
+        
+        <TabsContent value="integrations" className="space-y-6">
+          <MCPToolsManager />
+          <McpIntegrationGuide 
+            serverUrl={serverUrl} 
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 } 

@@ -27,7 +27,7 @@ export function NavSecondary({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild className="hover:bg-gradient-to-r hover:from-yellow-100 hover:via-orange-50 hover:to-red-100 dark:hover:from-yellow-800/30 dark:hover:via-orange-800/20 dark:hover:to-red-800/30 transition-all duration-300 rounded-lg transform hover:scale-[1.02]">
+              <SidebarMenuButton asChild className="hover:bg-gradient-to-r hover:from-blue-100/80 hover:to-purple-100/80 dark:hover:from-blue-900/50 dark:hover:to-purple-900/50 transition-all duration-200 rounded-lg">
                 <a href={item.url}>
                   <item.icon />
                   <span>{item.title}</span>

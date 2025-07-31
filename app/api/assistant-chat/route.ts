@@ -4,6 +4,7 @@ import { getSlidesByPresentation } from '@/lib/slides';
 import { DatabaseService } from '@/lib/database';
 import { slideTools } from '@/lib/ai/slide-tools';
 import { createClient } from '@/lib/supabase/server';
+import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,23 @@ export async function POST(req: Request) {
       messagesCount: messages?.length,
       context,
     });
+
+    // Check and deduct credits for chat message
+    const creditResult = await withCreditCheck(user.id, 'chat_message', {
+      presentationId: context?.presentationId,
+      messageCount: messages?.length || 0
+    });
+
+    if (!creditResult.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: creditResult.error,
+          creditsRequired: 2,
+          currentBalance: creditResult.currentBalance
+        }),
+        { status: 402, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     const presentationId = context?.presentationId;
     if (!presentationId) {

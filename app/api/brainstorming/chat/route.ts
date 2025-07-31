@@ -1,10 +1,11 @@
 import { streamText, experimental_createMCPClient } from 'ai';
 import { groq } from '@ai-sdk/groq';
 import { openai } from '@ai-sdk/openai';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { createClient } from '@/lib/supabase/server';
 import { brainstormingTools } from '@/lib/ai/brainstorming-tools';
 import { BrainstormingDatabaseService } from '@/lib/brainstorming-database';
+import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,24 @@ export async function POST(request: Request) {
       activeMCPToolsCount: activeMCPTools.length,
       threadId
     });
+
+    // Check and deduct credits for brainstorming
+    const creditResult = await withCreditCheck(user.id, 'brainstorming', {
+      sessionId: contextSessionId,
+      messageCount: messages?.length || 0,
+      mcpToolsCount: activeMCPTools.length
+    });
+
+    if (!creditResult.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: creditResult.error,
+          creditsRequired: 3,
+          currentBalance: creditResult.currentBalance
+        }),
+        { status: 402, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Initialize database service
     const brainstormingDb = new BrainstormingDatabaseService(supabase);
