@@ -10,7 +10,36 @@ import { AssistantSlidePreview } from '@/components/assistant-ui/assistant-slide
 import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getThemeById, applyAndPersistTheme } from '@/lib/themes';
-import { getUserFriendlyToolName, getToolIcon, GlassContainer } from './shared';
+// Temporary inline functions until shared.tsx is fixed
+const getUserFriendlyToolName = (toolName: string): string => {
+  const nameMap: Record<string, string> = {
+    'applyTheme': 'Applying Theme',
+    'updateSlideContent': 'Updating Slide Content',
+    'createSlide': 'Creating Slide',
+    'deleteSlide': 'Deleting Slide',
+    'duplicateSlide': 'Duplicating Slide',
+    'moveSlide': 'Moving Slide',
+    'changeSlideTemplate': 'Changing Slide Template',
+    'updateSlideImage': 'Updating Slide Image',
+    'getSlideContent': 'Getting Slide Content'
+  };
+  return nameMap[toolName] || toolName;
+};
+
+const getToolIcon = (toolName: string) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    'applyTheme': <span className="text-lg">🎨</span>,
+    'updateSlideContent': <span className="text-lg">✏️</span>,
+    'createSlide': <span className="text-lg">➕</span>,
+    'deleteSlide': <span className="text-lg">🗑️</span>,
+    'duplicateSlide': <span className="text-lg">📋</span>,
+    'moveSlide': <span className="text-lg">↔️</span>,
+    'changeSlideTemplate': <span className="text-lg">🔄</span>,
+    'updateSlideImage': <span className="text-lg">🖼️</span>,
+    'getSlideContent': <span className="text-lg">👁️</span>
+  };
+  return iconMap[toolName] || <span className="text-lg">⚙️</span>;
+};
 
 
 interface ToolCallResult {
@@ -29,18 +58,37 @@ interface ToolResultProps {
 
 
 export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResultProps) {
+  // Use a more stable key for the tool call to maintain state
+  const toolKey = `${toolCall.toolName}-${JSON.stringify(toolCall.args)}`;
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
+  const hasBeenApproved = React.useRef(false);
   const slideManager = useMyRuntime();
   const { setTheme } = useTheme();
   const params = useParams();
   const documentId = params.id as string;
 
   // Debug logging
-  console.log('ToolResult render - status:', status, 'toolCall:', toolCall.toolName);
+  console.log('ToolResult render - status:', status, 'toolCall:', toolCall.toolName, 'hasBeenApproved:', hasBeenApproved.current);
 
   // Force re-render when status changes
   useEffect(() => {
     console.log('Status changed to:', status);
+  }, [status]);
+
+  // Check localStorage for previous approval state
+  useEffect(() => {
+    const savedStatus = localStorage.getItem(`tool-status-${toolKey}`);
+    if (savedStatus === 'approved') {
+      setStatus('approved');
+      hasBeenApproved.current = true;
+    }
+  }, [toolKey]);
+
+  // If this tool has been approved before, maintain the approved state
+  useEffect(() => {
+    if (hasBeenApproved.current && status === 'pending') {
+      setStatus('approved');
+    }
   }, [status]);
   
   // Remove the automatic onResult call - only call it when user actually approves/rejects
@@ -49,6 +97,7 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
     console.log('handleApprove called!');
     // Set status to approved immediately for visual feedback
     setStatus('approved');
+    hasBeenApproved.current = true;
     
     const { toolName, result } = toolCall;
 
@@ -185,14 +234,23 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
           {requiresApproval && (
             <div className="flex gap-2 pt-2">
                                    <Button
-                       onClick={() => {
+                       onClick={async () => {
                          console.log('Button clicked!');
-                         handleApprove();
-                         setStatus('approved');
+                         setStatus('approved'); // Update UI immediately
+                         hasBeenApproved.current = true;
+                         localStorage.setItem(`tool-status-${toolKey}`, 'approved'); // Persist state
+                         
+                         // Apply changes in the background without affecting UI
+                         try {
+                           await handleApprove();
+                         } catch (error) {
+                           console.error('Error applying changes:', error);
+                           // Don't revert UI on error - keep it approved
+                         }
                        }}
                        size="sm"
                        className={status === 'approved' ? 'bg-green-800 text-white' : 'bg-green-600 hover:bg-green-700'}
-                       disabled={status !== 'pending'}
+                       disabled={status === 'approved'}
                      >
                        <CheckCircle className="w-4 h-4 mr-1" />
                        {status === 'pending' ? 'Apply Changes' : 'Applied!'}

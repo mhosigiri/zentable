@@ -265,6 +265,7 @@ const AssistantMessage: FC = () => {
             tools: {
               Fallback: (props: any) => (
                 <ToolResult
+                  key={`${props.toolName}-${JSON.stringify(props.args)}-${JSON.stringify(props.result)}`}
                   toolCall={{
                     toolName: props.toolName,
                     args: props.args,
@@ -275,6 +276,10 @@ const AssistantMessage: FC = () => {
                     if (props.toolName === 'updateSlideContent') {
                       handleApproveSlideUpdate(toolCall);
                     }
+                  }}
+                  onReject={(toolCall, failureMessage) => {
+                    // Handle rejection if needed
+                    console.log('Tool rejected:', toolCall.toolName, failureMessage);
                   }}
                 />
               )
