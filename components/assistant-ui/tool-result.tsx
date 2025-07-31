@@ -75,13 +75,12 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
     console.log('Status changed to:', status);
   }, [status]);
 
-  // Check localStorage for previous approval state
+  // Clear any previous state when a new tool call comes in
   useEffect(() => {
-    const savedStatus = localStorage.getItem(`tool-status-${toolKey}`);
-    if (savedStatus === 'approved') {
-      setStatus('approved');
-      hasBeenApproved.current = true;
-    }
+    // Reset to pending for new tool calls
+    setStatus('pending');
+    hasBeenApproved.current = false;
+    localStorage.removeItem(`tool-status-${toolKey}`);
   }, [toolKey]);
 
   // If this tool has been approved before, maintain the approved state
