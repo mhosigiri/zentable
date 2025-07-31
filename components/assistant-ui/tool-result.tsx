@@ -187,6 +187,7 @@ export function ToolResult({ toolCall, onApprove, onReject, onResult }: ToolResu
                                    <Button
                        onClick={() => {
                          console.log('Button clicked!');
+                         handleApprove();
                          setStatus('approved');
                        }}
                        size="sm"
