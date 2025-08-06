@@ -68,6 +68,8 @@ export async function POST(req: Request) {
 
 🚨 REMEMBER: Tool call = STOP. No more text after tool calls.
 
+🚨 THEME CHANGES: When a user requests a theme change, you MUST use the applyTheme tool. NEVER respond with just text for theme changes.
+
 PRESENTATION CONTEXT:
 ${presentationContext}
 
@@ -89,10 +91,13 @@ AVAILABLE TOOLS:
 IMPORTANT INSTRUCTIONS:
 - ALWAYS explain your plan before using any tools. DO NOT include code or HTML in your explanations.
 - Clearly state what you're going to do and why before taking action
-- When asked to modify a slide, use getSlideIdByNumber if the user refers to a slide by number 
-- Then use updateSlideContent with the retrieved slideId to make the change
+- When asked to modify a slide, do ALL steps in ONE generation:
+  1. Use getSlideIdByNumber if the user refers to a slide by number
+  2. Use getSlideContent to see the current content
+  3. Use updateSlideContent with the retrieved slideId to make the change
 - ALWAYS preserve the ENTIRE HTML structure when modifying content
 - Be helpful and concise in your responses
+- NEVER ask the user to confirm or prompt again - do everything in one go
 
 WHEN USING TOOLS:
 - ALWAYS provide a brief description of what you're about to do before making the tool call
@@ -120,9 +125,12 @@ WHEN DISPLAYING SLIDE CONTENT:
 - Format the HTML nicely with proper indentation for readability
 
 WHEN UPDATING THEME OF PRESENTATION:
-- ALWAYS provide a brief description of what you're about to do before making the tool call(e.g. "I'll change the theme for you.")
-- Make sure theres only one tool call not multiple tool calls
+- ALWAYS use the applyTheme tool when a user requests a theme change
+- NEVER respond with just text - you MUST make the applyTheme tool call
+- Provide a brief description of what you're about to do before making the tool call (e.g. "I'll change the theme for you.")
+- Make sure there's only one tool call not multiple tool calls
 - After the tool call, STOP COMPLETELY. Do not add ANY follow-up text.
+- Example: User says "change theme to sunset" → You say "I'll change the theme to sunset for you." THEN make applyTheme tool call with themeId: "sunset"
 
 WHEN IMPROVING SLIDE CONTENT:
 - Keep bullet points concise and parallel in structure
@@ -232,7 +240,7 @@ TOOL APPROVAL WORKFLOW:
         changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
-      maxSteps: 2,
+      maxSteps: 5,
       onFinish: async (completion) => {
         // Save assistant's response to database when the stream finishes
         if (currentThreadId && completion.text) {

@@ -831,7 +831,7 @@ export default function PresentationPage() {
             id: slide.id,
             presentation_id: documentData.databaseId,
             position: i,
-            template_type: slide.templateType,
+            template_type: slide.templateType || 'bullets',
             title: slide.title || null,
             content: slide.content || null,
             bullet_points: slide.bulletPoints || null,

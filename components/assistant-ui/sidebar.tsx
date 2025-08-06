@@ -8,6 +8,7 @@ import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 
+
 interface AssistantSidebarProps {
   presentationId: string;
   className?: string;

@@ -8,7 +8,7 @@ import {
   ThreadPrimitive,
 } from "@assistant-ui/react";
 import type { FC } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowDownIcon,
   CheckIcon,
@@ -31,6 +31,7 @@ import { CircleStopIcon, XIcon } from "./shared";
 
 
 export const Thread: FC = () => {
+
   return (
     <ThreadPrimitive.Root
       className="bg-white/10 backdrop-blur box-border flex h-full flex-col overflow-hidden rounded-lg border border-white/20 shadow-lg"
@@ -263,26 +264,30 @@ const AssistantMessage: FC = () => {
           components={{
             Text: MarkdownText,
             tools: {
-              Fallback: (props: any) => (
-                <ToolResult
-                  key={`${props.toolName}-${JSON.stringify(props.args)}-${JSON.stringify(props.result)}`}
-                  toolCall={{
-                    toolName: props.toolName,
-                    args: props.args,
-                    result: props.result
-                  }}
-                  onApprove={(toolCall, successMessage) => {
-                    handleToolApproval(toolCall, successMessage);
-                    if (props.toolName === 'updateSlideContent') {
-                      handleApproveSlideUpdate(toolCall);
-                    }
-                  }}
-                  onReject={(toolCall, failureMessage) => {
-                    // Handle rejection if needed
-                    console.log('Tool rejected:', toolCall.toolName, failureMessage);
-                  }}
-                />
-              )
+              Fallback: (props: any) => {
+                console.log('Fallback tool call received:', props);
+                
+                return (
+                  <ToolResult
+                    key={`${props.toolName}-${JSON.stringify(props.args)}`}
+                    toolCall={{
+                      toolName: props.toolName,
+                      args: props.args,
+                      result: props.result
+                    }}
+                    onApprove={(toolCall, successMessage) => {
+                      handleToolApproval(toolCall, successMessage);
+                      if (props.toolName === 'updateSlideContent') {
+                        handleApproveSlideUpdate(toolCall);
+                      }
+                    }}
+                    onReject={(toolCall, failureMessage) => {
+                      // Handle rejection if needed
+                      console.log('Tool rejected:', toolCall.toolName, failureMessage);
+                    }}
+                  />
+                );
+              }
             }
           }}
         />

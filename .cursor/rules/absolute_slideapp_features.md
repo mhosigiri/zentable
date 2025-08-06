@@ -314,7 +314,6 @@ POST /api/export/pptx          - PowerPoint export
 ### File Structure Extensions
 ```
 /components/copilot/
-  ├── ChatWidget.tsx           - Floating chat interface
   ├── ContextManager.tsx       - Slide/presentation context
   ├── CommandProcessor.tsx     - Natural language processing
   └── SuggestionEngine.tsx     - Proactive AI suggestions
