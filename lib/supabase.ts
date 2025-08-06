@@ -48,6 +48,7 @@ export interface Database {
           image_style: string | null
           status: 'draft' | 'generating' | 'completed' | 'error'
           outline: any | null
+          enable_browser_search: boolean
           created_at: string
           updated_at: string
           last_synced_at: string
@@ -65,6 +66,7 @@ export interface Database {
           image_style?: string | null
           status?: 'draft' | 'generating' | 'completed' | 'error'
           outline?: any | null
+          enable_browser_search?: boolean
         }
         Update: {
           id?: string
@@ -79,6 +81,7 @@ export interface Database {
           image_style?: string | null
           status?: 'draft' | 'generating' | 'completed' | 'error'
           outline?: any | null
+          enable_browser_search?: boolean
           last_synced_at?: string
         }
       }

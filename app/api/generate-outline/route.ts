@@ -225,7 +225,7 @@ function selectTemplateType(title: string, bulletPoints: string[], index: number
 
 export async function POST(req: Request) {
   try {
-    const { prompt, cardCount, style, language } = await req.json();
+    const { prompt, cardCount, style, language, enableBrowserSearch } = await req.json();
 
     if (!prompt) {
       return Response.json({ error: 'Prompt is required' }, { status: 400 });
@@ -276,8 +276,11 @@ export async function POST(req: Request) {
     const targetLanguage = languageMap[language] || 'English';
 
     // Combined prompt with reasoning instructions (no system prompt for reasoning models)
-    const userPrompt = `You are an expert presentation designer and content strategist. Create a comprehensive, well-structured presentation outline that is ${writingStyle} in tone and written in ${targetLanguage}.
+    const browserSearchInstruction = enableBrowserSearch ? 
+      `\nIMPORTANT: Use browser search to find current, accurate, and relevant information about "${prompt}". Include up-to-date facts, statistics, trends, and developments in your presentation outline. Prioritize recent information and credible sources.\n` : '';
 
+    const userPrompt = `You are an expert presentation designer and content strategist. Create a comprehensive, well-structured presentation outline that is ${writingStyle} in tone and written in ${targetLanguage}.
+${browserSearchInstruction}
 For each section, think through your template selection step-by-step:
 1. Analyze the content type (comparison, list, visual, process, etc.)
 2. Consider which templates best match this content structure
@@ -311,35 +314,95 @@ Remember: This is for SLIDE presentations - content must be scannable and visual
 
 Create a presentation outline for: "${prompt}"`;
 
-    // Generate with reasoning model
-    const response = await generateObject({
-      model: groq(modelName),
-      messages: [{ role: 'user', content: userPrompt }],
-      schema: OutlineSchema,
-      temperature: 0.6,
-      maxTokens: 2048,
-      providerOptions: {
-        groq: {
-          // reasoningFormat: 'parsed',
-          reasoningEffort: 'default',
-          structuredOutputs: true
-        }
+    // Generate with reasoning model - with fallback to regular model
+    let response;
+    let usedReasoningModel = true;
+    
+    try {
+      const groqOptions: any = {
+        // reasoningFormat: 'parsed',
+        reasoningEffort: 'low',
+        structuredOutputs: true
+      };
+
+      // Add browser search if enabled
+      if (enableBrowserSearch) {
+        groqOptions.tool_choice = 'required';
+        groqOptions.tools = [
+          {
+            type: 'browser_search'
+          }
+        ];
       }
-    });
+
+      response = await generateObject({
+        model: groq(modelName),
+        messages: [{ role: 'user', content: userPrompt }],
+        schema: OutlineSchema,
+        temperature: 0.6,
+        maxTokens: 2048,
+        providerOptions: {
+          groq: groqOptions
+        }
+      });
+    } catch (error) {
+      console.warn('Reasoning model failed, falling back to regular model:', error);
+      usedReasoningModel = false;
+      
+      // Fallback to regular Llama model without reasoning
+      const fallbackModel = 'llama-3.3-70b-versatile';
+      const fallbackOptions: any = {};
+      
+      // Add browser search if enabled
+      if (enableBrowserSearch) {
+        fallbackOptions.tool_choice = 'required';
+        fallbackOptions.tools = [
+          {
+            type: 'browser_search'
+          }
+        ];
+      }
+      
+      response = await generateObject({
+        model: groq(fallbackModel),
+        messages: [{ role: 'user', content: userPrompt }],
+        schema: OutlineSchema,
+        temperature: 0.6,
+        maxTokens: 2048,
+        providerOptions: {
+          groq: fallbackOptions
+        }
+      });
+    }
 
     // Log reasoning output for debugging
-    console.log('=== REASONING MODEL OUTPUT ===');
-    console.log('Model:', modelName);
+    console.log('=== MODEL OUTPUT ===');
+    console.log('Model used:', usedReasoningModel ? modelName : 'llama-3.3-70b-versatile (fallback)');
+    console.log('Browser Search Enabled:', enableBrowserSearch);
     console.log('Token usage:', {
       promptTokens: response.usage?.promptTokens,
       completionTokens: response.usage?.completionTokens,
       totalTokens: response.usage?.totalTokens
     });
     
-    // The reasoning is included in the generated object when using reasoningFormat: 'parsed'
-    // Log the full response for debugging
-    console.log('Generated object structure:', Object.keys(response.object));
+    // Simple browser search debugging
+    if (enableBrowserSearch) {
+      console.log('=== BROWSER SEARCH DEBUG ===');
+      console.log('Full response keys:', Object.keys(response));
+      // Check if response has any tool-related properties
+      const responseAny = response as any;
+      if (responseAny.toolCalls) {
+        console.log('Tool calls found:', responseAny.toolCalls.length);
+      }
+      if (responseAny.toolResults) {
+        console.log('Tool results found:', responseAny.toolResults.length);
+      }
+      if (responseAny.steps) {
+        console.log('Steps found:', responseAny.steps.length);
+      }
+    }
     
+    console.log('Generated object structure:', Object.keys(response.object));
     const object = response.object;
 
     // Add template types and IDs to sections

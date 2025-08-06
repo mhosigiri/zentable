@@ -38,6 +38,7 @@ export interface DocumentData {
   contentLength?: string
   theme?: string
   imageStyle?: string
+  enableBrowserSearch?: boolean
 }
 
 // Sync status for hybrid approach
@@ -305,6 +306,7 @@ export class DatabaseService {
     themeId?: string
     imageStyle?: string
     userId?: string | null  // Add optional userId parameter
+    enableBrowserSearch?: boolean  // Add browser search parameter
   }): Promise<Presentation> {
     const id = data.id || generateUUID(); // Ensure ID is defined
 
@@ -318,7 +320,8 @@ export class DatabaseService {
       content_length: (data.contentLength as any) || 'medium',
       theme_id: data.themeId || 'default',
       image_style: data.imageStyle || null,
-      status: 'draft'
+      status: 'draft',
+      enable_browser_search: data.enableBrowserSearch || false
     }
 
     // Try to save to Supabase first
@@ -740,6 +743,7 @@ export class DatabaseService {
           slides!inner(count)
         `)
         .eq('user_id', userId)
+        .eq('status', 'completed')
         .order('updated_at', { ascending: false })
 
       if (error) throw error

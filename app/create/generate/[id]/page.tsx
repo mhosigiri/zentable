@@ -189,6 +189,7 @@ export default function OutlinePage() {
   const [contentLength, setContentLength] = useState('brief');
   const [selectedTheme, setSelectedTheme] = useState<Theme>(defaultTheme);
   const [imageStyle, setImageStyle] = useState('');
+  const [enableBrowserSearch, setEnableBrowserSearch] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -251,6 +252,11 @@ export default function OutlinePage() {
         }
         
         setImageStyle(data.imageStyle || '');
+        setEnableBrowserSearch(data.enableBrowserSearch || false);
+        
+        // Debug: Log the loaded data to verify enableBrowserSearch
+        console.log('📄 Loaded document data:', data);
+        console.log('🔍 enableBrowserSearch from localStorage:', data.enableBrowserSearch);
         
         if (data.outline) {
           setGeneratedOutline(data.outline);
@@ -315,18 +321,37 @@ export default function OutlinePage() {
     setGeneratedOutline(null);
     
     try {
+      // Get enableBrowserSearch from database if available, otherwise use false
+      let browserSearchEnabled = false;
+      if (data.databaseId) {
+        try {
+          const presentation = await db.getPresentation(data.databaseId);
+          browserSearchEnabled = presentation?.enable_browser_search || false;
+          console.log('🔍 enableBrowserSearch from database:', browserSearchEnabled);
+        } catch (error) {
+          console.warn('Failed to get browser search setting from database:', error);
+          browserSearchEnabled = false;
+        }
+      }
+      
+      const requestBody = {
+        prompt: data.prompt,
+        cardCount: data.cardCount,
+        style: data.style,
+        language: data.language,
+        contentLength: contentLength, // Include content length
+        enableBrowserSearch: browserSearchEnabled // Use value from database
+      };
+      
+      console.log('🔍 Sending to API:', requestBody);
+      console.log('🔍 enableBrowserSearch from database:', browserSearchEnabled);
+      
       const response = await fetch('/api/generate-outline', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          prompt: data.prompt,
-          cardCount: data.cardCount,
-          style: data.style,
-          language: data.language,
-          contentLength: contentLength // Include content length
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -341,7 +366,7 @@ export default function OutlinePage() {
       // Save to localStorage (keep existing)
       const updatedData = {
         outline: generatedData,
-        status: 'completed',
+        status: 'draft', // Keep as draft until slides are generated
         contentLength,
         theme: selectedTheme.id,
         imageStyle
@@ -363,7 +388,7 @@ export default function OutlinePage() {
     if (documentData) {
       const updatedData = {
         ...documentData,
-        prompt,
+        prompt, // Use current input value
         cardCount: parseInt(cardCount),
         style,
         language,
@@ -415,7 +440,7 @@ export default function OutlinePage() {
       // Save the final outline state and content configuration
       const finalData = {
         outline: generatedOutline,
-        status: 'completed',
+        status: 'draft', // Keep as draft until slides are generated
         generatedSlides: undefined,
         contentLength,
         theme: selectedTheme.id,

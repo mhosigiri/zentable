@@ -812,6 +812,9 @@ export default function PresentationPage() {
     setIsSyncing(true);
     try {
       // Save presentation data
+      // Only mark as completed if we have actual slides generated
+      const hasGeneratedSlides = slides && slides.length > 0 && slides.some(slide => slide.content && slide.content.trim() !== '');
+      
       await db.updatePresentation(documentData.databaseId, {
         prompt: documentData.prompt,
         card_count: documentData.cardCount,
@@ -820,7 +823,7 @@ export default function PresentationPage() {
         content_length: documentData.contentLength as any || 'medium',
         theme_id: documentData.theme || 'default',
         image_style: documentData.imageStyle || null,
-        status: 'completed' as any,
+        status: hasGeneratedSlides ? 'completed' as any : 'draft' as any,
         outline: documentData.outline
       });
 

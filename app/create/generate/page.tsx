@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppHeader } from '@/components/ui/app-header';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Sparkles, 
   Home, 
@@ -19,7 +21,8 @@ import {
   FlaskRound as Flask, 
   DollarSign, 
   RefreshCw, 
-  Loader2
+  Loader2,
+  Globe
 } from 'lucide-react';
 import { db } from '@/lib/database';
 import { generateUUID, generatePrefixedId } from '@/lib/uuid';
@@ -36,6 +39,7 @@ export default function GeneratePage() {
   const [language, setLanguage] = useState('en');
   const [contentLength, setContentLength] = useState('brief');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [enableBrowserSearch, setEnableBrowserSearch] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -82,9 +86,12 @@ export default function GeneratePage() {
         style,
         language,
         createdAt: new Date().toISOString(),
-        status: 'generating'
+        status: 'generating',
+        enableBrowserSearch // Store browser search setting
       };
       
+      console.log('💾 Saving to localStorage with enableBrowserSearch:', enableBrowserSearch);
+      console.log('💾 Full documentData:', documentData);
       localStorage.setItem(documentId, JSON.stringify(documentData));
       
       // Also save to database in the background (new addition)
@@ -106,7 +113,8 @@ export default function GeneratePage() {
           contentLength,
           themeId: 'default',
           imageStyle: '',
-          userId: userId // Pass the user ID
+          userId: userId, // Pass the user ID
+          enableBrowserSearch // Pass the browser search setting
         });
         console.log('✅ Presentation saved to database with UUID:', databaseId);
       } catch (dbError) {
@@ -188,6 +196,18 @@ export default function GeneratePage() {
               <SelectItem value="de">German</SelectItem>
             </SelectContent>
           </Select>
+
+          <div className="flex items-center space-x-2 px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200/80 rounded-lg">
+            <Globe className="w-4 h-4 text-gray-600" />
+            <Label htmlFor="browser-search" className="text-base font-medium">
+              Web Search
+            </Label>
+            <Switch
+              id="browser-search"
+              checked={enableBrowserSearch}
+              onCheckedChange={setEnableBrowserSearch}
+            />
+          </div>
         </div>
 
         {/* Prompt Input - Modern Floating */}
