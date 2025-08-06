@@ -7,12 +7,12 @@ import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
-// Configure Groq with Llama 4 Scout
+// Configure Groq with reasoning model
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const modelName = 'meta-llama/llama-4-scout-17b-16e-instruct';
+const modelName = 'openai/gpt-oss-20b'; // Reasoning model with reasoningFormat support
 
 const OutlineSchema = z.object({
   title: z.string().describe('A compelling, professional title for the presentation'),
@@ -275,7 +275,14 @@ export async function POST(req: Request) {
     const writingStyle = styleMap[style] || 'professional and clear';
     const targetLanguage = languageMap[language] || 'English';
 
-    const systemPrompt = `You are an expert presentation designer and content strategist. Create a comprehensive, well-structured presentation outline that is ${writingStyle} in tone and written in ${targetLanguage}.
+    // Combined prompt with reasoning instructions (no system prompt for reasoning models)
+    const userPrompt = `You are an expert presentation designer and content strategist. Create a comprehensive, well-structured presentation outline that is ${writingStyle} in tone and written in ${targetLanguage}.
+
+For each section, think through your template selection step-by-step:
+1. Analyze the content type (comparison, list, visual, process, etc.)
+2. Consider which templates best match this content structure
+3. Ensure visual variety by avoiding recently used templates
+4. Select the optimal template and explain why
 
 CRITICAL GUIDELINES FOR PRESENTATION CONTENT:
 - Generate exactly ${cardCount} sections for the presentation
@@ -295,17 +302,45 @@ TEMPLATE VARIETY REQUIREMENTS:
 - Avoid repeating the same template type when possible
 - Use the full range of available templates to create visual interest
 - Consider content suitability but prioritize template variety
+- First slide should use an accent template (accent-left, or accent-right)
+- Balance content-template fit with visual variety
+
+Available templates: blank-card, bullets, paragraph, image-and-text, text-and-image, two-columns, two-column-with-headings, three-columns, three-column-with-headings, four-columns, four-columns-with-headings, title-with-bullets, title-with-bullets-and-image, title-with-text, accent-left, accent-right, accent-top
 
 Remember: This is for SLIDE presentations - content must be scannable and visually digestible, not essay-like.
 
-The outline should create a compelling ${cardCount}-slide presentation with maximum visual variety.`;
+Create a presentation outline for: "${prompt}"`;
 
-    const { object } = await generateObject({
+    // Generate with reasoning model
+    const response = await generateObject({
       model: groq(modelName),
-      system: systemPrompt,
-      prompt: `Create a presentation outline for: "${prompt}"`,
+      messages: [{ role: 'user', content: userPrompt }],
       schema: OutlineSchema,
+      temperature: 0.6,
+      maxTokens: 2048,
+      providerOptions: {
+        groq: {
+          // reasoningFormat: 'parsed',
+          reasoningEffort: 'default',
+          structuredOutputs: true
+        }
+      }
     });
+
+    // Log reasoning output for debugging
+    console.log('=== REASONING MODEL OUTPUT ===');
+    console.log('Model:', modelName);
+    console.log('Token usage:', {
+      promptTokens: response.usage?.promptTokens,
+      completionTokens: response.usage?.completionTokens,
+      totalTokens: response.usage?.totalTokens
+    });
+    
+    // The reasoning is included in the generated object when using reasoningFormat: 'parsed'
+    // Log the full response for debugging
+    console.log('Generated object structure:', Object.keys(response.object));
+    
+    const object = response.object;
 
     // Add template types and IDs to sections
     const usedTemplates: string[] = [];
@@ -313,7 +348,7 @@ The outline should create a compelling ${cardCount}-slide presentation with maxi
       let templateType;
       if (index === 0) {
         // Force the first slide to be an accent template
-        const accentTemplates = ['accent-left', 'accent-right', 'accent-top'];
+        const accentTemplates = ['accent-left', 'accent-right'];
         templateType = accentTemplates[Math.floor(Math.random() * accentTemplates.length)];
       } else {
         templateType = section.templateType || selectTemplateType(
@@ -339,7 +374,25 @@ The outline should create a compelling ${cardCount}-slide presentation with maxi
       sections: sectionsWithTemplates
     };
 
-    console.log('Generated outline:', JSON.stringify(finalObject, null, 2));
+    // Enhanced logging for debugging template selection reasoning
+    console.log('\n=== GENERATED OUTLINE WITH REASONING ===');
+    console.log('Title:', finalObject.title);
+    console.log('\nSections with template choices:');
+    finalObject.sections.forEach((section, index) => {
+      console.log(`\n[Section ${index + 1}] ${section.title}`);
+      console.log(`  Template: ${section.templateType}`);
+      console.log(`  Bullet points: ${section.bulletPoints.length}`);
+      console.log(`  Content preview: ${section.bulletPoints[0].substring(0, 50)}...`);
+    });
+    console.log('\nTemplate usage summary:');
+    const templateCounts = usedTemplates.reduce((acc, template) => {
+      acc[template] = (acc[template] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    Object.entries(templateCounts).forEach(([template, count]) => {
+      console.log(`  ${template}: ${count} time(s)`);
+    });
+    console.log('\n=== END OUTLINE ===\n');
     
     return Response.json({
       ...finalObject,

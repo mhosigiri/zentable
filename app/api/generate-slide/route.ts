@@ -11,7 +11,7 @@ const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const modelName = 'meta-llama/llama-4-scout-17b-16e-instruct';
+const modelName = 'openai/gpt-oss-20b';
 
 // Define schemas for different slide templates
 const BlankCardSchema = z.object({
