@@ -5,35 +5,14 @@ import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, Edit, Search, Wand2, Sparkles, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AssistantSlidePreview } from '@/components/assistant-ui/assistant-slide-preview';
 import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getThemeById, applyAndPersistTheme } from '@/lib/themes';
-
-// Convert technical tool names to user-friendly descriptions
-const getUserFriendlyToolName = (toolName: string): string => {
-  const toolNameMap: Record<string, string> = {
-    'updateSlideImage': 'Updating Slide Image',
-    'applyTheme': 'Applying Theme',
-    'changeSlideTemplate': 'Changing Slide Template',
-    'createSlide': 'Creating Slide',
-    'createSlideWithAI': 'Creating AI-Generated Slide',
-    'deleteSlide': 'Deleting Slide',
-    'duplicateSlide': 'Duplicating Slide',
-    'moveSlide': 'Moving Slide',
-    'getSlideContent': 'Viewing Slide Content',
-    'updateSlideContent': 'Updating Slide Content',
-    'getSlideIdByNumber': 'Getting Slide Content',
-    'getSlideById': 'Retrieving Slide',
-    'getAllSlides': 'Getting All Slides',
-    'getOutline': 'Retrieving Outline',
-    'generateImage': 'Generating Image',
-  };
-  
-  return toolNameMap[toolName] || toolName;
-};
+import { getUserFriendlyToolName } from './utils';
+import { getToolIcon } from './tool-icons';
 
 interface ToolCallResult {
   toolName: string;
@@ -46,29 +25,6 @@ interface ToolResultProps {
   onApprove?: (toolCall: ToolCallResult) => void;
   onReject?: (toolCall: ToolCallResult) => void;
 }
-
-const getToolIcon = (toolName: string) => {
-  switch (toolName) {
-    case 'updateSlideImage':
-    case 'generateImage':
-      return <Sparkles className="w-4 h-4" />;
-    case 'applyTheme':
-    case 'changeSlideTemplate':
-    case 'updateSlideContent':
-    case 'createSlide':
-    case 'duplicateSlide':
-    case 'moveSlide':
-    case 'deleteSlide':
-      return <Wand2 className="w-4 h-4" />;
-    case 'getSlideContent':
-    case 'getSlideIdByNumber':
-      return <Search className="w-4 h-4" />;
-    default:
-      return <Clock className="w-4 h-4" />;
-  }
-};
-
-
 
 export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
@@ -101,7 +57,6 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
       } else if (toolName === 'applyTheme' && result.success) {
         const theme = getThemeById(result.themeId);
         if (theme) {
-          // eslint-disable-next-line no-console
           console.log(`🎨 Assistant applying theme for documentId: ${documentId}`);
           
           // Update the theme context first
@@ -200,6 +155,7 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
           {toolCall.toolName === 'changeSlideTemplate' && toolCall.result?.slideId && (
             <p className="text-sm">Change template for slide <code className='text-xs bg-gray-200 p-1 rounded'>{toolCall.result.slideId}</code> to <strong>{toolCall.result.newTemplateType}</strong>?</p>
           )}
+          
           {/* Action Buttons */}
           {status === 'pending' && requiresApproval && (
             <div className="flex gap-2 pt-2">

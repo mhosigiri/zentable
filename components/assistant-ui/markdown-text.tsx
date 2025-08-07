@@ -13,22 +13,7 @@ import { CheckIcon, CopyIcon } from "lucide-react";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { cn } from "@/lib/utils";
 import { AssistantSlidePreview } from "@/components/assistant-ui/assistant-slide-preview";
-
-// Function to detect if code is HTML slide content
-const isSlideHtmlContent = (code: string): boolean => {
-  // Check if it contains common slide HTML elements like <h1>, <h2>, <h3>, <p>, <ul>, <li>
-  // and doesn't contain complex HTML that wouldn't be in a slide
-  const slideHtmlPattern = /<h[1-3]>|<p>|<ul>|<li>|<ol>/i;
-  const nonSlidePattern = /<script|<style|<iframe|<canvas|<svg|<nav|<header|<footer|<!DOCTYPE/i;
-  
-  return slideHtmlPattern.test(code) && !nonSlidePattern.test(code);
-};
-
-// Extract title from HTML content if possible
-const extractTitleFromHtml = (html: string): string => {
-  const titleMatch = html.match(/<h[1-3][^>]*>([^<]+)<\/h[1-3]>/i);
-  return titleMatch ? titleMatch[1] : '';
-};
+import { isSlideHtmlContent, extractTitleFromHtml } from './utils';
 
 const MarkdownTextImpl = () => {
   return (

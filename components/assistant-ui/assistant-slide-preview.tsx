@@ -7,7 +7,11 @@ interface AssistantSlidePreviewProps {
   templateType?: string;
 }
 
-export const AssistantSlidePreview: React.FC<AssistantSlidePreviewProps> = ({ content, title = '', templateType = 'bullets' }) => {
+export const AssistantSlidePreview: React.FC<AssistantSlidePreviewProps> = ({ 
+  content, 
+  title = '', 
+  templateType = 'bullets' 
+}) => {
   // Minimal SlideData for preview
   const slide: SlideData = {
     id: 'preview',

@@ -7,6 +7,7 @@ import { Thread } from "@/components/assistant-ui/thread";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { getThreadStorageKey, getThreadCleanupKey } from './utils';
 
 interface AssistantSidebarProps {
   presentationId: string;
@@ -32,20 +33,20 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
 
   // On mount, clear threadId for this presentation to force new thread on reload
   useEffect(() => {
-    localStorage.removeItem(`thread_${presentationId}`);
+    localStorage.removeItem(getThreadCleanupKey(presentationId));
     setCurrentThreadId(null);
   }, [presentationId]);
 
   // When threadId changes, persist it in localStorage
   useEffect(() => {
     if (currentThreadId) {
-      localStorage.setItem(`threadId_${presentationId}`, currentThreadId);
+      localStorage.setItem(getThreadStorageKey(presentationId), currentThreadId);
     }
   }, [currentThreadId, presentationId]);
 
   // If presentationId changes, reset threadId
   useEffect(() => {
-    setCurrentThreadId(localStorage.getItem(`threadId_${presentationId}`) || null);
+    setCurrentThreadId(localStorage.getItem(getThreadStorageKey(presentationId)) || null);
   }, [presentationId]);
 
   // Initialize the chat runtime with our assistant-chat API endpoint
@@ -61,14 +62,14 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
       if (threadId && threadId !== currentThreadId) {
         setCurrentThreadId(threadId);
         // Persist in localStorage as well
-        localStorage.setItem(`threadId_${presentationId}`, threadId);
+        localStorage.setItem(getThreadStorageKey(presentationId), threadId);
         console.log('Updated thread ID from response:', threadId);
       }
     }
   });
   
   // Set up effect to listen for slide update messages from approved tool calls
-  React.useEffect(() => {
+  useEffect(() => {
     // Skip if onSlideUpdate callback isn't provided
     if (!onSlideUpdate) return;
     
@@ -106,40 +107,39 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
           'bg-white/10 dark:bg-black/10 backdrop-blur-sm border border-white/20 dark:border-zinc-800/20 rounded-xl shadow-2xl',
           'flex flex-col transition-all duration-300 ease-in-out',
           'max-h-[80vh] h-full'
-        )}
-        >
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="absolute top-1/2 -translate-y-1/2 left-[-16px] z-20 bg-white/10 dark:bg-black/10 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/20 border border-white/20 dark:border-zinc-800/20 rounded-full p-1.5 shadow-md transition-all duration-300 ease-in-out text-white"
-        aria-label={isOpen ? "Close assistant sidebar" : "Open assistant sidebar"}
-      >
-        {isOpen ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-      </button>
+        )}>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="absolute top-1/2 -translate-y-1/2 left-[-16px] z-20 bg-white/10 dark:bg-black/10 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/20 border border-white/20 dark:border-zinc-800/20 rounded-full p-1.5 shadow-md transition-all duration-300 ease-in-out text-white"
+            aria-label={isOpen ? "Close assistant sidebar" : "Open assistant sidebar"}
+          >
+            {isOpen ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
 
-      {isOpen ? (
-        <div className="flex h-full w-full flex-col overflow-hidden rounded-xl">
-          <div className="flex items-center border-b border-white/20 dark:border-zinc-800/20 p-4">
-            <h3 className="text-sm font-semibold text-white">AI Assistant</h3>
-          </div>
-          <div className={cn("flex h-full flex-col", !isOpen && "hidden")}>
-            <AssistantRuntimeProvider runtime={runtime}>
-              <Thread />
-            </AssistantRuntimeProvider>
-          </div>
-        </div>
-      ) : (
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="p-3 w-full h-full flex flex-col items-center justify-center hover:bg-white/20 dark:hover:bg-black/20 rounded-xl text-white"
-        >
-          <div className="flex flex-col items-center gap-3">
-            <Wand2 className="h-5 w-5 animate-shimmer" />
-            <div className="h-16">
-              <span className="text-xs rotate-90 whitespace-nowrap block origin-center translate-y-5">AI Assistant</span>
+          {isOpen ? (
+            <div className="flex h-full w-full flex-col overflow-hidden rounded-xl">
+              <div className="flex items-center border-b border-white/20 dark:border-zinc-800/20 p-4">
+                <h3 className="text-sm font-semibold text-white">AI Assistant</h3>
+              </div>
+              <div className="flex h-full flex-col">
+                <AssistantRuntimeProvider runtime={runtime}>
+                  <Thread />
+                </AssistantRuntimeProvider>
+              </div>
             </div>
-          </div>
-        </button>
-      )}
+          ) : (
+            <button 
+              onClick={() => setIsOpen(true)}
+              className="p-3 w-full h-full flex flex-col items-center justify-center hover:bg-white/20 dark:hover:bg-black/20 rounded-xl text-white"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <Wand2 className="h-5 w-5 animate-shimmer" />
+                <div className="h-16">
+                  <span className="text-xs rotate-90 whitespace-nowrap block origin-center translate-y-5">AI Assistant</span>
+                </div>
+              </div>
+            </button>
+          )}
         </div>
       </div>
     </TooltipProvider>
