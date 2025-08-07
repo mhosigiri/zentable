@@ -187,12 +187,12 @@ export default function PricingPage() {
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
               <img 
-                src="/assets/Zent_icon.png" 
-                alt="Zent Logo" 
+                src="/assets/Zentable_icon.png" 
+                alt="Zentable Logo" 
                 className="h-8 w-8"
               />
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Zent
+                Zentable
               </span>
             </Link>
             <nav className="flex items-center space-x-4">
@@ -361,12 +361,12 @@ export default function PricingPage() {
             <div className="text-center">
               <div className="flex items-center justify-center space-x-3 mb-6">
                 <img 
-                  src="/assets/Zent_icon.png" 
-                  alt="Zent Logo" 
+                  src="/assets/Zentable_icon.png" 
+                  alt="Zentable Logo" 
                   className="h-10 w-10"
                 />
                 <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                  Zent
+                  Zentable
                 </span>
               </div>
               <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">

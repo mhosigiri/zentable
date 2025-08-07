@@ -6,12 +6,12 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Zent - AI-Powered Presentation Builder',
+  title: 'Zentable - AI-Powered Presentation Builder',
   description: 'Create stunning presentations with AI in seconds. Transform your ideas into captivating visual stories.',
   icons: {
-    icon: '/assets/Zent_icon.png',
-    shortcut: '/assets/Zent_icon.png',
-    apple: '/assets/Zent_icon.png',
+    icon: '/assets/Zentable_icon.png',
+    shortcut: '/assets/Zentable_icon.png',
+    apple: '/assets/Zentable_icon.png',
   },
 };
 
@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/assets/Zent.png" />
+        <link rel="icon" href="/assets/Zentable.png" />
       </head>
       <body className={inter.className}>
         <ThemeProvider>

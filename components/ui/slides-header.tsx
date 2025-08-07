@@ -26,12 +26,12 @@ export function SlidesHeader({ title, showHomeButton = false, additionalButtons 
             <div className="flex items-center space-x-3">
               <Link href="/dashboard" className="flex items-center space-x-3">
                 <img 
-                  src="/assets/Zent_icon.png" 
-                  alt="Zent Logo" 
+                  src="/assets/Zentable_icon.png" 
+                  alt="Zentable Logo" 
                   className="h-6 w-6"
                 />
                 <span className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {title || 'Zent'}
+                  {title || 'Zentable'}
                 </span>
               </Link>
             </div>

@@ -34,12 +34,12 @@ export default function Page() {
           >
             <div className="flex items-center justify-center space-x-3 mb-6">
               <img 
-                src="/assets/Zent_icon.png" 
-                alt="Zent Logo" 
+                src="/assets/Zentable_icon.png" 
+                alt="Zentable Logo" 
                 className="h-10 w-10"
               />
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Zent
+                Zentable
               </span>
             </div>
             
@@ -117,7 +117,7 @@ export default function Page() {
             className="text-center mt-8"
           >
             <p className="text-sm text-gray-500">
-              New to Zent?{' '}
+              New to Zentable?{' '}
               <Link href="/" className="text-purple-600 hover:text-purple-700 font-medium transition-colors">
                 Learn more
               </Link>

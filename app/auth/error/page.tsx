@@ -40,8 +40,8 @@ export default function Page({ searchParams }: { searchParams: Promise<{ error: 
           >
             <div className="flex items-center justify-center space-x-3 mb-6">
               <img 
-                src="/assets/Zent_icon.png" 
-                alt="Zent Logo" 
+                src="/assets/Zentable_icon.png" 
+                alt="Zentable Logo" 
                 className="h-10 w-10"
               />
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">

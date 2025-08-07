@@ -688,6 +688,7 @@ export class DatabaseService {
       image_style: documentData.imageStyle || null,
       status: documentData.status as any,
       outline: documentData.outline,
+      enable_browser_search: documentData.enableBrowserSearch || false,
       created_at: documentData.createdAt,
       updated_at: new Date().toISOString(),
       last_synced_at: new Date().toISOString()
