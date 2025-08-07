@@ -1,4 +1,4 @@
-import { createAzure } from '@ai-sdk/azure';
+import { groq } from '@ai-sdk/groq';
 import { streamText } from 'ai';
 import { getSlidesByPresentation } from '@/lib/slides';
 import { DatabaseService } from '@/lib/database';
@@ -8,12 +8,7 @@ import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
-// Configure Azure OpenAI with AI SDK
-const azureOpenAI = createAzure({
-  apiKey: process.env.AZURE_OPENAI_API_KEY || process.env.AZURE_API_KEY,
-  apiVersion: '2025-01-01-preview',
-  resourceName: process.env.AZURE_RESOURCE_NAME,
-});
+const modelName = 'openai/gpt-oss-20b'; // Fast, cost-effective reasoning model
 
 export async function POST(req: Request) {
   try {
@@ -203,7 +198,7 @@ REMINDERS:
     }
     
     const result = await streamText({
-      model: azureOpenAI(process.env.AZURE_GPT4_DEPLOYMENT || 'gpt-4o-mini'),
+      model: groq(modelName),
       messages: [
         {
           role: 'system',
