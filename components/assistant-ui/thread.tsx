@@ -24,6 +24,7 @@ import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { ToolResult } from "@/components/assistant-ui/tool-result";
 import { CircleStopIcon, XIcon } from "./icons";
+import React from "react";
 
 export const Thread: FC = () => {
   return (
@@ -203,6 +204,9 @@ const EditComposer: FC = () => {
 };
 
 const AssistantMessage: FC = () => {
+  // Ref that becomes true after we encounter the first tool call that requires approval
+  const hideTextAfterToolRef = React.useRef(false);
+
   const handleApproveSlideUpdate = async (toolCall: any) => {
     try {
       // Commenting out database write for testing UI-only updates
@@ -236,19 +240,35 @@ const AssistantMessage: FC = () => {
       <div className="text-foreground col-span-2 col-start-2 row-start-1 my-1.5 max-w-[calc(var(--thread-max-width)*0.8)] break-words leading-7">
         <MessagePrimitive.Content
           components={{
-            Text: MarkdownText,
+            // Custom Text renderer that hides text that appears after a tool call requiring approval
+            Text: (textProps: any) => {
+              if (hideTextAfterToolRef.current) {
+                return null;
+              }
+              return <MarkdownText {...textProps} />;
+            },
             tools: {
-              Fallback: (props: any) => (
-                <ToolResult
-                  toolCall={{
-                    toolName: props.toolName,
-                    args: props.args,
-                    result: props.result
-                  }}
-                  onApprove={props.toolName === 'updateSlideContent' ? handleApproveSlideUpdate : undefined}
-                />
-              )
-            }
+              Fallback: (props: any) => {
+                // If this tool call requires approval, set the flag so subsequent text is hidden
+                if (props.result?.requiresApproval) {
+                  hideTextAfterToolRef.current = true;
+                }
+                return (
+                  <ToolResult
+                    toolCall={{
+                      toolName: props.toolName,
+                      args: props.args,
+                      result: props.result,
+                    }}
+                    onApprove={
+                      props.toolName === 'updateSlideContent'
+                        ? handleApproveSlideUpdate
+                        : undefined
+                    }
+                  />
+                );
+              },
+            },
           }}
         />
       </div>
