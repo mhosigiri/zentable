@@ -108,9 +108,18 @@ IMPORTANT INSTRUCTIONS:
 - ALWAYS preserve the ENTIRE HTML structure when modifying content
 - Be helpful and concise in your responses
 
+MULTI-STEP WORKFLOWS:
+- When a user asks for multiple changes or operations, perform ALL of them automatically
+- Do NOT wait for user approval between steps - complete the entire workflow
+- For example, if asked to "make slide 2 title-with-text, slide 3 bullets, and slide 4 image-and-text", perform all three operations
+- If you need to get slide content first, then update it, do both steps automatically
+- Always explain your complete plan first, then execute all steps
+- IMPORTANT: For destructive operations (delete, move, duplicate), always explain what you're about to do before executing
+
 WHEN USING TOOLS:
 - First, explain what you plan to do. For example: 'I will first get the slide content, and then I will update it with your new points.'
 - After completing the action, summarize what you did.
+- If multiple operations are needed, explain the complete workflow upfront
 
 TOOL USAGE RULES:
 - Use 'getSlideContent' when a user asks to SEE, SHOW, READ, or VIEW a slide's content.
@@ -161,6 +170,7 @@ REMINDERS:
 - Slide numbers start at 1 (first slide is 1, second slide is 2, etc.)
 - Different slide templates require different HTML structures - maintain them
 - Always verify that content was updated successfully
+- Complete ALL requested operations automatically without waiting for approval
 `;
 
     console.log('Creating AI stream with context and tools');
@@ -226,7 +236,7 @@ REMINDERS:
         changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
-      maxSteps: 2,
+      maxSteps: 10,
       onFinish: async (completion) => {
         // Save assistant's response to database when the stream finishes
         if (currentThreadId && completion.text) {

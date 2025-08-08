@@ -269,7 +269,7 @@ export const createSlide = tool({
 
     return {
       success: true,
-      message: 'Slide creation proposed. Ready to be added to UI.',
+      message: 'Slide creation proposed - awaiting approval.',
       newSlide,
       requiresApproval: true,
     };
@@ -320,7 +320,7 @@ export const createSlideWithAI = tool({
 
       return {
         success: true,
-        message: 'Slide creation proposed with AI-generated content. Ready to be added.',
+        message: 'Slide creation proposed with AI-generated content - awaiting approval.',
         newSlide,
         requiresApproval: true,
       };
@@ -370,7 +370,7 @@ export const duplicateSlide = tool({
 
     return {
       success: true,
-      message: 'Slide duplication proposed.',
+      message: 'Slide duplication proposed - awaiting approval.',
       duplicatedSlide,
       originalSlideId: slideId,
       requiresApproval: true,
@@ -387,7 +387,7 @@ export const moveSlide = tool({
   execute: async ({ slideId, newPosition }) => {
     return {
       success: true,
-      message: 'Slide move proposed.',
+      message: 'Slide move proposed - awaiting approval.',
       slideId,
       newPosition,
       requiresApproval: true,
@@ -411,7 +411,7 @@ export const applyTheme = tool({
     }
     return {
       success: true,
-      message: `Theme "${theme.name}" proposed.`,
+      message: `Theme "${theme.name}" proposed - awaiting approval.`,
       themeId: theme.id,
       themeName: theme.name,
       requiresApproval: true,
@@ -428,7 +428,7 @@ export const updateSlideImage = tool({
   execute: async ({ slideId, imagePrompt }) => {
     return {
       success: true,
-      message: 'Slide image update proposed.',
+      message: 'Slide image update proposed - awaiting approval.',
       slideId,
       imagePrompt,
       requiresApproval: true,
@@ -446,7 +446,7 @@ export const changeSlideTemplate = tool({
     // We can add validation for templateType if needed
     return {
       success: true,
-      message: 'Slide template change proposed.',
+      message: 'Slide template change proposed - awaiting approval.',
       slideId,
       newTemplateType,
       requiresApproval: true,

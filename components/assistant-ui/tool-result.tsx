@@ -33,18 +33,19 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const { setTheme } = useTheme();
   const params = useParams();
   const documentId = params.id as string;
+  const requiresApproval = toolCall.result?.requiresApproval;
   
-  // Auto-collapse when approved
+  // Auto-collapse only for non-approval tools after a delay
   useEffect(() => {
-    if (status === 'approved') {
-      // Small delay to let user see the success state before collapsing
+    if (!requiresApproval && toolCall.result && toolCall.result.success) {
+      // Small delay to let user see the result before collapsing
       const timer = setTimeout(() => {
         setIsExpanded(false);
-      }, 1500);
+      }, 2000);
       
       return () => clearTimeout(timer);
     }
-  }, [status]);
+  }, [toolCall.result, requiresApproval]);
   
   const handleApprove = async () => {
     setStatus('approved');
@@ -101,38 +102,33 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
 
   const isUpdateSlideContent = toolCall.toolName === 'updateSlideContent';
   const isGetSlideContent = toolCall.toolName === 'getSlideContent';
-  const requiresApproval = toolCall.result?.requiresApproval;
   
-  // Determine status for badge - FIXED LOGIC
+  // Determine status for badge - ONLY SHOW ICON
   const getStatusBadge = () => {
     if (status === 'approved') {
       return (
         <Badge variant="default" className="gap-1 bg-green-600">
           <CheckCircle className="w-3 h-3" />
-          Completed
         </Badge>
       );
     } else if (status === 'rejected') {
       return (
         <Badge variant="destructive" className="gap-1">
           <XCircle className="w-3 h-3" />
-          Rejected
         </Badge>
       );
-    } else if (status === 'pending' && toolCall.result && !requiresApproval) {
-      // Only show completed if we have a result AND no approval is required
-      return (
-        <Badge variant="default" className="gap-1">
-          <CheckCircle className="w-3 h-3" />
-          Completed
-        </Badge>
-      );
-    } else {
-      // Show pending/running for everything else
+    } else if (requiresApproval) {
+      // Show pending for approval-required tools
       return (
         <Badge variant="secondary" className="gap-1">
           <Loader2 className="w-3 h-3 animate-spin" />
-          Pending
+        </Badge>
+      );
+    } else {
+      // Show completed for non-approval tools (like getSlideContent)
+      return (
+        <Badge variant="default" className="gap-1">
+          <CheckCircle className="w-3 h-3" />
         </Badge>
       );
     }
@@ -144,15 +140,15 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
       "opacity-100"
     )}>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1 justify-center">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
             {getToolIcon(toolCall.toolName)}
             <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
               {toolCall.toolName}
             </span>
           </div>
           
-          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {getStatusBadge()}
             
             <button
@@ -215,7 +211,7 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
               <p className="text-sm">Change template for slide <code className='text-xs bg-gray-200 p-1 rounded'>{toolCall.result.slideId}</code> to <strong>{toolCall.result.newTemplateType}</strong>?</p>
             )}
             
-            {/* Action Buttons - only show if pending and requires approval */}
+            {/* Action Buttons - show for tools that require approval */}
             {status === 'pending' && requiresApproval && (
               <div className="flex gap-2 pt-2">
                 <Button 
@@ -237,7 +233,7 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
               </div>
             )}
             
-            {/* Status messages */}
+            {/* Status messages - only show after user action */}
             {status === 'approved' && (
               <div className="text-sm text-green-600 font-medium">
                 ✅ Changes applied to slide
@@ -248,6 +244,7 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
                 ❌ Changes rejected
               </div>
             )}
+          
           </div>
         </CardContent>
       )}

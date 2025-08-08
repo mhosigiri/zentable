@@ -108,38 +108,38 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
           'flex flex-col transition-all duration-300 ease-in-out',
           'max-h-[80vh] h-full'
         )}>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="absolute top-1/2 -translate-y-1/2 left-[-16px] z-20 bg-white/10 dark:bg-black/10 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/20 border border-white/20 dark:border-zinc-800/20 rounded-full p-1.5 shadow-md transition-all duration-300 ease-in-out text-white"
-            aria-label={isOpen ? "Close assistant sidebar" : "Open assistant sidebar"}
-          >
-            {isOpen ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="absolute top-1/2 -translate-y-1/2 left-[-16px] z-20 bg-white/10 dark:bg-black/10 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/20 border border-white/20 dark:border-zinc-800/20 rounded-full p-1.5 shadow-md transition-all duration-300 ease-in-out text-white"
+        aria-label={isOpen ? "Close assistant sidebar" : "Open assistant sidebar"}
+      >
+        {isOpen ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+      </button>
 
-          {isOpen ? (
-            <div className="flex h-full w-full flex-col overflow-hidden rounded-xl">
-              <div className="flex items-center border-b border-white/20 dark:border-zinc-800/20 p-4">
-                <h3 className="text-sm font-semibold text-white">AI Assistant</h3>
-              </div>
+      {isOpen ? (
+        <div className="flex h-full w-full flex-col overflow-hidden rounded-xl">
+          <div className="flex items-center border-b border-white/20 dark:border-zinc-800/20 p-4">
+            <h3 className="text-sm font-semibold text-white">AI Assistant</h3>
+          </div>
               <div className="flex h-full flex-col">
-                <AssistantRuntimeProvider runtime={runtime}>
-                  <Thread />
-                </AssistantRuntimeProvider>
-              </div>
+            <AssistantRuntimeProvider runtime={runtime}>
+              <Thread />
+            </AssistantRuntimeProvider>
+          </div>
+        </div>
+      ) : (
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="p-3 w-full h-full flex flex-col items-center justify-center hover:bg-white/20 dark:hover:bg-black/20 rounded-xl text-white"
+        >
+          <div className="flex flex-col items-center gap-3">
+            <Wand2 className="h-5 w-5 animate-shimmer" />
+            <div className="h-16">
+              <span className="text-xs rotate-90 whitespace-nowrap block origin-center translate-y-5">AI Assistant</span>
             </div>
-          ) : (
-            <button 
-              onClick={() => setIsOpen(true)}
-              className="p-3 w-full h-full flex flex-col items-center justify-center hover:bg-white/20 dark:hover:bg-black/20 rounded-xl text-white"
-            >
-              <div className="flex flex-col items-center gap-3">
-                <Wand2 className="h-5 w-5 animate-shimmer" />
-                <div className="h-16">
-                  <span className="text-xs rotate-90 whitespace-nowrap block origin-center translate-y-5">AI Assistant</span>
-                </div>
-              </div>
-            </button>
-          )}
+          </div>
+        </button>
+      )}
         </div>
       </div>
     </TooltipProvider>

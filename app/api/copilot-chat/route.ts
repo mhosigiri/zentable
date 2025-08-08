@@ -77,6 +77,12 @@ IMPORTANT INSTRUCTIONS:
 - Match the style, tone, and type of the existing content
 - Don't ask questions, just enhance the content directly
 
+MULTI-STEP WORKFLOWS:
+- When a user asks for multiple changes or operations, perform ALL of them automatically
+- Do NOT wait for user approval between steps - complete the entire workflow
+- If you need to get slide content first, then update it, do both steps automatically
+- Always explain your complete plan first, then execute all steps
+
 ${slideContext}
 
 When improving slide content:
@@ -129,7 +135,7 @@ Important: When returning content through the updateSlideContent tool, provide O
         changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
-      maxSteps: 2, // Allow initial response and tool execution
+      maxSteps: 10, // Allow initial response and tool execution
     });
 
     console.log('Stream created successfully, returning response');
