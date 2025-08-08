@@ -35,17 +35,24 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const documentId = params.id as string;
   const requiresApproval = toolCall.result?.requiresApproval;
   
-  // Auto-collapse only for non-approval tools after a delay
+  // Auto-collapse only after user approval or for non-approval tools
   useEffect(() => {
-    if (!requiresApproval && toolCall.result && toolCall.result.success) {
-      // Small delay to let user see the result before collapsing
+    if (status === 'approved') {
+      // Collapse after user clicks "Accept Changes"
       const timer = setTimeout(() => {
         setIsExpanded(false);
-      }, 2000);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    } else if (!requiresApproval && toolCall.result && toolCall.result.success) {
+      // Auto-collapse for read-only tools that don't need approval
+      const timer = setTimeout(() => {
+        setIsExpanded(false);
+      }, 1500);
       
       return () => clearTimeout(timer);
     }
-  }, [toolCall.result, requiresApproval]);
+  }, [status, requiresApproval, toolCall.result]);
   
   const handleApprove = async () => {
     setStatus('approved');
