@@ -16,6 +16,14 @@ export interface Database {
           full_name: string | null
           avatar_url: string | null
           subscription_status: string
+          subscription_tier: string
+          credits_balance: number
+          credits_total_used: number
+          free_credits_used: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          stripe_price_id: string | null
+          current_period_end: string | null
           created_at: string
           updated_at: string
         }
@@ -25,6 +33,14 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           subscription_status?: string
+          subscription_tier?: string
+          credits_balance?: number
+          credits_total_used?: number
+          free_credits_used?: number
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_price_id?: string | null
+          current_period_end?: string | null
         }
         Update: {
           id?: string
@@ -32,6 +48,14 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           subscription_status?: string
+          subscription_tier?: string
+          credits_balance?: number
+          credits_total_used?: number
+          free_credits_used?: number
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_price_id?: string | null
+          current_period_end?: string | null
         }
       }
       presentations: {
@@ -218,6 +242,36 @@ export interface Database {
           role?: string
           content?: string
           tool_calls?: any | null
+        }
+      }
+      credit_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          action_type: string
+          credits_used: number
+          credits_before: number
+          credits_after: number
+          metadata: any | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          action_type: string
+          credits_used: number
+          credits_before: number
+          credits_after: number
+          metadata?: any | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          action_type?: string
+          credits_used?: number
+          credits_before?: number
+          credits_after?: number
+          metadata?: any | null
         }
       }
     }

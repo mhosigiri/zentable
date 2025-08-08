@@ -13,6 +13,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Info, CheckCircle } from "lucide-react"
+import { SubscriptionManagement } from "@/components/dashboard/subscription-management"
 
 interface CreditTransaction {
   id: string
@@ -85,7 +86,9 @@ export default function BillingPage() {
       chat_message: "Chat Message",
       brainstorming: "Brainstorming Session",
       credit_purchase: "Credits Purchased",
-      credit_grant: "Credits Granted"
+      credit_grant: "Credits Granted",
+      plan_upgrade: "Plan Upgraded",
+      plan_downgrade: "Plan Downgraded"
     }
     return labels[actionType] || actionType
   }
@@ -287,6 +290,9 @@ export default function BillingPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Subscription Management */}
+      <SubscriptionManagement />
 
       {/* Quick Actions */}
       <Card>

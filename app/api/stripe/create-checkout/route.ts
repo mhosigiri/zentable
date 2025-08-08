@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
+import { getStripeConfig } from '@/lib/stripe-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,23 +21,39 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if Stripe secret key is configured
-    if (!process.env.STRIPE_SECRET_KEY) {
-      // Fallback to demo mode if secret key is not configured
+    // Get user profile to check for existing customer and subscription
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('stripe_customer_id, stripe_subscription_id, stripe_price_id, subscription_status')
+      .eq('id', user.id)
+      .single()
+
+    // Check if user already has this exact plan
+    if (profile?.stripe_price_id === priceId && profile.subscription_status === 'active') {
       return Response.json({ 
-        success: true, 
-        checkoutUrl: '/dashboard/billing?demo=true&plan=' + encodeURIComponent(planName),
-        message: 'Demo mode - Stripe integration requires secret API key configuration'
-      })
+        error: 'You are already subscribed to this plan' 
+      }, { status: 400 })
+    }
+
+    // Get environment-aware Stripe configuration
+    const stripeConfig = getStripeConfig()
+    
+    // Check if Stripe secret key is configured
+    if (!stripeConfig.secretKey) {
+      return Response.json({ 
+        error: 'Stripe secret key not configured' 
+      }, { status: 500 })
     }
 
     // Initialize Stripe with secret key
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    const stripe = new Stripe(stripeConfig.secretKey, {
       apiVersion: '2024-06-20' as any
     })
 
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const hasActiveSubscription = profile?.stripe_subscription_id && profile.subscription_status === 'active'
+
+    // Create checkout session configuration
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -44,17 +61,54 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      mode: 'payment', // One-time payment for credits
+      mode: 'subscription',
       success_url: `http://localhost:3000/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `http://localhost:3000/pricing?canceled=true`,
       client_reference_id: user.id,
-      customer_email: user.email,
       metadata: {
         userId: user.id,
         planName: planName,
-        priceId: priceId
+        priceId: priceId,
+        isUpgrade: hasActiveSubscription ? 'true' : 'false'
+      },
+      subscription_data: {
+        metadata: {
+          userId: user.id,
+          planName: planName,
+          previousSubscription: profile?.stripe_subscription_id || ''
+        }
       }
-    })
+    }
+
+    // If user has existing subscription, we need to cancel it first
+    if (hasActiveSubscription && profile.stripe_subscription_id) {
+      try {
+        // Cancel the existing subscription immediately
+        await stripe.subscriptions.cancel(profile.stripe_subscription_id)
+        console.log(`📛 Canceled existing subscription: ${profile.stripe_subscription_id}`)
+      } catch (error) {
+        console.error('Failed to cancel existing subscription:', error)
+        // Continue anyway - Stripe checkout will handle it
+      }
+    }
+
+    // If user has existing Stripe customer, try to use it but fallback to email if invalid
+    if (profile?.stripe_customer_id) {
+      try {
+        // Verify the customer exists in current Stripe account
+        await stripe.customers.retrieve(profile.stripe_customer_id)
+        sessionConfig.customer = profile.stripe_customer_id
+      } catch (error) {
+        // Customer doesn't exist in this account, use email instead
+        console.log('Customer not found in current Stripe account, using email instead')
+        sessionConfig.customer_email = user.email
+      }
+    } else {
+      sessionConfig.customer_email = user.email
+    }
+
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     return Response.json({ 
       success: true, 

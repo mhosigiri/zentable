@@ -1,5 +1,6 @@
 import { supabase, Database } from './supabase'
 import { generateUUID, isValidUUID, ensureUUID } from './uuid'
+import { getAllPriceIds, getCreditAllocation } from './stripe-config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Type aliases for easier use
@@ -12,6 +13,8 @@ export type SlideInsert = Database['public']['Tables']['slides']['Insert']
 export type SlideUpdate = Database['public']['Tables']['slides']['Update']
 
 export type Profile = Database['public']['Tables']['profiles']['Row']
+export type CreditTransaction = Database['public']['Tables']['credit_transactions']['Row']
+export type CreditTransactionInsert = Database['public']['Tables']['credit_transactions']['Insert']
 
 // Assistant UI / Copilot types
 export type CopilotThread = Database['public']['Tables']['copilot_threads']['Row']
@@ -692,6 +695,265 @@ export class DatabaseService {
       created_at: documentData.createdAt,
       updated_at: new Date().toISOString(),
       last_synced_at: new Date().toISOString()
+    }
+  }
+
+  // ============ SUBSCRIPTION CREDIT METHODS ============
+  
+  /**
+   * Handle plan changes - allocate credits for upgrades
+   */
+  async handlePlanChange(userId: string, oldPriceId: string, newPriceId: string): Promise<boolean> {
+    try {
+      const oldCredits = getCreditAllocation(oldPriceId)
+      const newCredits = getCreditAllocation(newPriceId)
+      const isUpgrade = newCredits > oldCredits
+      
+      console.log('🔄 Processing plan change:', {
+        userId,
+        oldPriceId,
+        newPriceId,
+        oldCredits,
+        newCredits,
+        isUpgrade
+      })
+      
+      if (isUpgrade) {
+        // For upgrades, immediately allocate the credit difference
+        const creditDifference = newCredits - oldCredits
+        
+        // Get current balance
+        const { data: profile } = await this.supabaseClient
+          .from('profiles')
+          .select('credits_balance')
+          .eq('id', userId)
+          .single()
+          
+        if (profile) {
+          const newBalance = (profile.credits_balance || 0) + creditDifference
+          
+          // Update credits
+          const { error: updateError } = await this.supabaseClient
+            .from('profiles')
+            .update({
+              credits_balance: newBalance,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+            
+          if (updateError) throw updateError
+          
+          // Record transaction
+          const { error: transactionError } = await this.supabaseClient
+            .from('credit_transactions')
+            .insert({
+              user_id: userId,
+              action_type: 'plan_upgrade',
+              credits_used: -creditDifference, // Negative = added credits
+              credits_before: profile.credits_balance || 0,
+              credits_after: newBalance,
+              metadata: {
+                old_price_id: oldPriceId,
+                new_price_id: newPriceId,
+                credit_difference: creditDifference
+              }
+            })
+            
+          if (transactionError) throw transactionError
+          
+          console.log(`✅ Added ${creditDifference} credits for plan upgrade`)
+        }
+      } else {
+        console.log('⬇️ Downgrade detected - no immediate credit change')
+      }
+      
+      return true
+    } catch (error) {
+      console.error('Failed to handle plan change:', error)
+      return false
+    }
+  }
+
+  async allocateSubscriptionCredits(userId: string, priceId: string, isRenewal: boolean = false): Promise<boolean> {
+    try {
+      // Get current profile
+      const profile = await this.getProfile(userId)
+      if (!profile) {
+        console.error('Profile not found for user:', userId)
+        return false
+      }
+
+      // Get credit allocation for this price ID (environment-aware)
+      const creditsToAdd = getCreditAllocation(priceId)
+      if (creditsToAdd === 0) {
+        console.error('Unknown price ID:', priceId)
+        return false
+      }
+
+      const currentBalance = profile.credits_balance || 0
+      const newBalance = currentBalance + creditsToAdd
+
+      // Update profile with new credits
+      const { error: updateError } = await this.supabaseClient
+        .from('profiles')
+        .update({
+          credits_balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+
+      if (updateError) {
+        console.error('Error updating profile credits:', updateError)
+        return false
+      }
+
+      // Create credit transaction record
+      const { error: transactionError } = await this.supabaseClient
+        .from('credit_transactions')
+        .insert({
+          user_id: userId,
+          action_type: isRenewal ? 'subscription_renewal' : 'subscription_create',
+          credits_used: -creditsToAdd, // Negative for credits added
+          credits_before: currentBalance,
+          credits_after: newBalance,
+          metadata: {
+            price_id: priceId,
+            is_renewal: isRenewal
+          }
+        })
+
+      if (transactionError) {
+        console.error('Error creating credit transaction:', transactionError)
+        // Don't fail the whole operation for transaction logging
+      }
+
+      console.log(`✅ Allocated ${creditsToAdd} credits to user ${userId} (${isRenewal ? 'renewal' : 'initial'})`)
+      return true
+    } catch (error) {
+      console.error('Exception in allocateSubscriptionCredits:', error)
+      return false
+    }
+  }
+
+  async handleSubscriptionCancellation(userId: string): Promise<boolean> {
+    try {
+      // Get current profile
+      const profile = await this.getProfile(userId)
+      if (!profile) {
+        console.error('Profile not found for user:', userId)
+        return false
+      }
+
+      // Calculate remaining free credits (500 - used)
+      const freeCreditsUsed = profile.free_credits_used || 0
+      const remainingFreeCredits = Math.max(0, 500 - freeCreditsUsed)
+
+      const currentBalance = profile.credits_balance || 0
+
+      // Update profile to free plan with remaining free credits
+      const { error: updateError } = await this.supabaseClient
+        .from('profiles')
+        .update({
+          credits_balance: remainingFreeCredits,
+          subscription_tier: 'free',
+          subscription_status: 'canceled',
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          stripe_price_id: null,
+          current_period_end: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+
+      if (updateError) {
+        console.error('Error updating profile for cancellation:', updateError)
+        return false
+      }
+
+      // Create credit transaction record
+      const creditsDifference = remainingFreeCredits - currentBalance
+      if (creditsDifference !== 0) {
+        const { error: transactionError } = await this.supabaseClient
+          .from('credit_transactions')
+          .insert({
+            user_id: userId,
+            action_type: 'subscription_cancelled',
+            credits_used: -creditsDifference, // Negative if credits were added, positive if removed
+            credits_before: currentBalance,
+            credits_after: remainingFreeCredits,
+            metadata: {
+              free_credits_used: freeCreditsUsed,
+              remaining_free_credits: remainingFreeCredits
+            }
+          })
+
+        if (transactionError) {
+          console.error('Error creating cancellation transaction:', transactionError)
+          // Don't fail the whole operation for transaction logging
+        }
+      }
+
+      console.log(`✅ Handled cancellation for user ${userId}, reset to ${remainingFreeCredits} free credits`)
+      return true
+    } catch (error) {
+      console.error('Exception in handleSubscriptionCancellation:', error)
+      return false
+    }
+  }
+
+  // Map Stripe price IDs to our internal subscription tier
+  private getSubscriptionTierFromPriceId(priceId: string): string {
+    const allPriceIds = getAllPriceIds()
+    return allPriceIds[priceId] || 'free'
+  }
+
+  async updateSubscriptionStatus(userId: string, updates: {
+    stripeCustomerId?: string
+    stripeSubscriptionId?: string
+    stripePriceId?: string
+    subscriptionStatus?: string
+    subscriptionTier?: string
+    currentPeriodEnd?: string
+    cancelAt?: string | null
+  }): Promise<boolean> {
+    try {
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      }
+
+      if (updates.stripeCustomerId !== undefined) updateData.stripe_customer_id = updates.stripeCustomerId
+      if (updates.stripeSubscriptionId !== undefined) updateData.stripe_subscription_id = updates.stripeSubscriptionId
+      if (updates.stripePriceId !== undefined) {
+        updateData.stripe_price_id = updates.stripePriceId
+        // Set the subscription tier based on the price ID
+        updateData.subscription_tier = this.getSubscriptionTierFromPriceId(updates.stripePriceId)
+      }
+      if (updates.subscriptionStatus !== undefined) {
+        // This is the Stripe subscription status (active, canceled, etc.)
+        updateData.subscription_status = updates.subscriptionStatus
+      }
+      if (updates.subscriptionTier !== undefined) {
+        // This allows manual override of the tier if needed
+        updateData.subscription_tier = updates.subscriptionTier
+      }
+      if (updates.currentPeriodEnd !== undefined) updateData.current_period_end = updates.currentPeriodEnd
+      if (updates.cancelAt !== undefined) updateData.cancel_at = updates.cancelAt
+
+      const { error } = await this.supabaseClient
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId)
+
+      if (error) {
+        console.error('Error updating subscription status:', error)
+        return false
+      }
+
+      console.log('✅ Updated subscription status for user:', userId)
+      return true
+    } catch (error) {
+      console.error('Exception in updateSubscriptionStatus:', error)
+      return false
     }
   }
 

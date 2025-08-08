@@ -163,7 +163,7 @@ export async function getCreditStats(userId: string) {
   
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('credits_balance, credits_total_used, subscription_status')
+    .select('credits_balance, credits_total_used, subscription_tier')
     .eq('id', userId)
     .single()
 
@@ -178,7 +178,7 @@ export async function getCreditStats(userId: string) {
   return {
     balance: profile.credits_balance,
     totalUsed: profile.credits_total_used,
-    subscriptionStatus: profile.subscription_status,
+    subscriptionStatus: profile.subscription_tier, // Using tier for display
   }
 }
 

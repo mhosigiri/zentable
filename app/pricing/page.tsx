@@ -10,8 +10,8 @@ import { getCreditStatsClient } from "@/lib/credits-client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
-
-const plans = [
+// We'll load the price IDs dynamically on the client
+const getPlans = (priceIds: { lite: string; plus: string; pro: string }) => [
   {
     name: "Free",
     price: "$0",
@@ -20,25 +20,27 @@ const plans = [
     features: [
       "500 AI credits included",
       "Basic presentation generation",
-      "Standard slide templates",
+      "Standard slide templates", 
       "Image generation",
       "Chat assistance",
       "Export to PDF"
     ],
-    buttonText: "Current Plan",
+    buttonText: "Get Started Free",
     buttonVariant: "outline" as const,
-    disabled: true,
+    disabled: false,
     icon: Zap,
     popular: false
   },
   {
     name: "Lite",
     price: "$5",
-    priceId: "price_1RqcVa9MDLdB3mTbGfo0a30B",
+    priceId: priceIds.lite,
     description: "Great for occasional presentation creators",
     credits: "1,000 credits",
+    period: "/month",
     features: [
-      "1,000 AI credits",
+      "1,000 AI credits monthly",
+      "Credits accumulate each month",
       "Advanced presentation generation",
       "All slide templates",
       "High-quality image generation",
@@ -46,7 +48,7 @@ const plans = [
       "Export to PDF",
       "Email support"
     ],
-    buttonText: "Get Lite",
+    buttonText: "Subscribe to Lite",
     buttonVariant: "outline" as const,
     disabled: false,
     icon: CreditCard,
@@ -55,11 +57,13 @@ const plans = [
   {
     name: "Plus",
     price: "$10",
-    priceId: "price_1RqcVa9MDLdB3mTbDMI3d9fj",
+    priceId: priceIds.plus,
     description: "Perfect for regular presentation needs",
-    credits: "2,000 credits",
+    credits: "2,500 credits",
+    period: "/month",
     features: [
-      "2,000 AI credits",
+      "2,500 AI credits monthly",
+      "Credits accumulate each month",
       "Advanced presentation generation",
       "All premium templates",
       "High-quality image generation",
@@ -68,7 +72,7 @@ const plans = [
       "Export to PDF",
       "Priority email support"
     ],
-    buttonText: "Get Plus",
+    buttonText: "Subscribe to Plus",
     buttonVariant: "default" as const,
     disabled: false,
     icon: Star,
@@ -77,11 +81,13 @@ const plans = [
   {
     name: "Pro",
     price: "$20",
-    priceId: "price_1RqcVa9MDLdB3mTbN08L8b5H",
+    priceId: priceIds.pro,
     description: "For power users and teams",
-    credits: "Unlimited credits",
+    credits: "7,500 credits",
+    period: "/month",
     features: [
-      "Unlimited AI credits",
+      "7,500 AI credits monthly",
+      "Credits accumulate each month",
       "Advanced presentation generation",
       "All premium templates",
       "High-quality image generation",
@@ -92,7 +98,7 @@ const plans = [
       "Priority email support",
       "Phone support"
     ],
-    buttonText: "Get Pro",
+    buttonText: "Subscribe to Pro",
     buttonVariant: "default" as const,
     disabled: false,
     icon: Crown,
@@ -116,6 +122,8 @@ export default function PricingPage() {
     subscriptionStatus: string;
   } | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [plans, setPlans] = useState<any[]>([])
+  const [currentPriceId, setCurrentPriceId] = useState<string | null>(null)
   const router = useRouter()
 
   React.useEffect(() => {
@@ -128,14 +136,54 @@ export default function PricingPage() {
       if (currentUser) {
         const stats = await getCreditStatsClient()
         setCreditStats(stats)
+        
+        // Get current subscription details
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('stripe_price_id, subscription_status')
+          .eq('id', currentUser.id)
+          .single()
+          
+        if (profile?.stripe_price_id && profile.subscription_status === 'active') {
+          setCurrentPriceId(profile.stripe_price_id)
+        }
+      }
+    }
+
+    const fetchStripeConfig = async () => {
+      try {
+        const response = await fetch('/api/stripe/config')
+        const config = await response.json()
+        
+        // Generate plans with the correct price IDs
+        const plansWithPrices = getPlans(config.prices)
+        setPlans(plansWithPrices)
+      } catch (error) {
+        console.error('Error fetching Stripe config:', error)
+        // Fallback to test prices if config fails
+        const fallbackPrices = {
+          lite: 'price_1RtWl99MDLdB3mTb8iBxZYaY',
+          plus: 'price_1RtWlA9MDLdB3mTbqz1qLDT5', 
+          pro: 'price_1RtWlA9MDLdB3mTbUMunPLQH'
+        }
+        const plansWithPrices = getPlans(fallbackPrices)
+        setPlans(plansWithPrices)
       }
     }
     
     fetchUserAndStats()
+    fetchStripeConfig()
   }, [])
 
   const handlePurchase = async (priceId: string, planName: string) => {
-    if (!priceId) return
+    if (!priceId) {
+      // Handle free plan - just redirect to dashboard
+      if (planName === "Free") {
+        router.push('/dashboard')
+        return
+      }
+      return
+    }
     
     setLoading(priceId)
     
@@ -148,7 +196,7 @@ export default function PricingPage() {
         return
       }
 
-      // Create Stripe checkout session
+      // Always use Stripe checkout for plan changes/subscriptions
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: {
@@ -163,12 +211,11 @@ export default function PricingPage() {
       const data = await response.json()
 
       if (data.success && data.checkoutUrl) {
-        // Redirect to Stripe checkout or demo page
+        // Redirect to Stripe checkout
         window.location.href = data.checkoutUrl
       } else {
         console.error('Checkout creation failed:', data.error)
-        // Fallback to billing page
-        router.push('/dashboard/billing')
+        alert(data.error || 'Failed to create checkout. Please try again.')
       }
     } catch (error) {
       console.error('Purchase error:', error)
@@ -254,14 +301,21 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           {plans.map((plan, index) => {
             const Icon = plan.icon
+            const isCurrentPlan = plan.priceId && plan.priceId === currentPriceId
+            
             return (
               <Card 
                 key={index} 
-                className={`relative ${plan.popular ? 'ring-2 ring-blue-500 scale-105' : ''} hover:shadow-lg transition-all duration-200`}
+                className={`relative ${plan.popular && !isCurrentPlan ? 'ring-2 ring-blue-500 scale-105' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500 scale-105' : ''} hover:shadow-lg transition-all duration-200`}
               >
-                {plan.popular && (
+                {plan.popular && !isCurrentPlan && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                     <Badge className="bg-blue-500 text-white">Most Popular</Badge>
+                  </div>
+                )}
+                {isCurrentPlan && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-green-500 text-white">Current Plan</Badge>
                   </div>
                 )}
                 
@@ -273,7 +327,7 @@ export default function PricingPage() {
                   <CardDescription>{plan.description}</CardDescription>
                   <div className="mt-4">
                     <span className="text-3xl font-bold">{plan.price}</span>
-                    {plan.price !== "$0" && <span className="text-gray-500">/month</span>}
+                    {plan.period && <span className="text-gray-500">{plan.period}</span>}
                   </div>
                   <div className="text-sm text-blue-600 font-medium mt-2">
                     {plan.credits}
@@ -282,7 +336,7 @@ export default function PricingPage() {
                 
                 <CardContent>
                   <ul className="space-y-3">
-                    {plan.features.map((feature, featureIndex) => (
+                    {plan.features.map((feature: string, featureIndex: number) => (
                       <li key={featureIndex} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                         <span className="text-sm text-gray-600">{feature}</span>
@@ -294,11 +348,13 @@ export default function PricingPage() {
                 <CardFooter>
                   <Button
                     className="w-full"
-                    variant={plan.buttonVariant}
-                    disabled={plan.disabled || loading === plan.priceId}
+                    variant={isCurrentPlan ? "secondary" : plan.buttonVariant}
+                    disabled={plan.disabled || loading === plan.priceId || isCurrentPlan}
                     onClick={() => plan.priceId && handlePurchase(plan.priceId, plan.name)}
                   >
-                    {loading === plan.priceId ? 'Processing...' : plan.buttonText}
+                    {loading === plan.priceId ? 'Processing...' : 
+                     isCurrentPlan ? 'Current Plan' : 
+                     plan.buttonText}
                   </Button>
                 </CardFooter>
               </Card>
@@ -319,19 +375,19 @@ export default function PricingPage() {
             <div>
               <h3 className="font-semibold mb-2">Do credits expire?</h3>
               <p className="text-gray-600 text-sm">
-                No, credits never expire. Once purchased, they remain in your account until used.
+                Credits accumulate month-to-month on paid plans. Free users get 500 one-time credits. If you cancel a paid plan, you'll return to whatever remains of your original 500 free credits.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">Can I upgrade or downgrade?</h3>
               <p className="text-gray-600 text-sm">
-                Yes, you can change your plan at any time. Credits from your current plan will be added to your balance.
+                Yes, you can change your plan at any time through the billing page. Your accumulated credits remain when switching between paid plans.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">What happens if I run out of credits?</h3>
+              <h3 className="font-semibold mb-2">What happens if I cancel?</h3>
               <p className="text-gray-600 text-sm">
-                You can purchase additional credits at any time. Your presentations and data are always safe and accessible.
+                If you cancel your subscription, you'll keep access until the end of your billing period. When returning to the free plan, your credits will reset to 500.
               </p>
             </div>
           </div>
