@@ -1,6 +1,5 @@
 import { tool } from 'ai';
 import { getSlideById, updateSlideContent, getSlidesByPresentation } from '@/lib/slides';
-import { db } from '@/lib/database';
 import { generateUUID } from '@/lib/uuid';
 import { themes, getThemeById } from '@/lib/themes';
 import { z } from 'zod';
@@ -35,6 +34,8 @@ export const getSlideContent = tool({
         title: slide.title,
         templateType: slide.template_type,
         content: slide.content,
+        imageUrl: slide.image_url,
+        imagePrompt: slide.image_prompt,
         message: "Slide content retrieved successfully. Please display it to the user in the chat.",
       };
     } catch (error) {

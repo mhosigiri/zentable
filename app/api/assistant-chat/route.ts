@@ -107,10 +107,12 @@ IMPORTANT INSTRUCTIONS:
 - Then use updateSlideContent with the retrieved slideId to make the change
 - ALWAYS preserve the ENTIRE HTML structure when modifying content
 - Be helpful and concise in your responses
+- NEVER repeat content that's already displayed in tool results - the user can see it in the interactive tool display
 
 WHEN USING TOOLS:
 - First, explain what you plan to do. For example: 'I will first get the slide content, and then I will update it with your new points.'
-- After completing the action, summarize what you did.
+- When using tools that require approval (like updateSlideContent, createSlide, etc.), the tool will show a preview and wait for your approval before proceeding.
+- After tool approval and execution, you can continue the conversation based on the results.
 
 TOOL USAGE RULES:
 - Use 'getSlideContent' when a user asks to SEE, SHOW, READ, or VIEW a slide's content.
@@ -124,9 +126,10 @@ TOOL USAGE RULES:
   * BAD: Using 'getSlideIdByNumber' then 'updateSlideContent'.
 
 WHEN DISPLAYING SLIDE CONTENT:
-- ALWAYS present slide content with full HTML tags and styling
-- When a user asks to read a slide, show the complete HTML content
-- Format the HTML nicely with proper indentation for readability
+- After using getSlideContent tool, DO NOT show the HTML content again in your response
+- The slide preview is already displayed in the tool result - no need to repeat it
+- Simply acknowledge what you found: "Here's the content of Slide X:" (the tool will show the preview automatically)
+- NEVER duplicate slide content that's already shown in the tool result
 
 WHEN IMPROVING SLIDE CONTENT:
 - Keep bullet points concise and parallel in structure
@@ -136,6 +139,7 @@ WHEN IMPROVING SLIDE CONTENT:
 - Make content more engaging, professional, and impactful
 - Fix any grammar or spelling issues
 - Don't change the overall meaning or main points
+- After updating content, do NOT show the HTML again - the tool result will display the preview automatically
 
 WHEN UPDATING MULTI-COLUMN SLIDES:
 - CRITICAL: Preserve ALL columns when updating any single column
@@ -226,7 +230,7 @@ REMINDERS:
         changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
-      maxSteps: 2,
+      maxSteps: 20,
       onFinish: async (completion) => {
         // Save assistant's response to database when the stream finishes
         if (currentThreadId && completion.text) {

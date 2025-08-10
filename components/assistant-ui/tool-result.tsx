@@ -3,33 +3,39 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, Edit, Search, Wand2, Sparkles, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { AssistantSlidePreview } from '@/components/assistant-ui/assistant-slide-preview';
 import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getThemeById, applyAndPersistTheme } from '@/lib/themes';
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from '@/components/ai-elements/tool';
+import { CodeBlock } from '@/components/ai-elements/code-block';
+import type { ToolUIPart } from 'ai';
 
 // Convert technical tool names to user-friendly descriptions
 const getUserFriendlyToolName = (toolName: string): string => {
   const toolNameMap: Record<string, string> = {
-    'updateSlideImage': 'Updating Slide Image',
-    'applyTheme': 'Applying Theme',
-    'changeSlideTemplate': 'Changing Slide Template',
-    'createSlide': 'Creating Slide',
-    'createSlideWithAI': 'Creating AI-Generated Slide',
-    'deleteSlide': 'Deleting Slide',
-    'duplicateSlide': 'Duplicating Slide',
-    'moveSlide': 'Moving Slide',
-    'getSlideContent': 'Viewing Slide Content',
-    'updateSlideContent': 'Updating Slide Content',
-    'getSlideIdByNumber': 'Getting Slide Content',
-    'getSlideById': 'Retrieving Slide',
-    'getAllSlides': 'Getting All Slides',
-    'getOutline': 'Retrieving Outline',
-    'generateImage': 'Generating Image',
+    'updateSlideImage': 'Update Slide Image',
+    'applyTheme': 'Apply Theme',
+    'changeSlideTemplate': 'Change Slide Template',
+    'createSlide': 'Create Slide',
+    'createSlideWithAI': 'Generate AI Slide',
+    'deleteSlide': 'Delete Slide',
+    'duplicateSlide': 'Duplicate Slide',
+    'moveSlide': 'Move Slide',
+    'getSlideContent': 'Get Slide Content',
+    'updateSlideContent': 'Update Slide Content',
+    'getSlideIdByNumber': 'Find Slide',
+    'getSlideById': 'Retrieve Slide',
+    'getAllSlides': 'List All Slides',
+    'getOutline': 'Get Outline',
+    'generateImage': 'Generate Image',
   };
   
   return toolNameMap[toolName] || toolName;
@@ -47,25 +53,13 @@ interface ToolResultProps {
   onReject?: (toolCall: ToolCallResult) => void;
 }
 
-const getToolIcon = (toolName: string) => {
-  switch (toolName) {
-    case 'updateSlideImage':
-    case 'generateImage':
-      return <Sparkles className="w-4 h-4" />;
-    case 'applyTheme':
-    case 'changeSlideTemplate':
-    case 'updateSlideContent':
-    case 'createSlide':
-    case 'duplicateSlide':
-    case 'moveSlide':
-    case 'deleteSlide':
-      return <Wand2 className="w-4 h-4" />;
-    case 'getSlideContent':
-    case 'getSlideIdByNumber':
-      return <Search className="w-4 h-4" />;
-    default:
-      return <Clock className="w-4 h-4" />;
-  }
+// Map tool status to ToolUIPart state
+const getToolState = (toolCall: ToolCallResult, status: string): ToolUIPart['state'] => {
+  if (!toolCall.result) return 'input-streaming';
+  if (status === 'rejected') return 'output-error';
+  if (status === 'approved') return 'output-available';
+  if (toolCall.result?.requiresApproval) return 'input-available';
+  return 'output-available';
 };
 
 
@@ -134,45 +128,36 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
   const isUpdateSlideContent = toolCall.toolName === 'updateSlideContent';
   const isGetSlideContent = toolCall.toolName === 'getSlideContent';
   const requiresApproval = toolCall.result?.requiresApproval;
+  const toolState = getToolState(toolCall, status);
+  
+  // Determine if tool should be open by default
+  const defaultOpen = toolState === 'output-available' || toolState === 'output-error' || requiresApproval;
   
   return (
-    <Card className="my-4 bg-white/10 border border-white/20 rounded-lg backdrop-blur shadow-lg">
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-3">
-          {getToolIcon(toolCall.toolName)}
-          <div className="flex-1">
-            <CardTitle className="text-base font-medium">
-              {getUserFriendlyToolName(toolCall.toolName)}
-            </CardTitle>
-          </div>
-          <Badge 
-            variant={
-              status === 'approved' ? 'default' : 
-              status === 'rejected' ? 'destructive' : 
-              toolCall.result ? 'default' :
-              'secondary'
-            }
-            className="gap-1"
-          >
-            {status === 'pending' && !toolCall.result && <Loader2 className="w-3 h-3 animate-spin" />}
-            {status === 'pending' && toolCall.result && <CheckCircle className="w-3 h-3" />}
-            {status === 'approved' && <CheckCircle className="w-3 h-3" />}
-            {status === 'rejected' && <XCircle className="w-3 h-3" />}
-          </Badge>
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-3">
+    <Tool defaultOpen={defaultOpen} className="my-4">
+      <ToolHeader 
+        type={getUserFriendlyToolName(toolCall.toolName)} 
+        state={toolState}
+      />
+      <ToolContent>
+        {/* Show input parameters if available */}
+        {toolCall.args && Object.keys(toolCall.args).length > 0 && (
+          <ToolInput input={toolCall.args} />
+        )}
+        
+        {/* Custom output rendering based on tool type */}
+        <div className="space-y-4 px-4 pb-4">
           {/* For slide content viewing */}
           {isGetSlideContent && toolCall.result?.success && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Slide Preview:</h4>
-              <div className="mb-4">
+            <div className="space-y-2">
+              <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Slide Preview</h4>
+              <div className="rounded-md bg-muted/50 p-4">
                 <AssistantSlidePreview 
                   content={toolCall.result.content || ''} 
                   title={toolCall.result.title || ''}
                   templateType={toolCall.result.templateType || 'bullets'}
+                  imageUrl={toolCall.result.imageUrl}
+                  imagePrompt={toolCall.result.imagePrompt}
                 />
               </div>
             </div>
@@ -180,59 +165,71 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
 
           {/* For slide updates, show content preview */}
           {isUpdateSlideContent && toolCall.args.content && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Content Preview:</h4>
-              <div className="mb-10 pb-4">
+            <div className="space-y-2">
+              <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Content Preview</h4>
+              <div className="rounded-md bg-muted/50 p-4">
                 <AssistantSlidePreview 
                   content={toolCall.args.content} 
                   title={toolCall.args.title || ''}
                   templateType={toolCall.args.templateType || 'bullets'}
+                  imageUrl={toolCall.args.imageUrl}
+                  imagePrompt={toolCall.args.imagePrompt}
                 />
               </div>
             </div>
           )}
 
-          {/* Previews for other tools */}
-          {toolCall.toolName === 'updateSlideImage' && toolCall.result?.imagePrompt && (
-            <p className="text-sm">Generate image with prompt: <em>&quot;{toolCall.result.imagePrompt}&quot;</em></p>
+          {/* Show result if available and not already handled */}
+          {toolCall.result && !isGetSlideContent && !isUpdateSlideContent && (
+            <ToolOutput 
+              output={
+                <div className="p-3">
+                  {toolCall.toolName === 'updateSlideImage' && toolCall.result?.imagePrompt && (
+                    <p className="text-sm">Generate image with prompt: <em>&quot;{toolCall.result.imagePrompt}&quot;</em></p>
+                  )}
+                  {toolCall.toolName === 'changeSlideTemplate' && toolCall.result?.slideId && (
+                    <p className="text-sm">Change template to <strong>{toolCall.result.newTemplateType}</strong></p>
+                  )}
+                  {toolCall.toolName === 'applyTheme' && toolCall.result?.themeId && (
+                    <p className="text-sm">Applied theme: <strong>{toolCall.result.themeId}</strong></p>
+                  )}
+                  {/* For other tools, show JSON result */}
+                  {!['updateSlideImage', 'changeSlideTemplate', 'applyTheme'].includes(toolCall.toolName) && (
+                    <CodeBlock 
+                      code={JSON.stringify(toolCall.result, null, 2)} 
+                      language="json" 
+                    />
+                  )}
+                </div>
+              }
+              errorText={status === 'rejected' ? 'Changes rejected by user' : undefined}
+            />
           )}
-
-          {toolCall.toolName === 'changeSlideTemplate' && toolCall.result?.slideId && (
-            <p className="text-sm">Change template for slide <code className='text-xs bg-gray-200 p-1 rounded'>{toolCall.result.slideId}</code> to <strong>{toolCall.result.newTemplateType}</strong>?</p>
-          )}
-          {/* Action Buttons */}
+          
+          {/* Action Buttons for approval */}
           {status === 'pending' && requiresApproval && (
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 px-4 pb-4">
               <Button 
                 onClick={handleApprove}
                 size="sm"
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
-                <CheckCircle className="w-4 h-4 mr-1" />
+                <CheckCircle2 className="w-4 h-4 mr-1" />
                 Apply Changes
               </Button>
               <Button 
                 onClick={handleReject}
                 variant="outline"
                 size="sm"
+                className="border-red-500/50 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
               >
                 <XCircle className="w-4 h-4 mr-1" />
                 Reject
               </Button>
             </div>
           )}
-          {status === 'approved' && (
-            <div className="text-sm text-green-600 font-medium">
-              ✅ Changes applied to slide
-            </div>
-          )}
-          {status === 'rejected' && (
-            <div className="text-sm text-red-600 font-medium">
-              ❌ Changes rejected
-            </div>
-          )}
         </div>
-      </CardContent>
-    </Card>
+      </ToolContent>
+    </Tool>
   );
 }
