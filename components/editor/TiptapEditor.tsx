@@ -42,6 +42,9 @@ interface TiptapEditorProps {
   className?: string;
   variant?: 'title' | 'subtitle' | 'body' | 'default';
   editable?: boolean;
+  slideId?: string;
+  presentationId?: string;
+  templateType?: string;
 }
 
 function getEditorClasses(variant: string): string {
@@ -60,7 +63,17 @@ function getEditorClasses(variant: string): string {
   }
 }
 
-export function TiptapEditor({ content, onChange, placeholder, className, variant = 'default', editable = true }: TiptapEditorProps) {
+export function TiptapEditor({ 
+  content, 
+  onChange, 
+  placeholder, 
+  className, 
+  variant = 'default', 
+  editable = true,
+  slideId,
+  presentationId,
+  templateType
+}: TiptapEditorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showTextType, setShowTextType] = useState(false);
@@ -268,6 +281,11 @@ export function TiptapEditor({ content, onChange, placeholder, className, varian
           open={showAI}
           onOpenChange={setShowAI}
           selectedText={getSelectedText()}
+          slideId={slideId}
+          presentationId={presentationId}
+          templateType={templateType}
+          fullContent={editor?.getHTML()}
+          selectedHtml={editor?.state.selection.empty ? '' : editor?.getHTML()}
           onReplace={handleAIReplace}
           onInsert={handleAIInsert}
         >
