@@ -20,7 +20,7 @@ export function ThreeColumnWithHeadings({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 ThreeColumnWithHeadings - Content being saved:', newContent);
+      // console.log('💾 ThreeColumnWithHeadings - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

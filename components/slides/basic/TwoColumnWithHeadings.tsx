@@ -20,7 +20,7 @@ export function TwoColumnWithHeadings({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 TwoColumnWithHeadings - Content being saved:', newContent);
+      // console.log('💾 TwoColumnWithHeadings - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

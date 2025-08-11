@@ -190,13 +190,19 @@ function selectTemplateType(title: string, bulletPoints: string[], index: number
   }
   
   if (index === totalSections - 1) {
-    // Last slide - prefer summary-friendly templates
-    const lastSlidePreferred = finalTemplates.filter(t => 
-      ['title-with-bullets', 'bullets', 'paragraph', 'two-columns', 'three-columns'].includes(t)
-    );
-    if (lastSlidePreferred.length > 0) {
-      return lastSlidePreferred[Math.floor(Math.random() * lastSlidePreferred.length)];
+    // Last slide - use only non-image templates for conclusions and summaries
+    const imageTemplates = ['image-and-text', 'text-and-image', 'title-with-bullets-and-image', 'accent-left', 'accent-right', 'accent-top', 'accent-background'];
+    const lastSlideTemplates = allTemplates.filter(t => !imageTemplates.includes(t));
+    const lastSlidePreferred = ['title-with-bullets', 'bullets', 'paragraph', 'two-columns', 'two-column-with-headings', 'three-columns', 'three-column-with-headings', 'title-with-text'];
+    
+    // Prioritize conclusion-friendly templates first
+    const conclusionTemplates = lastSlidePreferred.filter(t => lastSlideTemplates.includes(t));
+    if (conclusionTemplates.length > 0) {
+      return conclusionTemplates[Math.floor(Math.random() * conclusionTemplates.length)];
     }
+    
+    // Fallback to any non-image template
+    return lastSlideTemplates[Math.floor(Math.random() * lastSlideTemplates.length)];
   }
   
   // PRIORITY 5: For middle slides, prefer least-used templates

@@ -227,9 +227,9 @@ const AssistantMessage: FC = () => {
         });
       }
       */
-      console.log('Database write skipped for testing UI-only updates');
+      // console.log('Database write skipped for testing UI-only updates');
     } catch (error) {
-      console.error('Failed to apply slide update:', error);
+      // console.error('Failed to apply slide update:', error);
     }
   };
 

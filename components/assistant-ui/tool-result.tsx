@@ -96,7 +96,7 @@ export function ToolResult({ toolCall, onReject }: ToolResultProps) {
         const theme = getThemeById(result.themeId);
         if (theme) {
           // eslint-disable-next-line no-console
-          console.log(`🎨 Assistant applying theme for documentId: ${documentId}`);
+          // console.log(`🎨 Assistant applying theme for documentId: ${documentId}`);
           
           // Update the theme context first
           setTheme(theme, documentId);
@@ -155,7 +155,7 @@ export function ToolResult({ toolCall, onReject }: ToolResultProps) {
             })
           });
         } catch (error) {
-          console.error('Failed to generate image:', error);
+          // console.error('Failed to generate image:', error);
           // Reset generating state on error
           slideManager.updateSlideById(result.slideId, { 
             isGeneratingImage: false 
@@ -173,7 +173,7 @@ export function ToolResult({ toolCall, onReject }: ToolResultProps) {
         }
       }
     } catch (e) {
-      console.error(`Failed to apply ${toolName} on client`, e);
+      // console.error(`Failed to apply ${toolName} on client`, e);
       setStatus('rejected'); // Revert status on failure
     }
 

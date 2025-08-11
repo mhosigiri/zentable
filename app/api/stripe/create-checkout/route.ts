@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     // Check if user already has this exact plan
-    if (profile?.stripe_price_id === priceId && profile.subscription_status === 'active') {
+    if (profile?.stripe_price_id === priceId && profile?.subscription_status === 'active') {
       return Response.json({ 
         error: 'You are already subscribed to this plan' 
       }, { status: 400 })
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'subscription',
-      success_url: `http://localhost:3000/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `http://localhost:3000/pricing?canceled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pricing?canceled=true`,
       client_reference_id: user.id,
       metadata: {
         userId: user.id,

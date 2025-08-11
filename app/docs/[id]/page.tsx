@@ -35,8 +35,9 @@ import {
   X
   } from 'lucide-react';
 import { PresentationMode } from '@/components/ui/presentation-mode';
-import { db, DocumentData, PresentationUpdate } from '@/lib/database';
+import { DatabaseService, DocumentData, PresentationUpdate } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { defaultTheme } from '@/lib/themes';
 import { getSlideById } from '@/lib/slides';
 import { exportSlidesToPDF } from '@/lib/export';
@@ -45,6 +46,10 @@ import { useSlideNavigation } from '@/hooks/useSlideNavigation';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useMyRuntime } from './MyRuntimeProvider';
 import { generateUUID, isValidUUID } from '@/lib/uuid';
+
+// Create database service with proper user-authenticated client
+const browserClient = createClient();
+const db = new DatabaseService(browserClient);
 
 interface OutlineSection {
   id: string;

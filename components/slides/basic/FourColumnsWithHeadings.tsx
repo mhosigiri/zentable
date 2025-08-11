@@ -20,7 +20,7 @@ export function FourColumnsWithHeadings({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 FourColumnsWithHeadings - Content being saved:', newContent);
+      // console.log('💾 FourColumnsWithHeadings - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

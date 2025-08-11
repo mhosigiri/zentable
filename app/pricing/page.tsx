@@ -159,7 +159,7 @@ export default function PricingPage() {
         const plansWithPrices = getPlans(config.prices)
         setPlans(plansWithPrices)
       } catch (error) {
-        console.error('Error fetching Stripe config:', error)
+        // console.error('Error fetching Stripe config:', error)
         // Fallback to test prices if config fails
         const fallbackPrices = {
           lite: 'price_1RtWl99MDLdB3mTb8iBxZYaY',
@@ -214,11 +214,11 @@ export default function PricingPage() {
         // Redirect to Stripe checkout
         window.location.href = data.checkoutUrl
       } else {
-        console.error('Checkout creation failed:', data.error)
+        // console.error('Checkout creation failed:', data.error)
         alert(data.error || 'Failed to create checkout. Please try again.')
       }
     } catch (error) {
-      console.error('Purchase error:', error)
+      // console.error('Purchase error:', error)
       // Fallback to billing page
       router.push('/dashboard/billing')
     } finally {

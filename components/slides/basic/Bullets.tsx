@@ -18,7 +18,7 @@ export function Bullets({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 Bullets - Content being saved:', newContent);
+      // console.log('💾 Bullets - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

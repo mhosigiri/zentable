@@ -142,6 +142,7 @@
     "zod": "^3.25.67"
   },
   "devDependencies": {
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@types/uuid": "^10.0.0"
   }
 }

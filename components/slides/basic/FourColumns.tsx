@@ -20,7 +20,7 @@ export function FourColumns({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 FourColumns - Content being saved:', newContent);
+      // console.log('💾 FourColumns - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

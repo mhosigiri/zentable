@@ -16,7 +16,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import type { ToolUIPart } from 'ai';
+import type { ToolCallContentPartProps } from '@assistant-ui/react';
 import { CodeBlock } from './code-block';
 
 export type ToolProps = ComponentProps<typeof Collapsible>;
@@ -29,12 +29,12 @@ export const Tool = ({ className, ...props }: ToolProps) => (
 );
 
 export type ToolHeaderProps = {
-  type: ToolUIPart['type'];
-  state: ToolUIPart['state'];
+  type: string;
+  state: 'input-streaming' | 'input-available' | 'output-available' | 'output-error';
   className?: string;
 };
 
-const getStatusBadge = (status: ToolUIPart['state']) => {
+const getStatusBadge = (status: 'input-streaming' | 'input-available' | 'output-available' | 'output-error') => {
   const labels = {
     'input-streaming': 'Pending',
     'input-available': 'Running',
@@ -92,7 +92,7 @@ export const ToolContent = ({ className, ...props }: ToolContentProps) => (
 );
 
 export type ToolInputProps = ComponentProps<'div'> & {
-  input: ToolUIPart['input'];
+  input: any;
 };
 
 export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
@@ -108,7 +108,7 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
 
 export type ToolOutputProps = ComponentProps<'div'> & {
   output: ReactNode;
-  errorText: ToolUIPart['errorText'];
+  errorText?: string;
 };
 
 export const ToolOutput = ({

@@ -99,7 +99,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
         setCurrentThreadId(threadId);
         // Persist in localStorage as well
         localStorage.setItem(`threadId_${presentationId}`, threadId);
-        console.log('Updated thread ID from response:', threadId);
+        // console.log('Updated thread ID from response:', threadId);
       }
     }
   });
@@ -113,7 +113,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
     const handleMessage = (event: MessageEvent) => {
       // Check if this is a slideUpdated event from approved tool calls
       if (event.data?.type === 'slideUpdated' && event.data?.slideId) {
-        console.log("✅ Approved slide update detected:", event.data);
+        // console.log("✅ Approved slide update detected:", event.data);
         
         // Trigger slide refresh by calling onSlideUpdate with the slideId
         // This will refresh the slide from database

@@ -1,18 +1,12 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { DatabaseService } from '@/lib/database'
 
 export const dynamic = 'force-dynamic'
 
-// Type guards to handle Stripe API response variations
-function getSubscriptionId(sub: string | Stripe.Subscription | null): string | null {
-  if (!sub) return null
-  return typeof sub === 'string' ? sub : sub.id
-}
-
 function getPeriodEnd(subscription: Stripe.Subscription): number {
-  return subscription.current_period_end
+  return (subscription as any).current_period_end
 }
 
 // Use simple webhook secret variable
@@ -48,7 +42,8 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Stripe webhook event received:', event.type)
     
-    const supabase = await createClient()
+    // Use service client for webhook operations (no user context)
+    const supabase = createServiceClient()
     const db = new DatabaseService(supabase)
 
     switch (event.type) {

@@ -21,7 +21,11 @@ import { BrainstormingDatabaseService } from '@/lib/brainstorming-database';
 import { createClient } from '@/lib/supabase/client';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { generateUUID } from '@/lib/uuid';
-import { db } from '@/lib/database';
+import { DatabaseService } from '@/lib/database';
+
+// Create database service with proper user-authenticated client
+const browserClient = createClient();
+const db = new DatabaseService(browserClient);
 
 interface Idea {
   id: string;

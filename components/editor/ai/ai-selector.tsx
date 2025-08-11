@@ -51,7 +51,7 @@ export function AISelector({
       setShowCommands(false);
     },
     onError: (error) => {
-      console.error('AI completion error:', error);
+      // console.error('AI completion error:', error);
       toast.error("Failed to generate AI completion. Please try again.");
     },
     onFinish: () => {
@@ -77,7 +77,7 @@ export function AISelector({
         }
       });
     } catch (error) {
-      console.error('Error executing command:', error);
+      // console.error('Error executing command:', error);
       toast.error("Failed to execute AI command. Please try again.");
       setShowCommands(true);
     }
@@ -101,7 +101,7 @@ export function AISelector({
         }
       });
     } catch (error) {
-      console.error('Error executing custom command:', error);
+      // console.error('Error executing custom command:', error);
       toast.error("Failed to execute AI command. Please try again.");
       setShowCommands(true);
     }

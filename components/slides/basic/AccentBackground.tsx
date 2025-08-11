@@ -25,7 +25,7 @@ export function AccentBackground({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 AccentBackground - Content being saved:', newContent);
+      // console.log('💾 AccentBackground - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

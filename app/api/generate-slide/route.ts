@@ -29,27 +29,27 @@ const TextAndImageSchema = z.object({
 });
 
 const TwoColumnsSchema = z.object({
-  content: z.string().describe('Complete HTML content with h3 title and table-based two-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h4>Left Column</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h4>Right Column</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
+  content: z.string().describe('Complete HTML content with h3 title and table-based two-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h4>Meaningful Left Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h4>Meaningful Right Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const TwoColumnWithHeadingsSchema = z.object({
-  content: z.string().describe('Complete HTML content with h3 title and table-based two-column layout with styled headings. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Left Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Right Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
+  content: z.string().describe('Complete HTML content with h3 title and table-based two-column layout with styled headings. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Left Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Right Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const ThreeColumnsSchema = z.object({
-  content: z.string().describe('Complete HTML content with h3 title and table-based three-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h4>Column 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h4>Column 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h4>Column 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
+  content: z.string().describe('Complete HTML content with h3 title and table-based three-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h4>Meaningful Heading 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h4>Meaningful Heading 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h4>Meaningful Heading 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const ThreeColumnWithHeadingsSchema = z.object({
-  content: z.string().describe('Complete HTML content with h3 title and table-based three-column layout with styled headings. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 1 Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 2 Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 3 Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
+  content: z.string().describe('Complete HTML content with h3 title and table-based three-column layout with styled headings. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Heading 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Heading 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Heading 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const FourColumnsSchema = z.object({
-  content: z.string().describe('Complete HTML content with h3 title and table-based four-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h4>Column 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4>Column 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4>Column 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h4>Column 4</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
+  content: z.string().describe('Complete HTML content with h3 title and table-based four-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h4>Meaningful Heading 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4>Meaningful Heading 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4>Meaningful Heading 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h4>Meaningful Heading 4</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const FourColumnsWithHeadingsSchema = z.object({
-  content: z.string().describe('Complete HTML content with h3 title and table-based four-column layout with styled headings. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Column 4</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
+  content: z.string().describe('Complete HTML content with h3 title and table-based four-column layout with styled headings. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Heading 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Heading 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Heading 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Heading 4</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>'),
 });
 
 const BulletsSchema = z.object({
@@ -150,22 +150,22 @@ function getPromptForTemplate(templateType: string, sectionTitle: string, bullet
       return `Create complete HTML content with h3 title followed by paragraphs and/or bullet points that complement the image. Structure: <h3>Title</h3><p>Description text...</p><ul><li>Key point 1</li><li>Key point 2</li></ul>. Also create a detailed, professional image prompt. Make bullet points substantial (1-2 lines) and keep all text scannable. Base it on: ${baseContent}`;
     
     case 'two-columns':
-      return `Create complete HTML content with h3 title and table-based two-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h4>Left Column</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h4>Right Column</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-4 points per column. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h3 title and table-based two-column layout. Create meaningful column headings (2-4 words each) that relate to the content. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h4>Meaningful Left Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h4>Meaningful Right Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-4 points per column with descriptive, content-specific column headings. Base it on: ${baseContent}`;
     
     case 'two-column-with-headings':
-      return `Create complete HTML content with h3 title and table-based two-column layout with styled headings. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Left Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Right Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use clear headings (3-4 words max) and 2-4 points per column. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h3 title and table-based two-column layout with styled headings. Create meaningful column headings (2-4 words each) that relate to the content. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1.5rem 0 0; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Left Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 50%; padding: 0 0 0 1.5rem; vertical-align: top;"><h4 style="color: #8b5cf6; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1rem;">Meaningful Right Heading</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use descriptive, content-specific column headings (2-4 words max) and 2-4 points per column. Base it on: ${baseContent}`;
     
     case 'three-columns':
-      return `Create complete HTML content with h3 title and table-based three-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h4>Column 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h4>Column 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h4>Column 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-3 points per column. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h3 title and table-based three-column layout. Create meaningful column headings (2-3 words each) that relate to the content. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 33.33%; padding: 0 1rem 0 0; vertical-align: top;"><h4>Meaningful Heading 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0.5rem; vertical-align: top;"><h4>Meaningful Heading 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 33.33%; padding: 0 0 0 1rem; vertical-align: top;"><h4>Meaningful Heading 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-3 points per column with descriptive, content-specific column headings. Base it on: ${baseContent}`;
     
     case 'three-column-with-headings':
-      return `Create complete HTML content with h3 title and table-based three-column layout with styled headings. Use h4 tags for column headings with purple styling. Use short headings (2-3 words max) and 2-3 points per column. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h3 title and table-based three-column layout with styled headings. Create meaningful column headings (2-3 words each) that relate to the content. Use h4 tags for column headings with purple styling. Use descriptive, content-specific headings (2-3 words max) and 2-3 points per column. Base it on: ${baseContent}`;
     
     case 'four-columns':
-      return `Create complete HTML content with h3 title and table-based four-column layout. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h4>Column 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4>Column 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4>Column 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h4>Column 4</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-3 points per column. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h3 title and table-based four-column layout. Create meaningful column headings (2-3 words each) that relate to the content. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 25%; padding: 0 0.75rem 0 0; vertical-align: top;"><h4>Meaningful Heading 1</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4>Meaningful Heading 2</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0.375rem; vertical-align: top;"><h4>Meaningful Heading 3</h4><ul><li>Point 1</li><li>Point 2</li></ul></td><td style="width: 25%; padding: 0 0 0 0.75rem; vertical-align: top;"><h4>Meaningful Heading 4</h4><ul><li>Point 1</li><li>Point 2</li></ul></td></tr></table>. Use 2-3 points per column with descriptive, content-specific column headings. Base it on: ${baseContent}`;
     
     case 'four-columns-with-headings':
-      return `Create complete HTML content with h3 title and table-based four-column layout with styled headings. Use the exact structure from the schema with purple headings and borders. Use short headings (2-3 words max) and 2-3 points per column. Base it on: ${baseContent}`;
+      return `Create complete HTML content with h3 title and table-based four-column layout with styled headings. Create meaningful column headings (2-3 words each) that relate to the content. Use the exact structure from the schema with purple headings and borders. Use descriptive, content-specific headings (2-3 words max) and 2-3 points per column. Base it on: ${baseContent}`;
     
     case 'bullets':
       return `Create complete HTML content with h3 title and table-based 2x2 grid layout for exactly 4 numbered bullet points with bold Point Titles. Structure: <h3>Title</h3><table style="width: 100%; border-collapse: collapse; margin-top: 2rem;"><tr><td style="width: 50%; padding: 0 1rem 1rem 0; vertical-align: top;"><h4><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">1</span>Point Title</h4><p>Description</p></td><td style="width: 50%; padding: 0 0 1rem 1rem; vertical-align: top;"><h4><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">2</span>Point Title</h4><p>Description</p></td></tr><tr><td style="width: 50%; padding: 1rem 1rem 0 0; vertical-align: top;"><h4><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">3</span>Point Title</h4><p>Description</p></td><td style="width: 50%; padding: 1rem 0 0 1rem; vertical-align: top;"><h4><span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: #8b5cf6; color: white; border-radius: 50%; font-weight: bold; margin-right: 0.75rem;">4</span>Point Title</h4><p>Description</p></td></tr></table><hr style="margin: 2rem 0; border: 1px solid #e5e7eb;" /><p><strong>Conclusion:</strong> Summary content</p>. Keep each point concise (3-8 words for Point Title, 1-2 sentences for Description). Add a brief, strong conclusion. Base it on: ${baseContent}`;
@@ -271,6 +271,8 @@ export async function POST(req: Request) {
 
     const systemPrompt = `You are an expert presentation designer and content creator. Create compelling slide content that is ${writingStyle} in tone and written in ${targetLanguage}.
 
+IMPORTANT: You must respond with valid JSON only. Do not include any text outside the JSON structure.
+
 CRITICAL INSTRUCTIONS FOR PRESENTATION SLIDES:
 - DO NOT use the outline bullet points directly - they are reference points only
 - CREATE concise, presentation-ready content that expands meaningfully on the topic
@@ -332,8 +334,13 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
         system: systemPrompt,
         prompt,
         schema,
-        maxTokens: 1000,
+        maxTokens: 2000,
         temperature: 0.7,
+        experimental_providerMetadata: {
+          groq: {
+            response_format: { type: "json_object" }
+          }
+        }
       });
 
       console.log('✅ generateObject completed successfully');
@@ -350,10 +357,35 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
       console.error('❌ Error with generateObject:', generateError);
       console.error('Error details:', generateError instanceof Error ? generateError.message : String(generateError));
       console.error('Error stack:', generateError instanceof Error ? generateError.stack : 'No stack trace');
-      return Response.json(
-        { error: 'Failed to generate slide content', details: generateError instanceof Error ? generateError.message : String(generateError) },
-        { status: 500 }
-      );
+      
+      // Try fallback with different model
+      console.log('🔄 Attempting fallback with llama-3.3-70b-versatile...');
+      try {
+        const fallbackResult = await generateObject({
+          model: groq('llama-3.3-70b-versatile'),
+          system: systemPrompt,
+          prompt,
+          schema,
+          maxTokens: 2000,
+          temperature: 0.7,
+        });
+
+        console.log('✅ Fallback generation successful');
+        return Response.json({
+          success: true,
+          data: fallbackResult.object,
+          usage: fallbackResult.usage,
+          creditsRemaining: creditResult.newBalance,
+          usedFallback: true
+        });
+
+      } catch (fallbackError) {
+        console.error('❌ Fallback also failed:', fallbackError);
+        return Response.json(
+          { error: 'Failed to generate slide content with both models', details: generateError instanceof Error ? generateError.message : String(generateError) },
+          { status: 500 }
+        );
+      }
     }
 
   } catch (error) {
