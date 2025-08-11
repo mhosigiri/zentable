@@ -1,0 +1,36 @@
+# Zentable - AI-Powered Presentation Builder
+
+> Transform your ideas into stunning presentations with AI in seconds. Zentable combines advanced AI generation, intelligent slide templates, and powerful customization tools to create captivating visual stories from simple prompts.
+
+## Product Overview
+
+Zentable is a modern presentation builder that leverages artificial intelligence to help users create professional presentations quickly and efficiently. The platform offers multiple ways to start creating: AI generation from prompts, content transformation from existing materials, and import capabilities for various file formats.
+
+## Core Features
+
+- [AI Generation](/docs-section/features/ai-generation): Transform prompts into comprehensive presentations with intelligent content structuring and automatic slide creation
+- [AI Assistant](/docs-section/features/ai-assistant): Interactive chat assistant for real-time slide editing, content suggestions, and presentation improvements
+- [Brainstorming](/docs-section/features/brainstorming): Interactive brainstorming mode to explore ideas and refine presentation concepts before creation
+- [MCP Integration](/docs-section/features/mcp-integration): Create presentations directly from AI development tools like Claude Code, Cursor, Windsurf, and VS Code Copilot
+- [Slide Templates](/docs-section/features/slide-templates): 18+ professionally designed templates including title slides, bullet points, image layouts, and multi-column formats
+- [Themes](/docs-section/features/themes): 27+ visual themes ranging from professional business styles to creative and modern designs
+- [Presentation Mode](/docs-section/features/presentation-mode): Full-screen presentation mode with navigation controls and presenter tools
+- [Export Options](/docs-section/features/export): PDF export capabilities for sharing and offline viewing
+
+## Getting Started
+
+- [Quick Start Guide](/docs-section/getting-started): Complete onboarding process from account creation to first presentation
+- [Creating Presentations](/docs-section/guides/creating-presentations): Step-by-step guide for all creation methods including AI prompts and content transformation
+- [Editing Slides](/docs-section/guides/editing-slides): Comprehensive editing features, theme application, and slide management
+- [Complete User Guide](/docs-section/llms-full.txt): Comprehensive documentation covering all features, best practices, and detailed usage instructions
+
+## Subscription Plans
+
+- **Free**: 500 one-time credits for trying AI presentations
+- **Lite ($5/month)**: 1,000 monthly credits with accumulation and advanced features  
+- **Pro ($15/month)**: 3,000 monthly credits with priority support and premium templates
+
+## Optional
+
+- [Pricing Details](/pricing): Complete pricing breakdown with feature comparisons and subscription management
+- [Authentication](/auth/login): User account creation and management system with OAuth support

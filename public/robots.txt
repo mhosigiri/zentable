@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+
+# Allow crawling of main pages
+Allow: /pricing
+Allow: /docs
+Allow: /auth/login
+
+# Disallow private/internal pages
+Disallow: /dashboard/
+Disallow: /create/
+Disallow: /docs/*/
+Disallow: /api/
+Disallow: /tests/
+
+# Block crawling of authentication pages
+Disallow: /auth/error
+
+# Allow search engines to access sitemap
+Sitemap: https://zentable.ai/sitemap.xml
+
+# LLM-friendly documentation files
+# Standard index file for AI models
+Allow: /llms.txt
+# Complete documentation for AI models
+Allow: /llms-full.txt
