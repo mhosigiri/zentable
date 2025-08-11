@@ -29,7 +29,7 @@ export const AssistantLayoutProvider: FC<AssistantLayoutProviderProps> = ({ chil
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('assistant-sidebar-open');
       if (saved !== null) return JSON.parse(saved);
-      return window.innerWidth >= 1440;
+      return false; // Default to closed
     }
     return false;
   });

@@ -154,18 +154,31 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 -left-10 z-20",
-            "bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800",
-            "border border-gray-200 dark:border-gray-700 rounded-l-lg",
-            "p-2 shadow-lg transition-all duration-300 ease-in-out"
+            "absolute top-1/2 -translate-y-1/2 z-20",
+            "bg-white/10 dark:bg-black/10 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/20",
+            "border border-white/20 dark:border-zinc-800/20",
+            "shadow-2xl transition-all duration-300 ease-in-out",
+            isOpen ? "rounded-l-lg p-2 -left-10" : "rounded-xl py-6 px-3 -left-[4.5rem] group h-40"
           )}
           aria-label={isOpen ? "Close assistant sidebar" : "Open assistant sidebar"}
         >
-          {isOpen ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          {isOpen ? (
+            <ChevronRight className="w-5 h-5 text-white" />
+          ) : (
+            <div className="relative w-full h-full flex items-center justify-center text-white">
+              <div className="absolute left-1/2 -translate-x-8 w-6 h-6 rounded-full border border-white/50 flex items-center justify-center">
+                <ChevronLeft className="w-4 h-4" />
+              </div>
+              <div className="flex items-center gap-2 [writing-mode:vertical-rl]">
+                <Wand2 className="w-5 h-5 animate-pulse" />
+                <span className="text-xs whitespace-nowrap">AI Assistant</span>
+              </div>
+            </div>
+          )}
         </button>
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800">
+        <div className="flex items-center justify-center border-b border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center gap-2">
             <Wand2 className="w-5 h-5 text-blue-500" />
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">AI Assistant</h3>
@@ -179,27 +192,6 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
           </AssistantRuntimeProvider>
         </div>
       </div>
-      
-      {/* Collapsed state floating button */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className={cn(
-            "fixed right-4 top-1/2 -translate-y-1/2 z-40",
-            "bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800",
-            "border border-gray-200 dark:border-gray-700 rounded-lg",
-            "px-4 py-3 shadow-lg transition-all duration-300 ease-in-out group"
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Wand2 className="w-5 h-5 text-blue-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">AI Assistant</span>
-            </div>
-            <ChevronLeft className="w-4 h-4 text-gray-500 group-hover:-translate-x-0.5 transition-transform" />
-          </div>
-        </button>
-      )}
     </TooltipProvider>
   );
 };

@@ -16,7 +16,7 @@ import {
   ToolOutput,
 } from '@/components/ai-elements/tool';
 import { CodeBlock } from '@/components/ai-elements/code-block';
-import type { ToolUIPart } from 'ai';
+// import type { ToolUIPart } from 'ai'; // Removed - not available in current AI SDK version
 
 // Convert technical tool names to user-friendly descriptions
 const getUserFriendlyToolName = (toolName: string): string => {
@@ -53,8 +53,8 @@ interface ToolResultProps {
   onReject?: (toolCall: ToolCallResult) => void;
 }
 
-// Map tool status to ToolUIPart state
-const getToolState = (toolCall: ToolCallResult, status: string): ToolUIPart['state'] => {
+// Map tool status to state
+const getToolState = (toolCall: ToolCallResult, status: string): 'input-streaming' | 'output-error' | 'output-available' | 'input-available' => {
   if (!toolCall.result) return 'input-streaming';
   if (status === 'rejected') return 'output-error';
   if (status === 'approved') return 'output-available';
@@ -64,7 +64,7 @@ const getToolState = (toolCall: ToolCallResult, status: string): ToolUIPart['sta
 
 
 
-export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
+export function ToolResult({ toolCall, onReject }: ToolResultProps) {
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const slideManager = useMyRuntime();
   const { setTheme } = useTheme();
@@ -105,11 +105,72 @@ export function ToolResult({ toolCall, onApprove, onReject }: ToolResultProps) {
           applyAndPersistTheme(theme, documentId);
         }
       } else if (toolName === 'updateSlideImage' && result.success) {
+        // First update the slide to show generating state
         slideManager.updateSlideById(result.slideId, { 
           imagePrompt: result.imagePrompt,
           imageUrl: undefined, // Clear existing image to trigger regeneration
           isGeneratingImage: true 
         });
+        
+        // Also persist the generating state to database
+        await fetch('/api/approve-slide-image-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slideId: result.slideId,
+            imagePrompt: result.imagePrompt,
+            isGeneratingImage: true
+          })
+        });
+        
+        // Actually generate the image
+        try {
+          const response = await fetch('/api/generate-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: result.imagePrompt })
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to generate image: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          
+          // Update slide with the generated image
+          slideManager.updateSlideById(result.slideId, { 
+            imageUrl: data.imageUrl,
+            isGeneratingImage: false 
+          });
+          
+          // Persist the updated slide to the database
+          await fetch('/api/approve-slide-image-update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slideId: result.slideId,
+              imageUrl: data.imageUrl,
+              imagePrompt: result.imagePrompt,
+              isGeneratingImage: false
+            })
+          });
+        } catch (error) {
+          console.error('Failed to generate image:', error);
+          // Reset generating state on error
+          slideManager.updateSlideById(result.slideId, { 
+            isGeneratingImage: false 
+          });
+          
+          // Also reset in database
+          await fetch('/api/approve-slide-image-update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slideId: result.slideId,
+              isGeneratingImage: false
+            })
+          });
+        }
       }
     } catch (e) {
       console.error(`Failed to apply ${toolName} on client`, e);

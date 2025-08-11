@@ -41,7 +41,7 @@ export const CREDIT_COSTS = {
 - ✅ `/api/generate-image` - Image generation (2 credits)
 - ✅ `/api/assistant-chat` - Chat messages (2 credits)
 - ✅ `/api/brainstorming/chat` - Brainstorming (3 credits)
-- ✅ `/api/copilot-chat` - Copilot chat (2 credits)
+- ❌ `/api/copilot-chat` - Removed (superseded by assistant-chat)
 
 ### **Stripe Integration**
 - ✅ **4 Stripe Products Created**: Free, Lite ($5), Plus ($10), Pro ($20)
@@ -513,7 +513,7 @@ export async function POST(request: Request) {
   }
 }
 
-// 6. app/api/copilot-chat/route.ts - COPILOT CHAT (slide editing)
+// 6. REMOVED: app/api/copilot-chat/route.ts - Superseded by assistant-chat
 export async function POST(request: Request) {
   try {
     await getSubscribedUser();

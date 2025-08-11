@@ -78,7 +78,7 @@ export default function SlideContentModifierTest() {
     setResult(null);
 
     try {
-      const response = await fetch('/api/copilot-chat', {
+      const response = await fetch('/api/assistant-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,10 +87,13 @@ export default function SlideContentModifierTest() {
           messages: [
             {
               role: 'user',
-              content: `Here is the current HTML content of slide #${slideId}:\n\n${currentSlide.content}\n\nPlease modify this content based on these instructions: ${prompt}`,
+              content: `Please modify the content of slide ${currentSlide.id} based on these instructions: ${prompt}`,
             },
           ],
-          slideId: currentSlide.id,
+          context: { 
+            presentationId: currentSlide.presentation_id 
+          },
+          threadId: null,
         }),
       });
 
@@ -213,7 +216,7 @@ export default function SlideContentModifierTest() {
 
   return (
     <div className="container mx-auto p-4 max-w-5xl">
-      <h1 className="text-3xl font-bold mb-8">AI Slide Content Modifier Test</h1>
+      <h1 className="text-3xl font-bold mb-8">AI Assistant Slide Content Modifier Test</h1>
       
       <Card className="mb-8">
         <CardHeader>
@@ -286,8 +289,8 @@ export default function SlideContentModifierTest() {
 
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>AI Content Modification</CardTitle>
-              <CardDescription>Enter instructions for modifying the slide content</CardDescription>
+              <CardTitle>AI Assistant Content Modification</CardTitle>
+              <CardDescription>Enter instructions for modifying the slide content using the assistant-chat API</CardDescription>
             </CardHeader>
             <CardContent>
               <div>

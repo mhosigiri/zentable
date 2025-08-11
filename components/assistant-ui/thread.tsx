@@ -78,7 +78,7 @@ const ThreadWelcome: FC = () => {
     <ThreadPrimitive.Empty>
       <div className="flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
         <div className="flex w-full flex-grow flex-col items-center justify-center">
-          <p className="mt-4 font-medium">How can I help with your presentation?</p>
+          <p className="mt-4 font-medium text-center">How can I help with your presentation?</p>
         </div>
         <ThreadWelcomeSuggestions />
       </div>
@@ -91,12 +91,12 @@ const ThreadWelcomeSuggestions: FC = () => {
     <div className="mt-3 flex w-full items-stretch justify-center gap-4">
       <ThreadPrimitive.Suggestion
         className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
-        prompt="Help me improve my slide content"
+        prompt="Help me improve first slide"
         method="replace"
         autoSend
       >
         <span className="line-clamp-2 text-ellipsis text-sm font-semibold">
-          Help me improve my slide content
+          Help me improve first slide
         </span>
       </ThreadPrimitive.Suggestion>
       <ThreadPrimitive.Suggestion
