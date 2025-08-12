@@ -43,7 +43,7 @@ export async function generatePresentationMetadata(
         type: 'article',
         title: pageTitle,
         description: description.slice(0, 160),
-        url: `https://zentable.ai/docs/${presentationId}`,
+        url: `https://zentableai.com/docs/${presentationId}`,
         siteName: 'Zentable',
         images: [
           {
@@ -79,7 +79,7 @@ export const pricingMetadata: Metadata = {
   openGraph: {
     title: 'Pricing | Zentable - AI Presentation Builder',
     description: 'Choose the perfect plan for your presentation needs. Start free with 500 credits, upgrade for more features.',
-    url: 'https://zentable.ai/pricing',
+    url: 'https://zentableai.com/pricing',
     images: ['/assets/Zentable_Hero.png'],
   },
   twitter: {
@@ -105,7 +105,7 @@ export function generateDocsMetadata(
     openGraph: {
       title: pageTitle,
       description,
-      url: `https://zentable.ai/${path}`,
+      url: `https://zentableai.com/${path}`,
       type: 'article',
       images: ['/assets/Zentable_Hero.png'],
     },

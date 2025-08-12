@@ -102,7 +102,7 @@ export default function MCPIntegrationPage() {
       "args": ["-y", "@zentable/mcp-server@latest"],
       "env": {
         "ZENTABLE_API_KEY": "your_api_key_here",
-        "ZENTABLE_SERVER_URL": "https://zentable.ai"
+        "ZENTABLE_SERVER_URL": "https://zentableai.com"
       }
     }
   }
@@ -119,7 +119,7 @@ export default function MCPIntegrationPage() {
         "-H", "Content-Type: application/json",
         "-H", "Authorization: Bearer YOUR_API_KEY",
         "-d", "@-",
-        "https://zentable.ai/api/mcp"
+        "https://zentableai.com/api/mcp"
       ]
     }
   }

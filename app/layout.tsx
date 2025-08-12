@@ -17,14 +17,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://zentable.ai'),
+  metadataBase: new URL('https://zentableai.com'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://zentable.ai',
+    url: 'https://zentableai.com',
     title: 'Zentable - AI-Powered Presentation Builder',
     description: 'Create stunning presentations with AI in seconds. Transform your ideas into captivating visual stories.',
     siteName: 'Zentable',

@@ -17,7 +17,7 @@ Disallow: /tests/
 Disallow: /auth/error
 
 # Allow search engines to access sitemap
-Sitemap: https://zentable.ai/sitemap.xml
+Sitemap: https://zentableai.com/sitemap.xml
 
 # LLM-friendly documentation files
 # Standard index file for AI models
