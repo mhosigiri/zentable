@@ -20,7 +20,7 @@ export function TitleWithBullets({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 TitleWithBullets - Content being saved:', newContent);
+      // console.log('💾 TitleWithBullets - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

@@ -18,7 +18,7 @@ export function Paragraph({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 Paragraph - Content being saved:', newContent);
+      // console.log('💾 Paragraph - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

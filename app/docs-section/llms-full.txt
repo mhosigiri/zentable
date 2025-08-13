@@ -1,0 +1,510 @@
+# Zentable Documentation - Complete User Guide
+
+> Transform your ideas into stunning presentations with AI in seconds. This comprehensive guide covers everything you need to know about creating, editing, and sharing professional presentations with Zentable.
+
+## Getting Started with Zentable
+
+Zentable is an AI-powered presentation builder that helps you create professional presentations quickly and efficiently. Whether you're preparing for a business meeting, educational session, or creative project, Zentable provides the tools and intelligence to bring your ideas to life.
+
+### Quick Start Process:
+1. **Sign Up**: Create your free account to get started with 500 credits
+2. **Choose Creation Method**: Pick from AI generation, content transformation, or file import
+3. **Configure Your Presentation**: Set slide count, style, and language preferences
+4. **Let AI Work**: Watch as your presentation is generated automatically
+5. **Customize and Refine**: Edit content, apply themes, and perfect your slides
+6. **Present or Share**: Use presentation mode or export to PDF
+
+## Creating Presentations with AI
+
+### Method 1: Generate from Prompt
+Transform a simple idea into a complete presentation:
+
+**Step-by-Step Process:**
+1. Enter a descriptive prompt (e.g., "Digital marketing strategies for small businesses")
+2. Choose number of slides: 3, 5, 8, 10, or 15 slides
+3. Select presentation style:
+   - **Professional**: Clean, business-oriented for corporate settings
+   - **Friendly**: Warm, approachable for team or educational presentations
+   - **Fun**: Colorful, energetic for creative or informal presentations
+   - **Casual**: Relaxed, conversational tone
+   - **Formal**: Traditional, structured for official presentations
+4. Pick your language: English, Spanish, French, or German
+5. AI generates complete outline and slide content automatically
+
+**Prompt Writing Tips:**
+- Be specific: "Social media marketing for restaurants in 2024" vs. "marketing presentation"
+- Include context: mention your audience, industry, or specific focus area
+- Optimal length: 10-50 words for best results
+- Avoid overly broad topics that lack direction
+
+### Method 2: Transform Existing Content
+Turn your notes, outlines, or documents into professional slides:
+
+**Content Transformation Options:**
+1. **Generate or Summarize**: Let AI restructure and optimize your content
+   - AI analyzes your content for key themes and structure
+   - Reorganizes information into logical slide flow
+   - Enhances clarity and visual appeal
+
+2. **Preserve Exact Text**: Maintain your original formatting and wording
+   - Keeps your specific language and terminology
+   - Organizes content into appropriate slide layouts
+   - Maintains author voice and style
+
+**Formatting Tips:**
+- Use "---" separators to create specific slide breaks
+- Structure content with clear headers and bullet points
+- Include key concepts, data, or quotes you want highlighted
+- AI will organize content into the most appropriate slide templates
+
+## AI Assistant - Your Presentation Partner
+
+The AI Assistant provides real-time help throughout your presentation creation process. Chat naturally to get instant support and modifications.
+
+### What the Assistant Can Do:
+
+**Content Editing:**
+- "Change the title of slide 3 to 'Market Analysis'"
+- "Add more details about pricing to slide 7"
+- "Make the conclusion more compelling"
+- "Simplify the language in slide 4 for a general audience"
+
+**Slide Management:**
+- "Add a new slide about customer testimonials"
+- "Remove slide 5, it's redundant"
+- "Duplicate slide 2 and move it after slide 8"
+- "Reorder the slides to put the problem statement first"
+
+**Visual Improvements:**
+- "Make slide 3 more visual with relevant images"
+- "Apply a more professional theme to the presentation"
+- "Change slide 6 to a two-column layout"
+- "Generate a new image for slide 4 showing teamwork"
+
+**Content Enhancement:**
+- "Add statistics to support the claims in slide 5"
+- "Create a summary slide for the key takeaways"
+- "Make the introduction more engaging"
+- "Add transition text between sections"
+
+### Conversation Examples:
+
+**User**: "The presentation feels too long. Can you help me condense it?"
+**Assistant**: "I'll review your presentation and identify slides that can be combined or condensed. I can merge similar topics and highlight only the most essential points."
+
+**User**: "Add more visual elements to make it less text-heavy"
+**Assistant**: "I'll convert some text-heavy slides to visual formats, add relevant images, and use bullet points and infographics to make the content more engaging."
+
+## Slide Templates and Layouts
+
+Zentable offers 18+ professionally designed templates that automatically adapt to your content:
+
+### Core Template Types:
+
+**Title and Header Slides:**
+- Perfect for section introductions and main topics
+- Clean typography with optional background accents
+- Ideal for chapter dividers and agenda items
+
+**Content-Heavy Layouts:**
+- **Bullet Points**: Structured lists for key information and takeaways
+- **Paragraphs**: Detailed explanations and narrative content
+- **Mixed Content**: Combination of text, lists, and callouts
+
+**Visual-First Templates:**
+- **Image and Text**: Perfect balance of visuals and information
+- **Image-Heavy**: Stunning visuals with minimal supporting text
+- **Before/After**: Comparison layouts for demonstrating change
+
+**Multi-Column Formats:**
+- **Two Columns**: Side-by-side comparisons and balanced information
+- **Three Columns**: Feature breakdowns and category presentations
+- **Four Columns**: Detailed comparisons and comprehensive overviews
+
+**Specialized Layouts:**
+- **Title with Bullets and Image**: Comprehensive information with visual support
+- **Accent Backgrounds**: Eye-catching layouts with colored sections
+- **Data-Focused**: Optimized for charts, graphs, and statistics
+
+### Template Auto-Selection:
+AI intelligently chooses the best template based on your content type:
+- Lists become bullet point slides
+- Detailed explanations use paragraph layouts
+- Comparative content gets multi-column treatment
+- Visual concepts receive image-heavy templates
+
+## Visual Themes and Styling
+
+Choose from 27+ professional themes to match your presentation's purpose and audience:
+
+### Theme Categories:
+
+**Professional Themes:**
+- Clean, business-oriented designs
+- Conservative color palettes
+- Perfect for corporate presentations, client meetings, and formal reports
+- Examples: Corporate Blue, Executive Gray, Professional Navy
+
+**Creative Themes:**
+- Bold, colorful designs with modern elements
+- Eye-catching gradients and contemporary layouts
+- Ideal for marketing, creative projects, and innovative concepts
+- Examples: Vibrant Purple, Creative Orange, Modern Gradient
+
+**Minimalist Themes:**
+- Clean, simple layouts focusing on content clarity
+- Subtle colors and generous white space
+- Great for educational content and detailed information
+- Examples: Clean White, Simple Gray, Minimal Blue
+
+**Modern Themes:**
+- Contemporary designs with current design trends
+- Balanced use of color, typography, and visual elements
+- Versatile for various presentation types
+- Examples: Modern Teal, Contemporary Green, Fresh Blue
+
+### Applying Themes:
+- Themes can be changed at any time during editing
+- All content automatically adapts to the new visual style
+- Colors, fonts, and spacing adjust seamlessly
+- Preview themes before applying to see the full effect
+
+## Presentation Mode and Sharing
+
+### Full-Screen Presentation Mode:
+Transform your slides into a professional presentation experience:
+
+**Navigation Features:**
+- **Previous/Next Controls**: Smooth slide transitions
+- **Keyboard Shortcuts**: Arrow keys, spacebar for navigation
+- **Progress Indicator**: Track your position in the presentation
+- **Slide Counter**: Always know where you are
+
+**Presenter Tools:**
+- **Full-Screen View**: Distraction-free presentation environment
+- **Auto-Play Options**: Set automatic slide advancement
+- **Exit Anytime**: Quick return to editing mode
+
+### Export and Sharing Options:
+
+**PDF Export:**
+- High-quality PDF generation for offline viewing
+- Maintains all formatting and visual elements
+- Perfect for sharing via email or printing
+- Compatible with all devices and platforms
+
+**Sharing Best Practices:**
+- Export to PDF for client presentations
+- Use presentation mode for live audiences
+- Share edit links for collaborative reviews
+- Download for offline presentation backup
+
+## Subscription Plans and Credits
+
+### Understanding Credits:
+Credits are used for AI-powered features like content generation and image creation. Different actions consume different amounts of credits based on complexity.
+
+### Available Plans:
+
+**Free Plan - Perfect for Getting Started:**
+- 500 one-time credits included
+- All basic presentation features
+- Standard slide templates
+- AI generation capabilities
+- Image generation
+- PDF export functionality
+- Chat assistance
+
+**Lite Plan ($5/month) - For Regular Users:**
+- 1,000 AI credits monthly
+- Credits accumulate each month (unused credits roll over)
+- Advanced presentation generation
+- Access to all slide templates
+- High-quality image generation
+- Priority chat assistance
+- PDF export with enhanced quality
+- Email support
+
+**Pro Plan ($15/month) - For Power Users:**
+- 3,000 AI credits monthly
+- All Lite plan features included
+- Premium slide templates and themes
+- Priority image generation queue
+- Advanced AI models for better results
+- Premium chat assistance with faster responses
+- Priority customer support
+- Early access to new features
+
+### Maximizing Your Credits:
+- Use specific prompts to get better results in fewer generations
+- Edit existing slides instead of regenerating entire presentations
+- Reuse and adapt slides across multiple presentations
+- Take advantage of template auto-selection to reduce iterations
+
+## Best Practices for Great Presentations
+
+### Content Creation Tips:
+
+**Effective Prompts:**
+- Include your target audience in the prompt
+- Specify the presentation context or setting
+- Mention key points or themes you want covered
+- Indicate the desired tone and formality level
+
+**Content Organization:**
+- Start with a clear agenda or outline slide
+- Use logical flow from problem to solution
+- Include supporting data and examples
+- End with clear next steps or conclusions
+
+**Visual Design:**
+- Choose themes that match your audience and purpose
+- Use consistent formatting throughout
+- Balance text and visuals for engagement
+- Ensure readability with appropriate font sizes
+
+### Presentation Delivery:
+- Practice with presentation mode before your actual presentation
+- Test PDF export if sharing digitally
+- Have a backup plan for technical difficulties
+- Use the AI assistant to refine content based on practice sessions
+
+### Collaboration and Feedback:
+- Use the AI assistant to incorporate feedback quickly
+- Make real-time edits during review sessions
+- Export different versions for A/B testing
+- Gather input before finalizing your presentation
+
+## MCP (Model Context Protocol) Integration
+
+### What is MCP Integration?
+Zentable supports Model Context Protocol (MCP), allowing you to create presentations directly from AI development tools like Claude Code, Cursor, Windsurf, and VS Code Copilot. This integration brings presentation creation capabilities directly into your coding workflow.
+
+### Supported AI Development Tools:
+
+**Claude Code:**
+- Create presentations without leaving your Claude Code interface
+- Access Zentable tools through MCP server integration
+- Seamlessly generate presentations based on your code documentation or project requirements
+
+**Cursor IDE:**
+- Generate presentations for project demos, code reviews, or technical documentation
+- Configure MCP server in `.cursor/mcp.json`
+- Create slides directly from your codebase context
+
+**Windsurf:**
+- AI-powered presentation generation integrated into your development environment
+- Perfect for creating technical presentations and project overviews
+- Configure through Windsurf's MCP settings
+
+**VS Code with Copilot:**
+- Extension support for MCP protocol
+- Create presentations for code documentation and project presentations
+- Configure through `.vscode/mcp.json`
+
+### Setting Up MCP Integration:
+
+1. **Generate API Key:**
+   - Go to Dashboard → Settings → API Keys
+   - Click "Create API Key" and copy the generated key (shown only once)
+   - Store securely as it cannot be retrieved later
+
+2. **Configure Your AI Tool:**
+   Each tool requires specific configuration in their respective MCP settings file:
+
+   **For Claude Code:**
+   ```json
+   {
+     "mcpServers": {
+       "zentable": {
+         "command": "npx",
+         "args": ["-y", "@zentable/mcp-server@latest"],
+         "env": {
+           "ZENTABLE_API_KEY": "your_api_key_here",
+           "ZENTABLE_SERVER_URL": "https://zentableai.com"
+         }
+       }
+     }
+   }
+   ```
+
+   **For Cursor:**
+   Add to `.cursor/mcp.json`:
+   ```json
+   {
+     "mcpServers": {
+       "zentable-presentations": {
+         "command": "curl",
+         "args": [
+           "-X", "POST",
+           "-H", "Content-Type: application/json",
+           "-H", "Authorization: Bearer YOUR_API_KEY",
+           "-d", "@-",
+           "https://zentableai.com/api/mcp"
+         ]
+       }
+     }
+   }
+   ```
+
+3. **Available MCP Tools:**
+   - `create_presentation`: Generate complete presentations from prompts
+   - Parameters: prompt, slideCount (3-20), style, language, contentLength
+   - Presentations are automatically saved to your Zentable dashboard
+
+### MCP Use Cases:
+- **Code Documentation**: Create presentations explaining complex codebases
+- **Project Demos**: Generate slides for project showcases and demos
+- **Technical Presentations**: Build presentations about architectural decisions
+- **Team Meetings**: Create slides for sprint reviews and planning sessions
+- **Client Presentations**: Generate professional presentations for client meetings
+
+## Brainstorming Feature
+
+### Interactive Brainstorming Mode
+Zentable includes a dedicated brainstorming interface designed to help you explore ideas before creating formal presentations.
+
+### Brainstorming Capabilities:
+
+**Idea Generation:**
+- Start with broad topics and explore specific angles
+- AI suggests related concepts and themes
+- Generate multiple presentation directions from single topics
+
+**Conversational Exploration:**
+- Chat naturally about your presentation ideas
+- Ask "what if" questions and explore alternatives
+- Get suggestions for slide structure and content flow
+
+**Topic Refinement:**
+- Narrow down broad concepts into focused presentation themes
+- Identify key messages and supporting points
+- Develop clear narrative structures
+
+**Content Direction:**
+- Explore different presentation styles and approaches
+- Test audience-specific messaging
+- Identify the most compelling angles for your topic
+
+### How to Use Brainstorming:
+
+1. **Access Brainstorming Mode:**
+   - Go to Create → Brainstorm
+   - Or click "Brainstorm Ideas" from the main dashboard
+
+2. **Start the Conversation:**
+   - Enter your general topic or challenge
+   - Example: "I need to present our Q4 marketing strategy"
+
+3. **Explore Ideas:**
+   - AI will ask clarifying questions
+   - Discuss different angles and approaches
+   - Refine your focus through conversation
+
+4. **Generate Presentations:**
+   - Once you've refined your ideas, create presentations directly
+   - Choose from multiple suggested directions
+   - Maintain conversation context for consistent messaging
+
+### Brainstorming Best Practices:
+- Start broad and narrow down through conversation
+- Ask open-ended questions to explore possibilities
+- Don't worry about structure initially—focus on ideas
+- Use the AI to challenge your assumptions and find new angles
+- Export the best ideas directly to presentation creation
+
+## AI Assistant Integration
+
+### Comprehensive AI Assistant Features
+Zentable's AI Assistant provides real-time help throughout your presentation creation and editing process, offering both conversational guidance and direct slide manipulation capabilities.
+
+### AI Assistant Capabilities:
+
+**Natural Language Editing:**
+- Make changes using everyday language
+- Example: "Make slide 3 more visual and engaging"
+- AI interprets requests and applies appropriate changes
+
+**Contextual Understanding:**
+- AI understands your entire presentation context
+- Provides suggestions that maintain consistency
+- Offers content that builds on previous slides
+
+**Direct Slide Manipulation:**
+- Create, edit, delete, and reorder slides
+- Change templates and apply themes
+- Generate and update images
+- Modify content structure and formatting
+
+**Content Enhancement:**
+- Improve clarity and engagement of existing content
+- Add supporting details and examples
+- Suggest better organization and flow
+- Enhance visual appeal with appropriate templates
+
+### Available AI Assistant Actions:
+
+**Content Operations:**
+- "Update slide 2 with more technical details"
+- "Simplify the language in slide 5 for a general audience"
+- "Add statistics to support the claims in slide 3"
+- "Create a more engaging introduction"
+
+**Slide Management:**
+- "Add a conclusion slide summarizing key takeaways"
+- "Duplicate slide 4 and move it after slide 7"
+- "Remove slide 6, it's not adding value"
+- "Reorder slides to put the problem statement first"
+
+**Visual Improvements:**
+- "Make the presentation more visual overall"
+- "Change slide 3 to a two-column layout"
+- "Apply the Ocean theme for a more professional look"
+- "Generate a new image for slide 5 showing collaboration"
+
+**Template and Theme Changes:**
+- "Switch slide 2 to an image-heavy template"
+- "Apply consistent formatting across all slides"
+- "Make the design more modern and engaging"
+- "Change the color scheme to match our brand"
+
+### AI Assistant Workflow:
+
+1. **Access the Assistant:**
+   - Available in the sidebar during presentation editing
+   - Chat interface appears alongside your slides
+   - Maintains context throughout your editing session
+
+2. **Make Requests:**
+   - Type natural language requests
+   - Ask for suggestions and improvements
+   - Request specific changes or general enhancements
+
+3. **Review and Approve:**
+   - AI shows preview of proposed changes
+   - Approve or request modifications
+   - Changes are applied directly to your presentation
+
+4. **Continuous Improvement:**
+   - Assistant learns from your preferences
+   - Provides increasingly relevant suggestions
+   - Maintains consistency with your presentation style
+
+### Advanced AI Assistant Features:
+
+**Multi-Step Operations:**
+- "Restructure the presentation to be more persuasive"
+- "Add supporting slides for each main point"
+- "Create a executive summary version with key slides only"
+
+**Content Analysis:**
+- "What's missing from this presentation?"
+- "How can I make this more engaging for my audience?"
+- "Suggest improvements for better flow and clarity"
+
+**Audience Adaptation:**
+- "Adapt this for a technical audience"
+- "Make this more suitable for executives"
+- "Simplify for a general audience presentation"
+
+This comprehensive guide covers everything you need to create compelling presentations with Zentable, including advanced features like MCP integration for seamless AI tool integration, brainstorming capabilities for idea exploration, and comprehensive AI assistant functionality. Whether you're a beginner or experienced presenter, these tools and techniques will help you create professional, engaging presentations that effectively communicate your ideas.

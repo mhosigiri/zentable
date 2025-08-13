@@ -44,12 +44,12 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Subscription set to cancel at period end:', {
       subscriptionId: subscription.id,
-      cancelAt: new Date(subscription.current_period_end * 1000)
+      cancelAt: new Date((subscription as any).current_period_end * 1000)
     })
 
     return Response.json({ 
       success: true,
-      cancelAt: subscription.current_period_end
+      cancelAt: (subscription as any).current_period_end
     })
 
   } catch (error) {

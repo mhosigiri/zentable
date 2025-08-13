@@ -14,6 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { SlideRenderer, SlideData } from '@/components/slides/SlideRenderer';
 import { ThemedLayout } from '@/components/ui/themed-layout';
 import { AssistantSidebar } from '@/components/assistant-ui/sidebar';
+import { AssistantLayout, AssistantLayoutProvider } from '@/components/ui/assistant-layout';
 import { SlidesHeader } from '@/components/ui/slides-header';
 import { SlidesSidebar } from '@/components/ui/slides-sidebar';
 import { TemplateSelectionModal } from '@/components/ui/template-selection-modal';
@@ -34,8 +35,9 @@ import {
   X
   } from 'lucide-react';
 import { PresentationMode } from '@/components/ui/presentation-mode';
-import { db, DocumentData, PresentationUpdate } from '@/lib/database';
+import { DatabaseService, DocumentData, PresentationUpdate } from '@/lib/database';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { defaultTheme } from '@/lib/themes';
 import { getSlideById } from '@/lib/slides';
 import { exportSlidesToPDF } from '@/lib/export';
@@ -44,6 +46,10 @@ import { useSlideNavigation } from '@/hooks/useSlideNavigation';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useMyRuntime } from './MyRuntimeProvider';
 import { generateUUID, isValidUUID } from '@/lib/uuid';
+
+// Create database service with proper user-authenticated client
+const browserClient = createClient();
+const db = new DatabaseService(browserClient);
 
 interface OutlineSection {
   id: string;
@@ -994,6 +1000,58 @@ export default function PresentationPage() {
 
   return (
     <ThemedLayout>
+      <AssistantLayoutProvider>
+        <AssistantLayout
+          sidebar={
+            !isMobile && documentData?.databaseId ? (
+              <AssistantSidebar 
+                presentationId={documentData.databaseId}
+                onSlideUpdate={(slideId: string, newContent: string | null) => {
+                  if (!slideId) {
+                    // eslint-disable-next-line no-console
+                    console.error("❌ Invalid slideId for slide update");
+                    return;
+                  }
+                  
+                  // If newContent is null, this is a refresh request after approval
+                  if (newContent === null) {
+                    // Refresh the slide from database
+                    refreshSlideById(slideId).then(() => {
+                      // Find the slide index to scroll to it
+                      const slideIndex = slides.findIndex(slide => slide.id === slideId);
+                      if (slideIndex !== -1) {
+                        handleSlideSelect(slideIndex);
+                      }
+                    });
+                    return;
+                  }
+                  
+                  // Otherwise, this is a direct content update (legacy support)
+                  if (!newContent) {
+                    // eslint-disable-next-line no-console
+                    console.error("❌ Invalid content for slide update");
+                    return;
+                  }
+                  
+                  // Use the new atomic update function to update a single slide's content
+                  updateSlideContentById(slideId, newContent)
+                    .then(success => {
+                      if (success) {
+                        // Find the slide index to potentially scroll to it
+                        const slideIndex = slides.findIndex(slide => slide.id === slideId);
+                        if (slideIndex !== -1) {
+                          handleSlideSelect(slideIndex);
+                        }
+                      } else {
+                        // eslint-disable-next-line no-console
+                        console.error("❌ Failed to update slide content in UI");
+                      }
+                    });
+                }}
+              />
+            ) : null
+          }
+        >
       {/* Slides Sidebar */}
       <SlidesSidebar
         slides={slides}
@@ -1202,56 +1260,6 @@ export default function PresentationPage() {
         )}
       </main>
 
-      {/* Assistant UI Sidebar - only shown on desktop with a valid database ID */}
-      {!isMobile && documentData?.databaseId && (
-        <AssistantSidebar 
-          presentationId={documentData.databaseId}
-          className="max-w-xs"
-          onSlideUpdate={(slideId: string, newContent: string | null) => {
-            if (!slideId) {
-              // eslint-disable-next-line no-console
-              console.error("❌ Invalid slideId for slide update");
-              return;
-            }
-            
-            // If newContent is null, this is a refresh request after approval
-            if (newContent === null) {
-              // Refresh the slide from database
-              refreshSlideById(slideId).then(() => {
-                // Find the slide index to scroll to it
-                const slideIndex = slides.findIndex(slide => slide.id === slideId);
-                if (slideIndex !== -1) {
-                  handleSlideSelect(slideIndex);
-                }
-              });
-              return;
-            }
-            
-            // Otherwise, this is a direct content update (legacy support)
-            if (!newContent) {
-              // eslint-disable-next-line no-console
-              console.error("❌ Invalid content for slide update");
-              return;
-            }
-            
-            // Use the new atomic update function to update a single slide's content
-            updateSlideContentById(slideId, newContent)
-              .then(success => {
-                if (success) {
-                  // Find the slide index to potentially scroll to it
-                  const slideIndex = slides.findIndex(slide => slide.id === slideId);
-                  if (slideIndex !== -1) {
-                    handleSlideSelect(slideIndex);
-                  }
-                } else {
-                  // eslint-disable-next-line no-console
-                  console.error("❌ Failed to update slide content in UI");
-                }
-              });
-          }}
-        />
-      )}
-
       {/* Phase 3: Modals for slide addition */}
       <TemplateSelectionModal
         isOpen={showTemplateModal}
@@ -1265,7 +1273,8 @@ export default function PresentationPage() {
         onGenerate={handleAIGenerate}
         isGenerating={isGeneratingNewSlide}
       />
-
+        </AssistantLayout>
+      </AssistantLayoutProvider>
     </ThemedLayout>
   );
 }

@@ -21,7 +21,11 @@ import { BrainstormingDatabaseService } from '@/lib/brainstorming-database';
 import { createClient } from '@/lib/supabase/client';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { generateUUID } from '@/lib/uuid';
-import { db } from '@/lib/database';
+import { DatabaseService } from '@/lib/database';
+
+// Create database service with proper user-authenticated client
+const browserClient = createClient();
+const db = new DatabaseService(browserClient);
 
 interface Idea {
   id: string;
@@ -236,7 +240,7 @@ export function BrainstormingInterface() {
                   AI Brainstorming Assistant
                 </div>
                 <Badge variant={activeMCPTools.length > 0 ? "default" : "secondary"} className="text-xs">
-                  {activeMCPTools.length > 0 ? "GPT-4o + MCP" : "Llama 3.3 70B"}
+                  {activeMCPTools.length > 0 ? "GPT-4o + MCP" : "GPT-OSS 20B"}
                 </Badge>
               </CardTitle>
             </CardHeader>

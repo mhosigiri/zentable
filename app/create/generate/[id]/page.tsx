@@ -39,8 +39,10 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { DatabaseService, DocumentData, PresentationUpdate } from '@/lib/database';
 import { themes, getThemesByCategory, Theme, defaultTheme } from '@/lib/themes';
+import { createClient } from '@/lib/supabase/client';
 
-const db = new DatabaseService();
+const supabase = createClient();
+const db = new DatabaseService(supabase);
 import { AppHeader } from '@/components/ui/app-header';
 
 interface OutlineSection {

@@ -27,7 +27,7 @@ export function AccentTop({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 AccentTop - Content being saved:', newContent);
+      // console.log('💾 AccentTop - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

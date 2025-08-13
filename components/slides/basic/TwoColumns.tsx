@@ -20,7 +20,7 @@ export function TwoColumns({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 TwoColumns - Content being saved:', newContent);
+      // console.log('💾 TwoColumns - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

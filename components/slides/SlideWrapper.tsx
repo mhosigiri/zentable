@@ -25,7 +25,7 @@ export function SlideWrapper({
   
   // Base styling that applies to all slides
   const baseClasses = `
-    w-full ${minHeight} rounded-xl shadow-2xl transition-all duration-300 ease-in-out overflow-hidden p-8 sm:p-10 md:p-12 lg:p-14
+    w-full ${minHeight} rounded-xl shadow-2xl transition-all duration-300 ease-in-out overflow-visible p-8 sm:p-10 md:p-12 lg:p-14
     ${isDarkTheme 
       ? 'bg-black/10 backdrop-blur-lg border-white/10' 
       : 'bg-white/50 backdrop-blur-lg border-white/30'

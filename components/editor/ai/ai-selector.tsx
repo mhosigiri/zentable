@@ -13,13 +13,23 @@ import { MagicIcon } from "./magic-icon";
 
 interface AISelectorProps {
   selectedText: string;
+  slideId?: string;
+  presentationId?: string;
+  templateType?: string;
+  fullContent?: string;
+  selectedHtml?: string;
   onReplace: (content: string) => void;
   onInsert: (content: string) => void;
   onClose: () => void;
 }
 
 export function AISelector({ 
-  selectedText, 
+  selectedText,
+  slideId,
+  presentationId,
+  templateType,
+  fullContent,
+  selectedHtml,
   onReplace, 
   onInsert, 
   onClose 
@@ -41,7 +51,7 @@ export function AISelector({
       setShowCommands(false);
     },
     onError: (error) => {
-      console.error('AI completion error:', error);
+      // console.error('AI completion error:', error);
       toast.error("Failed to generate AI completion. Please try again.");
     },
     onFinish: () => {
@@ -58,11 +68,16 @@ export function AISelector({
         body: { 
           text: text || selectedText, 
           command,
-          option: command 
+          option: command,
+          slideId,
+          presentationId,
+          templateType,
+          fullContent,
+          selectedHtml
         }
       });
     } catch (error) {
-      console.error('Error executing command:', error);
+      // console.error('Error executing command:', error);
       toast.error("Failed to execute AI command. Please try again.");
       setShowCommands(true);
     }
@@ -77,11 +92,16 @@ export function AISelector({
         body: { 
           text: selectedText, 
           command: "zap",
-          option: inputValue.trim()
+          option: inputValue.trim(),
+          slideId,
+          presentationId,
+          templateType,
+          fullContent,
+          selectedHtml
         }
       });
     } catch (error) {
-      console.error('Error executing custom command:', error);
+      // console.error('Error executing custom command:', error);
       toast.error("Failed to execute AI command. Please try again.");
       setShowCommands(true);
     }
@@ -120,10 +140,18 @@ export function AISelector({
       {hasCompletion && (
         <div className="max-h-[200px] border-b overflow-hidden">
           <ScrollArea className="h-full max-h-[200px]">
-            <div className="p-4 prose prose-sm max-w-none dark:prose-invert">
-              <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
-                {completion}
-              </div>
+            <div className="p-4">
+              <div 
+                className="prose prose-sm max-w-none dark:prose-invert 
+                  prose-headings:font-semibold prose-headings:mb-2 
+                  prose-h3:text-base prose-h4:text-sm 
+                  prose-p:text-sm prose-p:mb-2 prose-p:leading-relaxed
+                  prose-ul:text-sm prose-ul:my-2 prose-ul:space-y-1
+                  prose-li:text-sm prose-li:leading-relaxed
+                  prose-strong:font-semibold prose-em:italic
+                  text-gray-700 dark:text-gray-300"
+                dangerouslySetInnerHTML={{ __html: completion }}
+              />
             </div>
           </ScrollArea>
         </div>

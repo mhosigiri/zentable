@@ -24,9 +24,13 @@ import {
   Loader2,
   Globe
 } from 'lucide-react';
-import { db } from '@/lib/database';
+import { DatabaseService } from '@/lib/database';
 import { generateUUID, generatePrefixedId } from '@/lib/uuid';
 import { createClient } from '@/lib/supabase/client';
+
+// Create database service with proper user-authenticated client
+const browserClient = createClient();
+const db = new DatabaseService(browserClient);
 import { PresentationExamples, type Example } from '@/components/presentation-examples';
 
 export default function GeneratePage() {

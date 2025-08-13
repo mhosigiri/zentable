@@ -27,7 +27,7 @@ export function TitleWithBulletsAndImage({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 TitleWithBulletsAndImage - Content being saved:', newContent);
+      // console.log('💾 TitleWithBulletsAndImage - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

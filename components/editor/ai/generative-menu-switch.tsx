@@ -10,6 +10,11 @@ interface GenerativeMenuSwitchProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedText: string;
+  slideId?: string;
+  presentationId?: string;
+  templateType?: string;
+  fullContent?: string;
+  selectedHtml?: string;
   onReplace: (content: string) => void;
   onInsert: (content: string) => void;
 }
@@ -19,6 +24,11 @@ export function GenerativeMenuSwitch({
   open, 
   onOpenChange, 
   selectedText,
+  slideId,
+  presentationId,
+  templateType,
+  fullContent,
+  selectedHtml,
   onReplace,
   onInsert
 }: GenerativeMenuSwitchProps) {
@@ -27,6 +37,11 @@ export function GenerativeMenuSwitch({
       {open && (
         <AISelector
           selectedText={selectedText}
+          slideId={slideId}
+          presentationId={presentationId}
+          templateType={templateType}
+          fullContent={fullContent}
+          selectedHtml={selectedHtml}
           onReplace={onReplace}
           onInsert={onInsert}
           onClose={() => onOpenChange(false)}

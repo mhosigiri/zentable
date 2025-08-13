@@ -1,4 +1,4 @@
-import { createAzure } from '@ai-sdk/azure';
+import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { getSlidesByPresentation } from '@/lib/slides';
 import { DatabaseService } from '@/lib/database';
@@ -8,14 +8,11 @@ import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
 
-// Configure Azure OpenAI with AI SDK
-const azureOpenAI = createAzure({
-  apiKey: process.env.AZURE_OPENAI_API_KEY || process.env.AZURE_API_KEY,
-  apiVersion: '2025-01-01-preview',
-  resourceName: process.env.AZURE_RESOURCE_NAME,
-});
-
 export async function POST(req: Request) {
+  let context: any;
+  let currentThreadId: string | undefined | null;
+  let messages: any[] = [];
+  
   try {
     // Authenticate user first
     const supabase = await createClient();
@@ -30,7 +27,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { messages, context, threadId, saveMessage } = body;
+    const { messages: reqMessages, context: reqContext, threadId, saveMessage } = body;
+    messages = reqMessages;
+    context = reqContext;
+    currentThreadId = threadId;
     
     console.log('Request body:', {
       messagesCount: messages?.length,
@@ -107,10 +107,18 @@ IMPORTANT INSTRUCTIONS:
 - Then use updateSlideContent with the retrieved slideId to make the change
 - ALWAYS preserve the ENTIRE HTML structure when modifying content
 - Be helpful and concise in your responses
+- NEVER repeat content that's already displayed in tool results - the user can see it in the interactive tool display
 
 WHEN USING TOOLS:
 - First, explain what you plan to do. For example: 'I will first get the slide content, and then I will update it with your new points.'
-- After completing the action, summarize what you did.
+- When using tools that require approval (like updateSlideContent, createSlide, etc.), the tool will show a preview and wait for your approval before proceeding.
+- After tool approval and execution, you can continue the conversation based on the results.
+
+APPROVAL PROMPT GUIDELINES:
+- When requesting approval for changes, use natural, conversational language
+- Instead of "Would you like to approve this image update?", say something like "Please approve if you like the changes, or reject if you'd prefer something different"
+- Keep approval requests brief and friendly
+- Don't use formal question structures like "Would you like to..."
 
 TOOL USAGE RULES:
 - Use 'getSlideContent' when a user asks to SEE, SHOW, READ, or VIEW a slide's content.
@@ -124,9 +132,10 @@ TOOL USAGE RULES:
   * BAD: Using 'getSlideIdByNumber' then 'updateSlideContent'.
 
 WHEN DISPLAYING SLIDE CONTENT:
-- ALWAYS present slide content with full HTML tags and styling
-- When a user asks to read a slide, show the complete HTML content
-- Format the HTML nicely with proper indentation for readability
+- After using getSlideContent tool, DO NOT show the HTML content again in your response
+- The slide preview is already displayed in the tool result - no need to repeat it
+- Simply acknowledge what you found: "Here's the content of Slide X:" (the tool will show the preview automatically)
+- NEVER duplicate slide content that's already shown in the tool result
 
 WHEN IMPROVING SLIDE CONTENT:
 - Keep bullet points concise and parallel in structure
@@ -136,6 +145,7 @@ WHEN IMPROVING SLIDE CONTENT:
 - Make content more engaging, professional, and impactful
 - Fix any grammar or spelling issues
 - Don't change the overall meaning or main points
+- After updating content, do NOT show the HTML again - the tool result will display the preview automatically
 
 WHEN UPDATING MULTI-COLUMN SLIDES:
 - CRITICAL: Preserve ALL columns when updating any single column
@@ -169,7 +179,6 @@ REMINDERS:
     const db = new DatabaseService(supabase);
     
     // Handle thread creation and message persistence
-    let currentThreadId = threadId;
     if (!currentThreadId && messages.length > 0) {
       // Create a new thread for this conversation
       const firstUserMessage = messages.find((m: any) => m.role === 'user');
@@ -202,8 +211,18 @@ REMINDERS:
       }
     }
     
+    // Log the request details
+    console.log('[assistant-chat] Starting OpenAI stream with:', {
+      model: 'gpt-5-nano',
+      messageCount: messages.length,
+      presentationId,
+      threadId: currentThreadId,
+      temperature: 0.7,
+      maxSteps: 20
+    });
+
     const result = await streamText({
-      model: azureOpenAI(process.env.AZURE_GPT4_DEPLOYMENT || 'gpt-4o-mini'),
+      model: openai('gpt-4o-mini'),
       messages: [
         {
           role: 'system',
@@ -226,8 +245,19 @@ REMINDERS:
         changeSlideTemplate: slideTools.changeSlideTemplate,
       },
       toolChoice: 'auto',
-      maxSteps: 2,
+      maxSteps: 20,
       onFinish: async (completion) => {
+        // Log the completion details
+        console.log('[assistant-chat] OpenAI stream completed:', {
+          threadId: currentThreadId,
+          responseLength: completion.text?.length || 0,
+          toolCallsCount: completion.toolCalls?.length || 0,
+          usage: completion.usage,
+          finishReason: completion.finishReason,
+          modelId: completion.providerMetadata?.openai?.modelId || 'unknown'
+        });
+        
+        console.log('[assistant-chat] Full completion object keys:', Object.keys(completion));
         // Save assistant's response to database when the stream finishes
         if (currentThreadId && completion.text) {
           try {
@@ -243,17 +273,41 @@ REMINDERS:
       }
     });
 
-    console.log('Stream created successfully, returning response');
+    console.log('[assistant-chat] Stream created successfully, returning response');
     const response = result.toDataStreamResponse({
       // Include threadId in response headers for client-side persistence
       headers: currentThreadId ? { 'X-Thread-Id': currentThreadId } : undefined
     });
-    console.log('Response type:', response.constructor.name, 'ThreadId:', currentThreadId);
+    console.log('[assistant-chat] Response prepared:', {
+      responseType: response.constructor.name,
+      threadId: currentThreadId,
+      hasHeaders: !!response.headers
+    });
     return response;
-  } catch (error) {
-    console.error('Error in assistant chat:', error);
+  } catch (error: any) {
+    console.error('[assistant-chat] Error occurred:', {
+      error: error?.message || String(error),
+      stack: error?.stack,
+      presentationId: context?.presentationId,
+      threadId: currentThreadId,
+      messageCount: messages?.length || 0
+    });
+    
+    // Check if it's an OpenAI API error
+    if (error?.name === 'APIError' || error?.type === 'openai_api_error') {
+      console.error('[assistant-chat] OpenAI API Error:', {
+        status: error?.status,
+        code: error?.code,
+        type: error?.type,
+        message: error?.message
+      });
+    }
+    
     return new Response(
-      JSON.stringify({ error: 'Failed to process assistant chat request' }),
+      JSON.stringify({ 
+        error: 'Failed to process assistant chat request',
+        details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

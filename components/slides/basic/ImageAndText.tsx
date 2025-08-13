@@ -25,7 +25,7 @@ export function ImageAndText({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 ImageAndText - Content being saved:', newContent);
+      // console.log('💾 ImageAndText - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

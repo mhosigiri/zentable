@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Main Pages -->
+  <url>
+    <loc>https://zentableai.com/</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/pricing</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Documentation Pages -->
+  <url>
+    <loc>https://zentableai.com/docs-section</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/getting-started</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/features/ai-generation</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/features/ai-assistant</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/features/slide-templates</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/features/themes</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/features/export</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/features/presentation-mode</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/guides/creating-presentations</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://zentableai.com/docs-section/guides/editing-slides</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Authentication -->
+  <url>
+    <loc>https://zentableai.com/auth/login</loc>
+    <lastmod>2024-12-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>

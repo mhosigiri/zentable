@@ -20,7 +20,7 @@ export function ThreeColumns({
 
   const handleContentChange = (newContent: string) => {
     if (onUpdate) {
-      console.log('💾 ThreeColumns - Content being saved:', newContent);
+      // console.log('💾 ThreeColumns - Content being saved:', newContent);
       onUpdate({ content: newContent });
     }
   };

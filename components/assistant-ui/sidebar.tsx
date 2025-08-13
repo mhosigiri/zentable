@@ -1,12 +1,13 @@
 'use client';
 
-import React, { FC, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
+import React, { FC, useState, useEffect, useRef, useCallback } from "react";
+import { ChevronLeft, ChevronRight, Wand2, GripVertical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Thread } from "@/components/assistant-ui/thread";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { useAssistantLayout } from "@/components/ui/assistant-layout";
 
 interface AssistantSidebarProps {
   presentationId: string;
@@ -19,16 +20,52 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
   className,
   onSlideUpdate,
 }) => {
-  // Initialize collapsed state based on screen size
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth >= 1440; // Default to open on larger screens
-    }
-    return true;
-  });
+  const { sidebarOpen: isOpen, setSidebarOpen: setIsOpen, sidebarWidth: width, setSidebarWidth: setWidth } = useAssistantLayout();
+  
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const isResizing = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
   
   // State for thread management
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  
+  // Handle resize
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    startX.current = e.clientX;
+    startWidth.current = width;
+    
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [width]);
+  
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      
+      const diff = startX.current - e.clientX;
+      const newWidth = Math.min(Math.max(startWidth.current + diff, 320), 800);
+      setWidth(newWidth);
+    };
+    
+    const handleMouseUp = () => {
+      if (isResizing.current) {
+        isResizing.current = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
 
   // On mount, clear threadId for this presentation to force new thread on reload
   useEffect(() => {
@@ -62,7 +99,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
         setCurrentThreadId(threadId);
         // Persist in localStorage as well
         localStorage.setItem(`threadId_${presentationId}`, threadId);
-        console.log('Updated thread ID from response:', threadId);
+        // console.log('Updated thread ID from response:', threadId);
       }
     }
   });
@@ -76,7 +113,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
     const handleMessage = (event: MessageEvent) => {
       // Check if this is a slideUpdated event from approved tool calls
       if (event.data?.type === 'slideUpdated' && event.data?.slideId) {
-        console.log("✅ Approved slide update detected:", event.data);
+        // console.log("✅ Approved slide update detected:", event.data);
         
         // Trigger slide refresh by calling onSlideUpdate with the slideId
         // This will refresh the slide from database
@@ -96,50 +133,66 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
   return (
     <TooltipProvider>
       <div
+        ref={sidebarRef}
         className={cn(
-          'h-full fixed right-4 top-[60%] transform -translate-y-1/2 z-50',
-          isOpen ? 'w-80' : 'w-12',
+          'h-full bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700',
+          'flex flex-col relative',
           className
         )}
       >
-        <div className={cn(
-          'bg-white/10 dark:bg-black/10 backdrop-blur-sm border border-white/20 dark:border-zinc-800/20 rounded-xl shadow-2xl',
-          'flex flex-col transition-all duration-300 ease-in-out',
-          'max-h-[80vh] h-full'
-        )}
+        {/* Resize handle */}
+        <div
+          onMouseDown={handleMouseDown}
+          className="absolute left-0 top-0 w-1 h-full cursor-col-resize group hover:bg-blue-500/50 transition-colors z-10"
         >
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="absolute top-1/2 -translate-y-1/2 left-[-16px] z-20 bg-white/10 dark:bg-black/10 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/20 border border-white/20 dark:border-zinc-800/20 rounded-full p-1.5 shadow-md transition-all duration-300 ease-in-out text-white"
-        aria-label={isOpen ? "Close assistant sidebar" : "Open assistant sidebar"}
-      >
-        {isOpen ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-      </button>
-
-      {isOpen ? (
-        <div className="flex h-full w-full flex-col overflow-hidden rounded-xl">
-          <div className="flex items-center border-b border-white/20 dark:border-zinc-800/20 p-4">
-            <h3 className="text-sm font-semibold text-white">AI Assistant</h3>
-          </div>
-          <div className={cn("flex h-full flex-col", !isOpen && "hidden")}>
-            <AssistantRuntimeProvider runtime={runtime}>
-              <Thread />
-            </AssistantRuntimeProvider>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-12 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <GripVertical className="w-4 h-4 text-gray-400" />
           </div>
         </div>
-      ) : (
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="p-3 w-full h-full flex flex-col items-center justify-center hover:bg-white/20 dark:hover:bg-black/20 rounded-xl text-white"
+        
+        {/* Toggle button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 z-20",
+            "bg-white/10 dark:bg-black/10 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/20",
+            "border border-white/20 dark:border-zinc-800/20",
+            "shadow-2xl transition-all duration-300 ease-in-out",
+            isOpen ? "rounded-l-lg p-2 -left-10" : "rounded-xl py-6 px-3 -left-[4.5rem] group h-40"
+          )}
+          aria-label={isOpen ? "Close assistant sidebar" : "Open assistant sidebar"}
         >
-          <div className="flex flex-col items-center gap-3">
-            <Wand2 className="h-5 w-5 animate-shimmer" />
-            <div className="h-16">
-              <span className="text-xs rotate-90 whitespace-nowrap block origin-center translate-y-5">AI Assistant</span>
+          {isOpen ? (
+            <ChevronRight className="w-5 h-5 text-white" />
+          ) : (
+            <div className="relative w-full h-full flex items-center justify-center text-white">
+              <div className="absolute left-1/2 -translate-x-8 w-6 h-6 rounded-full border border-white/50 flex items-center justify-center">
+                <ChevronLeft className="w-4 h-4" />
+              </div>
+              <div className="flex items-center gap-2 [writing-mode:vertical-rl]">
+                <Wand2 className="w-5 h-5 animate-pulse" />
+                <span className="text-xs whitespace-nowrap">AI Assistant</span>
+              </div>
             </div>
-          </div>
+          )}
         </button>
-      )}
+
+        {/* Header */}
+        <div className="h-16 flex items-center justify-center px-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-100/40 via-purple-50/20 to-transparent dark:from-purple-900/30 dark:via-purple-900/10 dark:to-transparent"></div>
+          <div className="flex items-center gap-2 relative z-10">
+            <Sparkles className="w-5 h-5 text-purple-500 animate-pulse" />
+            <h3 className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              AI Assistant
+            </h3>
+          </div>
+        </div>
+        
+        {/* Chat thread */}
+        <div className="flex-1 overflow-hidden">
+          <AssistantRuntimeProvider runtime={runtime}>
+            <Thread />
+          </AssistantRuntimeProvider>
         </div>
       </div>
     </TooltipProvider>

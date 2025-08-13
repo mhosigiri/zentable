@@ -51,6 +51,43 @@ export async function updateSlideContent(slideId: string, content: string): Prom
 }
 
 /**
+ * Updates the image-related fields of a slide
+ * @param slideId The ID of the slide to update
+ * @param imageUrl The new image URL
+ * @param imagePrompt The image prompt used
+ * @param isGeneratingImage Whether the slide is still generating an image
+ * @returns Boolean indicating success or failure
+ */
+export async function updateSlideImage(
+  slideId: string, 
+  imageUrl?: string, 
+  imagePrompt?: string, 
+  isGeneratingImage?: boolean
+): Promise<boolean> {
+  try {
+    const updateData: Partial<Tables<'slides'>> = {};
+    if (imageUrl !== undefined) updateData.image_url = imageUrl;
+    if (imagePrompt !== undefined) updateData.image_prompt = imagePrompt;
+    if (isGeneratingImage !== undefined) updateData.is_generating_image = isGeneratingImage;
+    
+    const { error } = await supabase
+      .from('slides')
+      .update(updateData)
+      .eq('id', slideId);
+    
+    if (error) {
+      console.error('Error updating slide image:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception when updating slide image:', error);
+    return false;
+  }
+}
+
+/**
  * Fetches all slides for a specific presentation
  * @param presentationId The ID of the presentation
  * @returns Array of slides or empty array if not found
