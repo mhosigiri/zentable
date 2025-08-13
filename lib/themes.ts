@@ -1,4 +1,3 @@
-import { db } from './database';
 
 export interface Theme {
   id: string;
@@ -275,35 +274,4 @@ export const getThemesByCategory = (category: Theme['category']): Theme[] => {
   return themes.filter(theme => theme.category === category);
 };
 
-/**
- * Applies a theme to the UI and persists the change to localStorage and the database.
- * @param theme The theme object to apply.
- * @param documentId The ID of the document (used for localStorage and database updates).
- */
-export const applyAndPersistTheme = async (theme: Theme, documentId: string) => {
-  try {
-    // Get current document data from localStorage
-    const stored = localStorage.getItem(documentId);
-    if (stored) {
-      const documentData = JSON.parse(stored);
-      
-      // Update localStorage immediately
-      const updatedData = { ...documentData, theme: theme.id };
-      localStorage.setItem(documentId, JSON.stringify(updatedData));
-      // eslint-disable-next-line no-console
-      console.log('✅ Updated theme in localStorage:', theme.id);
-      
-      // Update database if we have a database ID
-      if (documentData.databaseId) {
-        await db.updatePresentation(documentData.databaseId, {
-          theme_id: theme.id
-        });
-        // eslint-disable-next-line no-console
-        console.log('✅ Updated theme in database:', theme.id);
-      }
-    }
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn('⚠️ Failed to update and persist theme:', error);
-  }
-};  
+  

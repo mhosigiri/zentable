@@ -7,7 +7,7 @@ import { Button } from './button';
 import { ScrollArea } from './scroll-area';
 import { Badge } from './badge';
 import { useTheme } from '@/contexts/ThemeContext';
-import { themes, getThemesByCategory, Theme, applyAndPersistTheme } from '@/lib/themes';
+import { themes, getThemesByCategory, Theme } from '@/lib/themes';
 
 export function ThemesSidebar() {
   const { currentTheme, setTheme, isThemesSidebarOpen, setIsThemesSidebarOpen } = useTheme();
@@ -24,13 +24,8 @@ export function ThemesSidebar() {
   const handleThemeSelect = (theme: Theme) => {
     const documentId = pathname.includes('/docs/') ? params.id as string : undefined;
     
-    // Update the theme context first
+    // Update the theme context - auto-save will handle database persistence
     setTheme(theme, documentId);
-    
-    // If we have a documentId, persist the theme change
-    if (documentId) {
-      applyAndPersistTheme(theme, documentId);
-    }
   };
 
   const getCategoryIcon = (category: Theme['category']) => {

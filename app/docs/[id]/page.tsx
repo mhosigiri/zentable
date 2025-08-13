@@ -183,13 +183,21 @@ export default function PresentationPage() {
             
             setDocumentData(data);
             
-            // Load theme
+            // Load theme with priority: user's current theme > database theme > default
             let themeToUse = defaultTheme;
-            if (data.theme) {
+            
+            // Check if user has a currently selected theme first
+            const currentUserTheme = getThemeForDocument(documentId);
+            if (currentUserTheme.id !== defaultTheme.id) {
+              themeToUse = currentUserTheme;
+              console.log('🎨 Using user-selected theme from localStorage:', currentUserTheme.id);
+            } else if (data.theme) {
+              // Fallback to database theme if no user selection
               const themes = require('@/lib/themes').themes;
               const dbTheme = themes.find((t: any) => t.id === data.theme);
               if (dbTheme) {
                 themeToUse = dbTheme;
+                console.log('🎨 Using database theme:', dbTheme.id);
               }
             }
             setTheme(themeToUse, documentId);
@@ -217,21 +225,21 @@ export default function PresentationPage() {
         const data: DocumentData = JSON.parse(stored);
         setDocumentData(data);
         
-        // Load theme with priority: database data > localStorage > default
+        // Load theme with priority: user's current theme > database data > default
         let themeToUse = defaultTheme;
         
-        if (data.theme) {
-          // Use theme from database data (saved from outline configuration) - highest priority
+        // Check if user has a currently selected theme first
+        const currentUserTheme = getThemeForDocument(documentId);
+        if (currentUserTheme.id !== defaultTheme.id) {
+          themeToUse = currentUserTheme;
+          console.log('🎨 Using user-selected theme from localStorage:', currentUserTheme.id);
+        } else if (data.theme) {
+          // Fallback to database theme if no user selection
           const themes = require('@/lib/themes').themes;
           const dbTheme = themes.find((t: any) => t.id === data.theme);
           if (dbTheme) {
             themeToUse = dbTheme;
-          }
-        } else {
-          // Fallback to localStorage theme if no database theme
-          const localStorageTheme = getThemeForDocument(documentId);
-          if (localStorageTheme.id !== defaultTheme.id) {
-            themeToUse = localStorageTheme;
+            console.log('🎨 Using stored data theme:', dbTheme.id);
           }
         }
         
@@ -347,7 +355,39 @@ export default function PresentationPage() {
     }
   }, [slides, documentData, documentId]);
 
-  // Auto-save to database
+  // Immediate theme auto-save (separate from general auto-save)
+  useEffect(() => {
+    const databaseId = documentData?.databaseId;
+    // Don't save if there's no database ID yet.
+    if (!databaseId || !documentData?.theme) {
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      setIsSyncing(true);
+      try {
+        // Only save theme changes immediately
+        await db.updatePresentation(databaseId, {
+          theme_id: documentData.theme,
+        });
+
+        setLastSavedAt(new Date());
+        // eslint-disable-next-line no-console
+        console.log('🎨 Theme saved to database:', documentData.theme);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('❌ Failed to save theme to database:', error);
+      } finally {
+        setIsSyncing(false);
+      }
+    }, 1000); // Fast save for theme changes (1 second)
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [documentData?.theme, documentData?.databaseId]);
+
+  // General auto-save to database (slides + other data)
   useEffect(() => {
     const databaseId = documentData?.databaseId;
     // Don't save if there's no database ID yet.

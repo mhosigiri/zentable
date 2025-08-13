@@ -7,7 +7,7 @@ import { CheckCircle2, XCircle } from 'lucide-react';
 import { AssistantSlidePreview } from '@/components/assistant-ui/assistant-slide-preview';
 import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
 import { useTheme } from '@/contexts/ThemeContext';
-import { getThemeById, applyAndPersistTheme } from '@/lib/themes';
+import { getThemeById } from '@/lib/themes';
 import {
   Tool,
   ToolContent,
@@ -96,13 +96,10 @@ export function ToolResult({ toolCall, onReject }: ToolResultProps) {
         const theme = getThemeById(result.themeId);
         if (theme) {
           // eslint-disable-next-line no-console
-          // console.log(`🎨 Assistant applying theme for documentId: ${documentId}`);
+          console.log(`🎨 Assistant applying theme for documentId: ${documentId}`);
           
-          // Update the theme context first
+          // Update the theme context - auto-save will handle database persistence
           setTheme(theme, documentId);
-          
-          // Persist the theme change
-          applyAndPersistTheme(theme, documentId);
         }
       } else if (toolName === 'updateSlideImage' && result.success) {
         // First update the slide to show generating state
