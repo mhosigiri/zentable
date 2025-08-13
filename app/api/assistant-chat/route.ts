@@ -9,6 +9,10 @@ import { withCreditCheck } from '@/lib/credits';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  let context: any;
+  let currentThreadId: string | undefined | null;
+  let messages: any[] = [];
+  
   try {
     // Authenticate user first
     const supabase = await createClient();
@@ -23,7 +27,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { messages, context, threadId, saveMessage } = body;
+    const { messages: reqMessages, context: reqContext, threadId, saveMessage } = body;
+    messages = reqMessages;
+    context = reqContext;
+    currentThreadId = threadId;
     
     console.log('Request body:', {
       messagesCount: messages?.length,
@@ -172,7 +179,6 @@ REMINDERS:
     const db = new DatabaseService(supabase);
     
     // Handle thread creation and message persistence
-    let currentThreadId = threadId;
     if (!currentThreadId && messages.length > 0) {
       // Create a new thread for this conversation
       const firstUserMessage = messages.find((m: any) => m.role === 'user');
