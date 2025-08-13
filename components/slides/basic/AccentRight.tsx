@@ -78,7 +78,7 @@ export function AccentRight({
         {/* Right Image Panel - Full Height */}
         <div className="w-1/2 h-full relative">
           {isGenerating || isGeneratingImage || imageLoading ? (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 rounded-r-xl">
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-white/80 rounded-xl mx-auto flex items-center justify-center shadow-sm">
                   <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
@@ -94,7 +94,7 @@ export function AccentRight({
               </div>
             </div>
           ) : imageError || !imageUrl ? (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-white">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-white rounded-r-xl">
               <div className="text-center space-y-3">
                 <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl mx-auto flex items-center justify-center shadow-sm border border-slate-200">
                   <span className="text-3xl opacity-60">🖼️</span>
@@ -109,7 +109,7 @@ export function AccentRight({
             <img
               src={imageUrl}
               alt={imagePrompt || 'Slide image'}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-r-xl"
               onLoad={() => setImageLoading(false)}
               onError={() => {
                 setImageError(true);

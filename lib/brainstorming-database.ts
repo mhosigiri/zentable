@@ -324,7 +324,7 @@ export class BrainstormingDatabaseService {
           ideaContent,
           {
             ai_generated: true,
-            ai_model: 'groq/llama-3.3-70b',
+            ai_model: 'openai/gpt-oss-20b',
             category,
             style,
             generation_prompt: prompt

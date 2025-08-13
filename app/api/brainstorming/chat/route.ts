@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     const ideas = await brainstormingDb.getSessionIdeas(sessionId!, user.id);
 
     // Build system prompt with context
-    const modelInfo = activeMCPTools.length > 0 ? 'OpenAI GPT-4o with MCP tools' : 'Groq Llama 3.3 70B';
+    const modelInfo = activeMCPTools.length > 0 ? 'OpenAI GPT-4o with MCP tools' : 'Groq OpenAI/GPT-OSS-20B';
     const systemMessage = `You are an AI brainstorming assistant helping with creative ideation and idea development.
 You are running on ${modelInfo}.
 
@@ -281,9 +281,9 @@ ALWAYS use the suggestIdeas tool when users ask for ideas, recommendations, or b
         }
       }
     } else {
-      // Use Groq Llama when no MCP tools are active
-      model = groq('llama-3.3-70b-versatile');
-      console.log('Using Groq Llama 3.3 70B');
+      // Use Groq GPT-OSS when no MCP tools are active
+      model = groq('openai/gpt-oss-20b');
+      console.log('Using Groq OpenAI/GPT-OSS-20B');
     }
 
     const result = await streamText({

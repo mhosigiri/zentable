@@ -1,4 +1,4 @@
-import { createAzure } from '@ai-sdk/azure';
+import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { getSlidesByPresentation } from '@/lib/slides';
 import { DatabaseService } from '@/lib/database';
@@ -7,13 +7,6 @@ import { createClient } from '@/lib/supabase/server';
 import { withCreditCheck } from '@/lib/credits';
 
 export const dynamic = 'force-dynamic';
-
-// Configure Azure OpenAI with AI SDK
-const azureOpenAI = createAzure({
-  apiKey: process.env.AZURE_OPENAI_API_KEY || process.env.AZURE_API_KEY,
-  apiVersion: '2025-01-01-preview',
-  resourceName: process.env.AZURE_RESOURCE_NAME,
-});
 
 export async function POST(req: Request) {
   try {
@@ -212,8 +205,18 @@ REMINDERS:
       }
     }
     
+    // Log the request details
+    console.log('[assistant-chat] Starting OpenAI stream with:', {
+      model: 'gpt-5-nano',
+      messageCount: messages.length,
+      presentationId,
+      threadId: currentThreadId,
+      temperature: 0.7,
+      maxSteps: 20
+    });
+
     const result = await streamText({
-      model: azureOpenAI(process.env.AZURE_GPT4_DEPLOYMENT || 'gpt-4o-mini'),
+      model: openai('gpt-4o-mini'),
       messages: [
         {
           role: 'system',
@@ -238,6 +241,17 @@ REMINDERS:
       toolChoice: 'auto',
       maxSteps: 20,
       onFinish: async (completion) => {
+        // Log the completion details
+        console.log('[assistant-chat] OpenAI stream completed:', {
+          threadId: currentThreadId,
+          responseLength: completion.text?.length || 0,
+          toolCallsCount: completion.toolCalls?.length || 0,
+          usage: completion.usage,
+          finishReason: completion.finishReason,
+          modelId: completion.providerMetadata?.openai?.modelId || 'unknown'
+        });
+        
+        console.log('[assistant-chat] Full completion object keys:', Object.keys(completion));
         // Save assistant's response to database when the stream finishes
         if (currentThreadId && completion.text) {
           try {
@@ -253,17 +267,41 @@ REMINDERS:
       }
     });
 
-    console.log('Stream created successfully, returning response');
+    console.log('[assistant-chat] Stream created successfully, returning response');
     const response = result.toDataStreamResponse({
       // Include threadId in response headers for client-side persistence
       headers: currentThreadId ? { 'X-Thread-Id': currentThreadId } : undefined
     });
-    console.log('Response type:', response.constructor.name, 'ThreadId:', currentThreadId);
+    console.log('[assistant-chat] Response prepared:', {
+      responseType: response.constructor.name,
+      threadId: currentThreadId,
+      hasHeaders: !!response.headers
+    });
     return response;
-  } catch (error) {
-    console.error('Error in assistant chat:', error);
+  } catch (error: any) {
+    console.error('[assistant-chat] Error occurred:', {
+      error: error?.message || String(error),
+      stack: error?.stack,
+      presentationId: context?.presentationId,
+      threadId: currentThreadId,
+      messageCount: messages?.length || 0
+    });
+    
+    // Check if it's an OpenAI API error
+    if (error?.name === 'APIError' || error?.type === 'openai_api_error') {
+      console.error('[assistant-chat] OpenAI API Error:', {
+        status: error?.status,
+        code: error?.code,
+        type: error?.type,
+        message: error?.message
+      });
+    }
+    
     return new Response(
-      JSON.stringify({ error: 'Failed to process assistant chat request' }),
+      JSON.stringify({ 
+        error: 'Failed to process assistant chat request',
+        details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

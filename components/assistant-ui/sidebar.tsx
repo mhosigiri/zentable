@@ -1,7 +1,7 @@
 'use client';
 
 import React, { FC, useState, useEffect, useRef, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Wand2, GripVertical } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, GripVertical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Thread } from "@/components/assistant-ui/thread";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
@@ -178,10 +178,13 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
         </button>
 
         {/* Header */}
-        <div className="flex items-center justify-center border-b border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800">
-          <div className="flex items-center gap-2">
-            <Wand2 className="w-5 h-5 text-blue-500" />
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">AI Assistant</h3>
+        <div className="h-16 flex items-center justify-center px-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-100/40 via-purple-50/20 to-transparent dark:from-purple-900/30 dark:via-purple-900/10 dark:to-transparent"></div>
+          <div className="flex items-center gap-2 relative z-10">
+            <Sparkles className="w-5 h-5 text-purple-500 animate-pulse" />
+            <h3 className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              AI Assistant
+            </h3>
           </div>
         </div>
         
