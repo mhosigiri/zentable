@@ -225,9 +225,8 @@ const ThemePreview = ({ label, colors, className }: ThemePreviewProps) => (
                         className={cn('size-7 rounded-full border sm:size-8', {
                             'border-gray-300 bg-white': color.pattern === 'none',
                             'border-gray-300 bg-gray-100': color.pattern === 'border',
-                            'border-purple-500 bg-purple-500': color.pattern === 'primary',
+                            'border-purple-500 bg-purple-500': color.pattern === 'primary' || color.pattern === 'purple',
                             'border-blue-500 bg-blue-500': color.pattern === 'blue',
-                            'border-purple-500 bg-purple-500': color.pattern === 'purple',
                             'border-pink-500 bg-pink-500': color.pattern === 'pink',
                             'border-green-500 bg-green-500': color.pattern === 'green',
                         })}></div>
