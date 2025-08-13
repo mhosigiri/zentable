@@ -1,11 +1,17 @@
 'use client';
 
+import { useEffect } from 'react';
 import { LandingHeader } from '@/components/ui/landing-header';
 import { Hero } from '@/components/ui/hero';
 import { FeaturesSection } from '@/components/ui/features-section';
 import { ShowcaseSection } from '@/components/ui/showcase-section';
 
 export default function Home() {
+  useEffect(() => {
+    // Scroll to top on component mount
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       <LandingHeader />

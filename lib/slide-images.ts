@@ -1,5 +1,6 @@
 import { supabase, SlideImageData, SlideWithImages } from './supabase'
 import type { Tables, Inserts, Updates } from './supabase'
+import { createClient } from '@/lib/supabase/client'
 
 // Type aliases for cleaner code
 export type SlideImage = Tables<'slide_images'>
@@ -298,7 +299,34 @@ export async function getUserImages(userId: string): Promise<Array<{
   presentation_title: string;
   slide_position: number;
 }>> {
-  const { data, error } = await supabase
+  console.log('Fetching images for user:', userId);
+  
+  // Use client-side Supabase client for user-scoped queries
+  const clientSupabase = createClient();
+  
+  // First get all presentations for the user
+  const { data: presentations, error: presError } = await clientSupabase
+    .from('presentations')
+    .select('id, title')
+    .eq('user_id', userId)
+
+  if (presError) {
+    console.error('Error fetching user presentations:', presError)
+    throw presError
+  }
+
+  console.log('User presentations:', presentations);
+
+  if (!presentations || presentations.length === 0) {
+    console.log('No presentations found for user');
+    return []
+  }
+
+  const presentationIds = presentations.map(p => p.id)
+  const presentationMap = new Map(presentations.map(p => [p.id, p.title]))
+
+  // Then get all slides with images for those presentations
+  const { data: slides, error } = await clientSupabase
     .from('slides')
     .select(`
       id,
@@ -308,38 +336,93 @@ export async function getUserImages(userId: string): Promise<Array<{
       image_url,
       image_prompt,
       created_at,
-      updated_at,
-      presentations!slides_presentation_id_fkey(
-        id,
-        title,
-        user_id
-      )
+      updated_at
     `)
-    .eq('presentations.user_id', userId)
+    .in('presentation_id', presentationIds)
     .not('image_url', 'is', null)
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching user images:', error)
+    console.error('Error fetching slides with images:', error)
     throw error
   }
 
-  return data?.map(item => {
-    const presentation = item.presentations ? (Array.isArray(item.presentations) ? item.presentations[0] : item.presentations) : null;
-    
-    return {
-      id: item.id,
-      image_url: item.image_url,
-      image_prompt: item.image_prompt,
-      image_type: 'legacy', // Default type for images stored directly in slides
-      aspect_ratio: '16:9', // Default aspect ratio
-      created_at: item.created_at,
-      updated_at: item.updated_at,
-      slide_id: item.id,
-      slide_title: item.title || null,
-      presentation_id: item.presentation_id || '',
-      presentation_title: presentation?.title || 'Untitled Presentation',
-      slide_position: item.position || 0
-    };
-  }) || []
+  console.log('Slides with images:', slides);
+
+  // Also check for images in slide_images table
+  const { data: slideImages, error: slideImagesError } = await clientSupabase
+    .from('slide_images')
+    .select(`
+      id,
+      slide_id,
+      image_url,
+      image_prompt,
+      image_type,
+      aspect_ratio,
+      created_at,
+      updated_at,
+      position,
+      slides!slide_images_slide_id_fkey(
+        id,
+        title,
+        position,
+        presentation_id
+      )
+    `)
+    .not('image_url', 'is', null)
+    .order('created_at', { ascending: false })
+
+  if (slideImagesError) {
+    console.error('Error fetching slide_images:', slideImagesError)
+  }
+
+  console.log('Slide images from slide_images table:', slideImages);
+
+  const results = [];
+
+  // Add images from slides table
+  if (slides) {
+    for (const slide of slides) {
+      results.push({
+        id: slide.id,
+        image_url: slide.image_url,
+        image_prompt: slide.image_prompt,
+        image_type: 'legacy',
+        aspect_ratio: '16:9',
+        created_at: slide.created_at,
+        updated_at: slide.updated_at,
+        slide_id: slide.id,
+        slide_title: slide.title || null,
+        presentation_id: slide.presentation_id || '',
+        presentation_title: presentationMap.get(slide.presentation_id) || 'Untitled Presentation',
+        slide_position: slide.position || 0
+      });
+    }
+  }
+
+  // Add images from slide_images table (for slides that belong to user's presentations)
+  if (slideImages) {
+    for (const image of slideImages) {
+      const slideData = image.slides ? (Array.isArray(image.slides) ? image.slides[0] : image.slides) : null;
+      if (slideData && presentationIds.includes(slideData.presentation_id)) {
+        results.push({
+          id: image.id,
+          image_url: image.image_url,
+          image_prompt: image.image_prompt,
+          image_type: image.image_type || 'generated',
+          aspect_ratio: image.aspect_ratio || '16:9',
+          created_at: image.created_at,
+          updated_at: image.updated_at,
+          slide_id: image.slide_id,
+          slide_title: slideData.title || null,
+          presentation_id: slideData.presentation_id || '',
+          presentation_title: presentationMap.get(slideData.presentation_id) || 'Untitled Presentation',
+          slide_position: slideData.position || 0
+        });
+      }
+    }
+  }
+
+  console.log('Total images found:', results.length);
+  return results;
 }

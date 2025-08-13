@@ -47,6 +47,8 @@ export async function updateSession(request: NextRequest) {
     '/pricing',
     '/login',
     '/auth',
+    '/auth/oauth',
+    '/auth/callback',
     '/docs-section'
   ]
 
