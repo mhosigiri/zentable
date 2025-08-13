@@ -3,7 +3,9 @@
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes, ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
+// @ts-ignore
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+// @ts-ignore
 import {
   oneDark,
   oneLight,

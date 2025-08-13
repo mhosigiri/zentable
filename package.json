@@ -140,10 +140,10 @@
     "utf-8-validate": "^6.0.5",
     "uuid": "^11.1.0",
     "vaul": "^0.9.9",
-    "zod": "^3.25.67"
-  },
-  "devDependencies": {
+    "zod": "^3.25.67",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/uuid": "^10.0.0"
+  },
+  "devDependencies": {
   }
 }
