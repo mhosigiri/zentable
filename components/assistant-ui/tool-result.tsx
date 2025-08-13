@@ -102,6 +102,9 @@ export function ToolResult({ toolCall, onReject }: ToolResultProps) {
           setTheme(theme, documentId);
         }
       } else if (toolName === 'updateSlideImage' && result.success) {
+        // Get the current slide to preserve template type for aspect ratio
+        const currentSlide = slideManager.slides.find(s => s.id === result.slideId);
+        
         // First update the slide to show generating state
         slideManager.updateSlideById(result.slideId, { 
           imagePrompt: result.imagePrompt,
@@ -125,7 +128,10 @@ export function ToolResult({ toolCall, onReject }: ToolResultProps) {
           const response = await fetch('/api/generate-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: result.imagePrompt })
+            body: JSON.stringify({ 
+              prompt: result.imagePrompt,
+              templateType: currentSlide?.templateType // Pass template type to preserve aspect ratio
+            })
           });
           
           if (!response.ok) {

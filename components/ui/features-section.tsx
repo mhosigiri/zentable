@@ -22,9 +22,13 @@ import {
   TrendingUp,
   Eye,
   Download,
-  Share
+  Share,
+  Terminal,
+  Lightbulb,
+  Bot
 } from "lucide-react";
 import Link from "next/link";
+import { InteractiveSlidePreview } from "./interactive-slide-preview";
 
 export function FeaturesSection() {
   const [activeTab, setActiveTab] = useState("ai-generation");
@@ -44,10 +48,10 @@ export function FeaturesSection() {
         benefits: ["Auto-layout selection", "Color harmony", "Visual balance"]
       },
       {
-        icon: <MessageSquare className="h-8 w-8" />,
-        title: "Interactive Brainstorming Copilot",
-        description: "Collaborate with AI to expand ideas, suggest improvements, and explore creative directions for your presentations.",
-        benefits: ["Idea expansion", "Creative suggestions", "Content refinement"]
+        icon: <Bot className="h-8 w-8" />,
+        title: "AI Assistant for Real-time Editing",
+        description: "Chat naturally with AI to make instant changes, get suggestions, and enhance your slides with contextual understanding.",
+        benefits: ["Natural language editing", "Contextual suggestions", "Smart improvements"]
       }
     ],
     "smart-editing": [
@@ -64,70 +68,54 @@ export function FeaturesSection() {
         benefits: ["Instant feedback", "WYSIWYG editing", "Mobile preview"]
       },
       {
-        icon: <Code className="h-8 w-8" />,
-        title: "Advanced Text Editor",
-        description: "Rich text editing with AI-powered writing assistance, grammar checking, and style suggestions.",
-        benefits: ["Writing assistance", "Grammar check", "Style suggestions"]
+        icon: <Lightbulb className="h-8 w-8" />,
+        title: "Interactive Brainstorming Mode",
+        description: "Explore ideas with AI before creating presentations. Refine concepts through conversation and discover new angles.",
+        benefits: ["Idea exploration", "Topic refinement", "Creative discovery"]
       }
     ],
     "collaboration": [
       {
-        icon: <Users className="h-8 w-8" />,
-        title: "Team Collaboration",
-        description: "Real-time collaborative editing with AI-mediated conflict resolution and intelligent merge suggestions.",
-        benefits: ["Real-time editing", "Conflict resolution", "Version control"]
+        icon: <Bot className="h-8 w-8" />,
+        title: "AI Assistant Integration",
+        description: "Chat naturally with AI to edit slides, get suggestions, and enhance presentations with contextual understanding of your content.",
+        benefits: ["Natural language editing", "Contextual suggestions", "Real-time improvements"]
       },
       {
-        icon: <Share className="h-8 w-8" />,
-        title: "Smart Sharing",
-        description: "Intelligent sharing options with audience-specific formatting and access controls powered by AI insights.",
-        benefits: ["Audience targeting", "Access control", "Analytics"]
+        icon: <Lightbulb className="h-8 w-8" />,
+        title: "Interactive Brainstorming",
+        description: "Explore ideas with AI before creating presentations. Refine concepts through conversation and discover new creative angles.",
+        benefits: ["Idea exploration", "Topic refinement", "Creative discovery"]
       },
       {
-        icon: <Globe className="h-8 w-8" />,
-        title: "Universal Export",
-        description: "Export to any format with AI-optimized layouts for different platforms and presentation contexts.",
-        benefits: ["Multi-format export", "Platform optimization", "Quality preservation"]
+        icon: <Terminal className="h-8 w-8" />,
+        title: "MCP Developer Integration",
+        description: "Create presentations directly from Claude Code, Cursor, Windsurf, and VS Code with Model Context Protocol support.",
+        benefits: ["IDE integration", "API access", "Developer workflow"]
       }
     ]
   };
 
   const stats = [
-    { number: "10M+", label: "Slides Generated", icon: <Presentation className="h-5 w-5" /> },
-    { number: "500K+", label: "Active Users", icon: <Users className="h-5 w-5" /> },
-    { number: "99.9%", label: "Uptime", icon: <TrendingUp className="h-5 w-5" /> },
-    { number: "50+", label: "Integrations", icon: <Database className="h-5 w-5" /> }
+    { number: "18+", label: "Slide Templates", icon: <Presentation className="h-5 w-5" /> },
+    { number: "27+", label: "Professional Themes", icon: <Palette className="h-5 w-5" /> },
+    { number: "3", label: "Subscription Plans", icon: <TrendingUp className="h-5 w-5" /> },
+    { number: "4+", label: "AI Models", icon: <Brain className="h-5 w-5" /> }
   ];
 
   return (
-    <section className="py-24 px-4 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
+    <section id="features" className="py-12 sm:py-24 px-4 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30">
       <div className="max-w-7xl mx-auto">
         
-        {/* Section Header */}
+        {/* Interactive Slide Preview */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="mb-12 sm:mb-20"
         >
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-purple-100 text-purple-800 text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Powered by Advanced AI
-          </div>
-          
-          <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Intelligence Meets
-            </span>
-            <br />
-            <span className="text-gray-900">Creative Expression</span>
-          </h2>
-          
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Experience the future of presentation creation where AI amplifies your creativity, 
-            transforms your ideas, and brings your vision to life with unprecedented ease.
-          </p>
+          <InteractiveSlidePreview />
         </motion.div>
 
         {/* Stats */}
@@ -136,7 +124,7 @@ export function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           viewport={{ once: true }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 mb-12 sm:mb-20"
         >
           {stats.map((stat, index) => (
             <motion.div
@@ -150,8 +138,8 @@ export function FeaturesSection() {
               <div className="flex items-center justify-center mb-2 text-purple-500">
                 {stat.icon}
               </div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{stat.number}</div>
-              <div className="text-sm text-gray-600">{stat.label}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stat.number}</div>
+              <div className="text-xs sm:text-sm text-gray-600">{stat.label}</div>
             </motion.div>
           ))}
         </motion.div>
@@ -164,33 +152,36 @@ export function FeaturesSection() {
           viewport={{ once: true }}
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-12 bg-white/60 backdrop-blur-sm border border-purple-100">
+            <TabsList className="grid w-full grid-cols-3 mb-8 sm:mb-12 bg-white/60 backdrop-blur-sm border border-purple-100">
               <TabsTrigger 
                 value="ai-generation"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white text-xs sm:text-sm p-2 sm:p-3"
               >
-                <Brain className="w-4 h-4 mr-2" />
-                AI Generation
+                <Brain className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">AI Generation</span>
+                <span className="sm:hidden">AI Gen</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="smart-editing"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white text-xs sm:text-sm p-2 sm:p-3"
               >
-                <Wand2 className="w-4 h-4 mr-2" />
-                Smart Editing
+                <Wand2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Smart Editing</span>
+                <span className="sm:hidden">Editing</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="collaboration"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-blue-500 data-[state=active]:text-white text-xs sm:text-sm p-2 sm:p-3"
               >
-                <Users className="w-4 h-4 mr-2" />
-                Collaboration
+                <Bot className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">AI Collaboration</span>
+                <span className="sm:hidden">AI Collab</span>
               </TabsTrigger>
             </TabsList>
 
             {Object.entries(features).map(([key, featureList]) => (
               <TabsContent key={key} value={key} className="mt-0">
-                <div className="grid md:grid-cols-3 gap-8">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                   {featureList.map((feature, index) => (
                     <motion.div
                       key={feature.title}
@@ -241,37 +232,37 @@ export function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
           viewport={{ once: true }}
-          className="text-center mt-20"
+          className="text-center mt-12 sm:mt-20"
         >
           <div className="relative mx-auto max-w-4xl">
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl p-12 text-white overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl p-6 sm:p-12 text-white overflow-hidden">
               <div className="relative z-10">
-                <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
                   Ready to Transform Your Ideas?
                 </h3>
-                <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
+                <p className="text-base sm:text-lg md:text-xl opacity-90 mb-6 sm:mb-8 max-w-2xl mx-auto">
                   Join thousands of creators who are already using AI to build stunning presentations that captivate and inspire.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link href="/dashboard">
-                    <Button size="lg" variant="secondary" className="px-8 py-4 text-lg bg-white text-purple-600 hover:bg-gray-100">
-                      <Zap className="w-5 h-5 mr-2" />
+                    <Button size="lg" variant="secondary" className="px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg bg-white text-purple-600 hover:bg-gray-100 w-full sm:w-auto">
+                      <Zap className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
                       Start Free Trial
-                      <ArrowRight className="w-5 h-5 ml-2" />
+                      <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 ml-2" />
                     </Button>
                   </Link>
-                  <Button size="lg" variant="outline" className="px-8 py-4 text-lg border-white text-white hover:bg-white/10">
+                  {/* <Button size="lg" variant="outline" className="px-8 py-4 text-lg border-white text-white hover:bg-white/10">
                     <Download className="w-5 h-5 mr-2" />
                     View Examples
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
               
               {/* Background decoration */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20" />
-              <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-              <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-3xl" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
             </div>
           </div>
         </motion.div>
