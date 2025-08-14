@@ -110,50 +110,190 @@ function getSchemaForTemplate(templateType: string): z.ZodType<any> {
   }
 }
 
-// Template selection logic (simplified version of generate-outline route)
+// Template selection logic (matches generate-outline route exactly)
 function selectTemplateType(title: string, bulletPoints: string[], index: number, totalSections: number, usedTemplates: string[] = []): string {
+  const titleLower = title.toLowerCase();
   const contentText = (title + ' ' + bulletPoints.join(' ')).toLowerCase();
   
+  // Available templates for variety
   const allTemplates = [
-    'blank-card', 'bullets', 'paragraph', 'title-with-bullets'
+    'blank-card',
+    'bullets',
+    'paragraph',
+    'image-and-text',
+    'text-and-image',
+    'two-columns',
+    'two-column-with-headings',
+    'three-columns',
+    'three-column-with-headings',
+    'four-columns',
+    'four-columns-with-headings',
+    'title-with-bullets',
+    'title-with-bullets-and-image',
+    'title-with-text',
+    'accent-left',
+    'accent-right',
+    'accent-top'
   ];
   
+  // Enhanced variety logic - prioritize unused templates first
+  const templateCounts: { [key: string]: number } = {};
+  usedTemplates.forEach(template => {
+    templateCounts[template] = (templateCounts[template] || 0) + 1;
+  });
+  
+  // Get unused templates first
+  const unusedTemplates = allTemplates.filter(template => !templateCounts[template]);
+  
+  // Determine suitable templates based on content
   let suitableTemplates: string[] = [];
   
-  // Content-based selection
+  // Image-heavy content
+  if (contentText.includes('image') || contentText.includes('visual') || contentText.includes('photo') || 
+      contentText.includes('picture') || contentText.includes('diagram') || contentText.includes('chart') ||
+      contentText.includes('example') || contentText.includes('case study') || 
+      contentText.includes('demonstration') || contentText.includes('showcase')) {
+    suitableTemplates.push('image-and-text', 'text-and-image', 'title-with-bullets-and-image', 'accent-left', 'accent-right', 'accent-top');
+  }
+  
+  // Comparison or contrasting content
+  if (contentText.includes('vs') || contentText.includes('versus') || 
+      contentText.includes('comparison') || contentText.includes('difference') ||
+      contentText.includes('before') || contentText.includes('after') ||
+      contentText.includes('pros') || contentText.includes('cons')) {
+    suitableTemplates.push('two-column-with-headings', 'two-columns');
+  }
+  
+  // Categorized or structured content
+  if (contentText.includes('type') || contentText.includes('category') || 
+      contentText.includes('aspect') || contentText.includes('approach') ||
+      contentText.includes('step') || contentText.includes('phase') ||
+      contentText.includes('component') || contentText.includes('element')) {
+    if (bulletPoints.length >= 4) {
+      suitableTemplates.push('four-columns-with-headings', 'four-columns');
+    } else if (bulletPoints.length === 3) {
+      suitableTemplates.push('three-column-with-headings', 'three-columns');
+    } else if (bulletPoints.length === 2) {
+      suitableTemplates.push('two-column-with-headings', 'two-columns');
+    }
+  }
+  
+  // Content that works well as numbered bullets or paragraphs
   if (contentText.includes('benefit') || contentText.includes('advantage') || 
       contentText.includes('reason') || contentText.includes('point') ||
-      contentText.includes('key') || contentText.includes('important')) {
+      contentText.includes('key') || contentText.includes('important') ||
+      contentText.includes('main') || contentText.includes('primary')) {
     suitableTemplates.push('bullets', 'title-with-bullets');
   }
   
+  // Content that works well as short text or paragraphs
   if (contentText.includes('strategy') || contentText.includes('process') || 
       contentText.includes('methodology') || contentText.includes('framework') ||
-      contentText.includes('analysis') || contentText.includes('overview')) {
-    suitableTemplates.push('paragraph', 'title-with-bullets');
+      contentText.includes('analysis') || contentText.includes('overview') ||
+      contentText.includes('summary') || contentText.includes('conclusion') ||
+      contentText.includes('explanation') || contentText.includes('description') ||
+      contentText.includes('background') || contentText.includes('context') ||
+      contentText.includes('definition') || contentText.includes('concept')) {
+    suitableTemplates.push('paragraph', 'title-with-bullets', 'title-with-text');
   }
   
   // Multi-item content based on bullet count
   if (bulletPoints.length >= 4) {
-    suitableTemplates.push('bullets', 'title-with-bullets');
-  } else if (bulletPoints.length <= 2) {
+    suitableTemplates.push('four-columns', 'four-columns-with-headings', 'bullets', 'title-with-bullets');
+  } else if (bulletPoints.length === 3) {
+    suitableTemplates.push('three-columns', 'three-column-with-headings', 'bullets', 'title-with-bullets');
+  } else if (bulletPoints.length === 2) {
+    suitableTemplates.push('two-columns', 'two-column-with-headings', 'title-with-bullets');
+  } else if (bulletPoints.length === 1) {
     suitableTemplates.push('paragraph', 'title-with-bullets');
   }
   
+  // If no suitable templates found, use all templates
   if (suitableTemplates.length === 0) {
     suitableTemplates = [...allTemplates];
   }
   
-  // Remove duplicates and ensure variety
+  // Remove duplicates
   suitableTemplates = Array.from(new Set(suitableTemplates));
   
-  // Avoid repeating the same template as previous slide
-  if (index > 0 && usedTemplates[index - 1]) {
-    suitableTemplates = suitableTemplates.filter(t => t !== usedTemplates[index - 1]);
-    if (suitableTemplates.length === 0) suitableTemplates = [...allTemplates];
+  // PRIORITY 1: Use unused templates that are suitable for content
+  const unusedSuitableTemplates = suitableTemplates.filter(template => unusedTemplates.includes(template));
+  if (unusedSuitableTemplates.length > 0) {
+    return unusedSuitableTemplates[Math.floor(Math.random() * unusedSuitableTemplates.length)];
   }
   
-  return suitableTemplates[Math.floor(Math.random() * suitableTemplates.length)];
+  // PRIORITY 2: Use any unused template if no suitable unused ones
+  if (unusedTemplates.length > 0) {
+    return unusedTemplates[Math.floor(Math.random() * unusedTemplates.length)];
+  }
+  
+  // PRIORITY 3: Apply strict variety logic for used templates
+  const availableTemplates = suitableTemplates.filter(template => {
+    // Don't use the same template as the previous slide
+    if (index > 0 && usedTemplates[index - 1] === template) return false;
+    
+    // For longer presentations, avoid using the same template too frequently
+    if (totalSections > 5) {
+      const recentlyUsed = usedTemplates.slice(Math.max(0, index - 3), index);
+      if (recentlyUsed.includes(template)) return false;
+    }
+    
+    return true;
+  });
+  
+  // If we filtered out all templates, use the suitable ones
+  const finalTemplates = availableTemplates.length > 0 ? availableTemplates : suitableTemplates;
+  
+  // PRIORITY 4: Strategic selection based on position
+  if (index === 0) {
+    // First slide - default to a visually striking accent template
+    const accentTemplates = ['accent-left', 'accent-right', 'accent-top'];
+    const preferred = finalTemplates.filter(t => accentTemplates.includes(t));
+    if (preferred.length > 0) {
+      return preferred[Math.floor(Math.random() * preferred.length)];
+    }
+    // If no accent template is in finalTemplates (e.g. filtered out), just pick a random one as a fallback.
+    return accentTemplates[Math.floor(Math.random() * accentTemplates.length)];
+  }
+  
+  if (index === totalSections - 1) {
+    // Last slide - use only non-image templates for conclusions and summaries
+    const imageTemplates = ['image-and-text', 'text-and-image', 'title-with-bullets-and-image', 'accent-left', 'accent-right', 'accent-top', 'accent-background'];
+    const lastSlideTemplates = allTemplates.filter(t => !imageTemplates.includes(t));
+    const lastSlidePreferred = ['title-with-bullets', 'bullets', 'paragraph', 'two-columns', 'two-column-with-headings', 'three-columns', 'three-column-with-headings', 'title-with-text'];
+    
+    // Prioritize conclusion-friendly templates first
+    const conclusionTemplates = lastSlidePreferred.filter(t => lastSlideTemplates.includes(t));
+    if (conclusionTemplates.length > 0) {
+      return conclusionTemplates[Math.floor(Math.random() * conclusionTemplates.length)];
+    }
+    
+    // Fallback to any non-image template
+    return lastSlideTemplates[Math.floor(Math.random() * lastSlideTemplates.length)];
+  }
+  
+  // PRIORITY 5: For middle slides, prefer least-used templates
+  if (totalSections > 3) {
+    // Sort templates by usage count (ascending)
+    const sortedByUsage = finalTemplates.sort((a, b) => {
+      const countA = templateCounts[a] || 0;
+      const countB = templateCounts[b] || 0;
+      return countA - countB;
+    });
+    
+    // Use the least used template(s)
+    const minUsage = templateCounts[sortedByUsage[0]] || 0;
+    const leastUsedTemplates = sortedByUsage.filter(template => 
+      (templateCounts[template] || 0) === minUsage
+    );
+    
+    if (leastUsedTemplates.length > 0) {
+      return leastUsedTemplates[Math.floor(Math.random() * leastUsedTemplates.length)];
+    }
+  }
+  
+  // Final fallback - random selection from available templates
+  return finalTemplates[Math.floor(Math.random() * finalTemplates.length)];
 }
 
 // Authentication middleware
@@ -305,13 +445,20 @@ The outline should create a compelling ${slideCount}-slide presentation with max
     // Add template types and IDs to sections
     const usedTemplates: string[] = [];
     const sectionsWithTemplates = outline.sections.map((section, index) => {
-      const templateType = section.templateType || selectTemplateType(
-        section.title, 
-        section.bulletPoints, 
-        index, 
-        outline.sections.length,
-        usedTemplates
-      );
+      let templateType;
+      if (index === 0) {
+        // Force the first slide to be an accent template
+        const accentTemplates = ['accent-left', 'accent-right'];
+        templateType = accentTemplates[Math.floor(Math.random() * accentTemplates.length)];
+      } else {
+        templateType = section.templateType || selectTemplateType(
+          section.title, 
+          section.bulletPoints, 
+          index, 
+          outline.sections.length,
+          usedTemplates
+        );
+      }
       
       usedTemplates.push(templateType);
       

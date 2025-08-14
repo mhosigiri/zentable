@@ -83,29 +83,29 @@ export default function DocsPage() {
     <div className="space-y-12">
       {/* Hero Section */}
       <div className="text-center space-y-6">
-        <div className="flex items-center justify-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mr-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 sm:mb-0 sm:mr-4">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
               Cursor for Slides Documentation
             </h1>
-            <p className="text-xl text-gray-600">
+            <p className="text-lg sm:text-xl text-gray-600">
               Learn how to create stunning AI-powered presentations
             </p>
           </div>
         </div>
         
-        <div className="flex items-center justify-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link href="/docs-section/guides/creating-presentations">
-            <Button size="lg" className="bg-blue-500 hover:bg-blue-600">
+            <Button size="lg" className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto">
               <PlayCircle className="w-5 h-5 mr-2" />
               Get Started
             </Button>
           </Link>
           <Link href="/create">
-            <Button variant="outline" size="lg" className="bg-white/60 backdrop-blur-sm border-white/20">
+            <Button variant="outline" size="lg" className="bg-white/60 backdrop-blur-sm border-white/20 w-full sm:w-auto">
               Create Presentation
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
@@ -116,11 +116,11 @@ export default function DocsPage() {
       {/* Quick Start Guide */}
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Quick Start</h2>
-          <p className="text-lg text-gray-600">Get up and running in 3 simple steps</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Quick Start</h2>
+          <p className="text-base sm:text-lg text-gray-600">Get up and running in 3 simple steps</p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {quickStartSteps.map((step) => (
             <Link key={step.step} href={step.href}>
               <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white/80 backdrop-blur-sm border-0 h-full">
@@ -128,7 +128,7 @@ export default function DocsPage() {
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
                     <span className="text-xl font-bold text-white">{step.step}</span>
                   </div>
-                  <CardTitle className="text-xl font-semibold group-hover:text-blue-600 transition-colors">
+                  <CardTitle className="text-lg sm:text-xl font-semibold group-hover:text-blue-600 transition-colors">
                     {step.title}
                   </CardTitle>
                 </CardHeader>
@@ -146,16 +146,16 @@ export default function DocsPage() {
       {/* Features Overview */}
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Features</h2>
-          <p className="text-lg text-gray-600">Explore all the powerful features available in Cursor for Slides</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Features</h2>
+          <p className="text-base sm:text-lg text-gray-600">Explore all the powerful features available in Cursor for Slides</p>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {features.map((feature) => (
             <Link key={feature.title} href={feature.href}>
               <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white/80 backdrop-blur-sm border-0 h-full relative">
                 {feature.badge && (
-                  <Badge className="absolute -top-2 left-4 bg-blue-100 text-blue-800 hover:bg-blue-100">
+                  <Badge className="absolute -top-2 left-4 bg-blue-100 text-blue-800 hover:bg-blue-100 text-xs">
                     {feature.badge}
                   </Badge>
                 )}
@@ -163,7 +163,7 @@ export default function DocsPage() {
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
                     <feature.icon className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle className="text-xl font-semibold group-hover:text-blue-600 transition-colors">
+                  <CardTitle className="text-lg sm:text-xl font-semibold group-hover:text-blue-600 transition-colors">
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
@@ -181,18 +181,18 @@ export default function DocsPage() {
       {/* What's New */}
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">What&rsquo;s New</h2>
-          <p className="text-lg text-gray-600">Latest features and improvements</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">What's New</h2>
+          <p className="text-base sm:text-lg text-gray-600">Latest features and improvements</p>
         </div>
         
         <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-4">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Enhanced AI Assistant</h3>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Enhanced AI Assistant</h3>
                 <p className="text-gray-600 mb-4">
                   Our AI assistant now supports more natural conversations and can perform complex slide operations 
                   like reordering, duplicating, and applying themes through simple chat commands.
@@ -212,14 +212,14 @@ export default function DocsPage() {
       {/* Help & Support */}
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Need Help?</h2>
-          <p className="text-lg text-gray-600">Get support and connect with the community</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Need Help?</h2>
+          <p className="text-base sm:text-lg text-gray-600">Get support and connect with the community</p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
           <Card className="bg-white/80 backdrop-blur-sm border-0">
-            <CardContent className="p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Guides & Tutorials</h3>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Guides & Tutorials</h3>
               <p className="text-gray-600 mb-4">
                 Step-by-step guides to help you master all features
               </p>
@@ -232,10 +232,10 @@ export default function DocsPage() {
           </Card>
           
           <Card className="bg-white/80 backdrop-blur-sm border-0">
-            <CardContent className="p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Feature Requests</h3>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Feature Requests</h3>
               <p className="text-gray-600 mb-4">
-                Have an idea? We&rsquo;d love to hear your suggestions
+                Have an idea? We'd love to hear your suggestions
               </p>
               <Button variant="outline" className="bg-white/60 backdrop-blur-sm border-white/20">
                 Submit Feedback
