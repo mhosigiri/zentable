@@ -3,64 +3,87 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { 
-  Lightbulb, 
+  Brain, 
   ArrowRight, 
-  MessageSquare, 
-  Zap, 
-  Target,
+  Lightbulb, 
+  MessageSquare,
   CheckCircle,
   AlertCircle,
   Users,
-  Brain,
-  Sparkles
+  Sparkles,
+  Clock,
+  Target,
+  Workflow,
+  FileText,
+  PlayCircle,
+  BookOpen,
+  Loader2,
+  Settings,
+  Database,
+  Zap,
+  Monitor,
+  Filter,
+  BarChart3,
+  Search,
+  Layers,
+  Presentation,
+  Shield
 } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
+import { useEffect } from 'react';
 
 export default function BrainstormingPage() {
-  const brainstormingCapabilities = [
+  useEffect(() => {
+    analytics.pageView('brainstorming_guide');
+  }, []);
+
+  const brainstormingFeatures = [
     {
-      title: 'Idea Generation',
-      description: 'Start with broad topics and explore specific angles',
-      icon: Lightbulb,
-      features: [
-        'AI suggests related concepts and themes',
-        'Generate multiple presentation directions',
-        'Explore unexpected angles and perspectives',
-        'Build on initial ideas with follow-up suggestions'
-      ]
-    },
-    {
-      title: 'Conversational Exploration',
-      description: 'Chat naturally about your presentation ideas',
-      icon: MessageSquare,
-      features: [
-        'Ask "what if" questions and explore alternatives',
-        'Get suggestions for slide structure and content flow',
-        'Discuss different approaches and methodologies',
-        'Receive clarifying questions to refine your thinking'
-      ]
-    },
-    {
-      title: 'Topic Refinement',
-      description: 'Narrow down broad concepts into focused themes',
-      icon: Target,
-      features: [
-        'Identify key messages and supporting points',
-        'Develop clear narrative structures',
-        'Focus on the most compelling aspects',
-        'Eliminate unnecessary or confusing elements'
-      ]
-    },
-    {
-      title: 'Content Direction',
-      description: 'Explore different presentation styles and approaches',
+      title: 'AI Brainstorming Studio',
+      description: 'Collaborate with AI in real-time to generate and refine ideas',
       icon: Brain,
       features: [
-        'Test audience-specific messaging',
-        'Identify the most compelling angles',
-        'Consider different presentation formats',
-        'Explore various storytelling approaches'
+        'Two-panel interface with AI chat and idea collection',
+        'Real-time idea extraction and organization',
+        'Session-based brainstorming with persistent storage',
+        'Smart tagging and categorization of ideas'
+      ]
+    },
+    {
+      title: 'MCP Integration',
+      description: 'Connect with external tools and data sources via MCP',
+      icon: Zap,
+      features: [
+        'Toggle between GPT-4o + MCP and GPT-OSS 20B models',
+        'Dynamic tool activation during brainstorming sessions',
+        'Access to external APIs and data sources',
+        'Enhanced context from connected services'
+      ]
+    },
+    {
+      title: 'Intelligent Idea Management',
+      description: 'Automatic extraction and organization of brainstormed concepts',
+      icon: Lightbulb,
+      features: [
+        'Real-time idea extraction from chat messages',
+        'Automatic categorization and tagging',
+        'Priority scoring for ideas',
+        'Persistent storage across sessions'
+      ]
+    },
+    {
+      title: 'Seamless Presentation Generation',
+      description: 'Transform brainstormed ideas directly into presentations',
+      icon: Presentation,
+      features: [
+        'One-click presentation generation from collected ideas',
+        'Customizable slide count, style, and language',
+        'Content length optimization (brief, medium, detailed)',
+        'Direct integration with presentation creation workflow'
       ]
     }
   ];
@@ -68,198 +91,347 @@ export default function BrainstormingPage() {
   const workflowSteps = [
     {
       step: 1,
-      title: 'Access Brainstorming Mode',
-      description: 'Start your ideation session',
-      icon: Zap,
+      title: 'Start Brainstorming Session',
+      description: 'Create a new session and begin chatting with the AI assistant',
       details: [
-        'Go to Create → Brainstorm from main navigation',
-        'Or click "Brainstorm Ideas" from the dashboard',
-        'Choose between guided or free-form brainstorming',
-        'Set your session preferences and goals'
-      ]
+        'Navigate to /create/brainstorm to start',
+        'Session automatically created with unique ID',
+        'AI assistant ready for collaborative ideation',
+        'Choose between different AI models (GPT-4o + MCP or GPT-OSS 20B)'
+      ],
+      icon: MessageSquare
     },
     {
       step: 2,
-      title: 'Start the Conversation',
-      description: 'Enter your general topic or challenge',
-      icon: MessageSquare,
+      title: 'Activate MCP Tools (Optional)',
+      description: 'Connect external tools and data sources for enhanced brainstorming',
       details: [
-        'Begin with broad topics or specific challenges',
-        'Example: "I need to present our Q4 marketing strategy"',
-        'Share context about your audience and goals',
-        'Don\'t worry about structure at this stage'
-      ]
+        'Toggle MCP tools integration in the top-right corner',
+        'Access external APIs and databases',
+        'Incorporate real-time data into brainstorming',
+        'Enhanced AI capabilities with external context'
+      ],
+      icon: Zap
     },
     {
       step: 3,
-      title: 'Explore Ideas',
-      description: 'Engage in dynamic conversation with AI',
-      icon: Brain,
+      title: 'Collaborative Ideation',
+      description: 'Chat with AI to explore topics and generate creative ideas',
       details: [
-        'AI will ask clarifying questions to understand your needs',
-        'Discuss different angles and approaches openly',
-        'Explore "what if" scenarios and alternatives',
-        'Refine your focus through iterative conversation'
-      ]
+        'Describe your project, challenge, or topic',
+        'AI suggests related concepts and angles',
+        'Explore different perspectives and approaches',
+        'Ideas automatically extracted and saved in real-time'
+      ],
+      icon: Brain
     },
     {
       step: 4,
-      title: 'Generate Presentations',
-      description: 'Transform refined ideas into presentations',
-      icon: Sparkles,
+      title: 'Idea Collection & Organization',
+      description: 'Watch as ideas are automatically captured and organized',
       details: [
-        'Choose from multiple suggested presentation directions',
-        'Maintain conversation context for consistent messaging',
-        'Create presentations directly from brainstorming insights',
-        'Save successful brainstorming sessions for future reference'
-      ]
+        'Ideas appear in real-time in the right panel',
+        'Automatic categorization and tagging',
+        'Smart extraction of key concepts from conversation',
+        'Ideas persist across browser sessions'
+      ],
+      icon: Lightbulb
+    },
+    {
+      step: 5,
+      title: 'Presentation Customization',
+      description: 'Configure presentation settings before generation',
+      details: [
+        'Choose slide count (1-20 slides)',
+        'Select presentation style (Professional, Creative, Minimalist, Playful, Formal)',
+        'Pick language (English, Spanish, French, German)',
+        'Set content length (Brief, Medium, Detailed)'
+      ],
+      icon: Settings
+    },
+    {
+      step: 6,
+      title: 'Generate Presentation',
+      description: 'Transform your brainstormed ideas into a complete presentation',
+      details: [
+        'One-click generation from collected ideas',
+        'AI creates cohesive presentation structure',
+        'Ideas integrated into logical slide flow',
+        'Direct navigation to presentation editor'
+      ],
+      icon: Sparkles
     }
   ];
 
   const useCases = [
     {
-      title: 'Strategic Planning',
-      description: 'Develop comprehensive business strategies and roadmaps',
+      category: 'Business Strategy',
       icon: Target,
-      example: 'Brainstorm approaches for entering new markets, competitive positioning, or growth strategies'
+      examples: [
+        {
+          scenario: 'Product Launch Planning',
+          description: 'Brainstorm marketing strategies, target audiences, and launch timeline for a new product',
+          outcome: 'Comprehensive presentation with go-to-market strategy, messaging framework, and execution plan'
+        },
+        {
+          scenario: 'Market Research Analysis',
+          description: 'Explore market trends, competitor analysis, and opportunity identification',
+          outcome: 'Data-driven presentation with market insights, competitive landscape, and strategic recommendations'
+        }
+      ]
     },
     {
-      title: 'Problem Solving',
-      description: 'Work through complex challenges and identify solutions',
+      category: 'Creative Projects',
       icon: Lightbulb,
-      example: 'Explore different solutions to operational challenges or technical problems'
+      examples: [
+        {
+          scenario: 'Campaign Conceptualization',
+          description: 'Generate creative concepts, themes, and messaging for marketing campaigns',
+          outcome: 'Visual presentation showcasing campaign ideas, creative direction, and execution concepts'
+        },
+        {
+          scenario: 'Content Strategy Development',
+          description: 'Brainstorm content themes, formats, and distribution strategies',
+          outcome: 'Strategic presentation with content calendar, platform strategies, and engagement tactics'
+        }
+      ]
     },
     {
-      title: 'Creative Projects',
-      description: 'Generate innovative ideas for marketing campaigns or projects',
-      icon: Sparkles,
-      example: 'Develop creative concepts for product launches or brand campaigns'
-    },
-    {
-      title: 'Educational Content',
-      description: 'Structure learning materials and training programs',
-      icon: Brain,
-      example: 'Create engaging training presentations or educational workshop content'
-    },
-    {
-      title: 'Team Presentations',
-      description: 'Prepare for team meetings, retrospectives, and planning sessions',
-      icon: Users,
-      example: 'Plan sprint reviews, team building sessions, or organizational updates'
-    },
-    {
-      title: 'Client Pitches',
-      description: 'Develop compelling proposals and client presentations',
+      category: 'Technical Innovation',
       icon: Zap,
-      example: 'Create persuasive sales presentations or project proposals'
+      examples: [
+        {
+          scenario: 'Software Architecture Design',
+          description: 'Explore system design patterns, technology choices, and implementation approaches',
+          outcome: 'Technical presentation with architecture diagrams, technology stack, and implementation roadmap'
+        },
+        {
+          scenario: 'Problem-Solution Mapping',
+          description: 'Identify technical challenges and brainstorm innovative solutions',
+          outcome: 'Solution-focused presentation with problem analysis, proposed solutions, and implementation strategy'
+        }
+      ]
+    },
+    {
+      category: 'Educational Content',
+      icon: BookOpen,
+      examples: [
+        {
+          scenario: 'Course Development',
+          description: 'Design curriculum structure, learning objectives, and teaching methodologies',
+          outcome: 'Educational presentation with course outline, learning modules, and assessment strategies'
+        },
+        {
+          scenario: 'Workshop Planning',
+          description: 'Create interactive workshop activities, exercises, and discussion topics',
+          outcome: 'Workshop presentation with agenda, activities, and participant engagement strategies'
+        }
+      ]
     }
   ];
 
-  const conversationExamples = [
+  const technicalFeatures = [
     {
-      user: 'I need to present our new product features to stakeholders',
-      ai: 'That sounds important! Let me help you explore different angles. First, who are your main stakeholders - executives, technical teams, or customers? And what\'s the primary goal - approval, feedback, or buy-in?',
-      outcome: 'Leads to audience-specific presentation structure'
+      title: 'Session Management',
+      description: 'Persistent brainstorming sessions with automatic save',
+      icon: Database,
+      implementation: [
+        'Supabase backend for session storage',
+        'Real-time idea synchronization',
+        'Cross-browser session persistence',
+        'Automatic session creation and management'
+      ]
     },
     {
-      user: 'I want to explain why our team should adopt agile methodologies',
-      ai: 'Great topic! Are you facing resistance to change, or is this more about education? And what specific agile practices are you most excited about implementing?',
-      outcome: 'Develops change management approach'
+      title: 'AI Model Selection',
+      description: 'Choose between different AI capabilities',
+      icon: Brain,
+      implementation: [
+        'GPT-4o with MCP integration for advanced capabilities',
+        'GPT-OSS 20B for standard brainstorming',
+        'Dynamic model switching during sessions',
+        'Performance optimization based on selected model'
+      ]
     },
     {
-      user: 'Our Q3 results were mixed - some wins, some challenges',
-      ai: 'Mixed results can actually make for compelling presentations. Would you like to focus on lessons learned, future improvements, or celebrating the wins while addressing challenges?',
-      outcome: 'Creates balanced, honest narrative'
+      title: 'Real-time Processing',
+      description: 'Live idea extraction and organization',
+      icon: Workflow,
+      implementation: [
+        'WebSocket-based real-time updates',
+        '5-second automatic refresh cycle',
+        'Instant idea categorization and tagging',
+        'Live session state synchronization'
+      ]
+    },
+    {
+      title: 'Presentation Integration',
+      description: 'Seamless transition from ideas to presentations',
+      icon: Presentation,
+      implementation: [
+        'Direct API integration with presentation generator',
+        'Automatic outline creation from ideas',
+        'Configurable presentation parameters',
+        'Local storage for presentation state management'
+      ]
     }
   ];
 
   const bestPractices = [
     {
-      category: 'Getting Started',
-      tips: [
-        'Start broad and narrow down through conversation',
-        'Don\'t worry about perfect phrasing initially',
-        'Be honest about your challenges and constraints',
-        'Share context about your audience and goals'
+      title: 'Effective Brainstorming Techniques',
+      icon: Target,
+      practices: [
+        'Start with broad topics and narrow down focus',
+        'Ask open-ended questions to explore different angles',
+        'Build on previous ideas to create concept chains',
+        'Use "what if" scenarios to push creative boundaries',
+        'Combine unrelated concepts for innovative solutions'
       ]
     },
     {
-      category: 'During Brainstorming',
-      tips: [
-        'Ask open-ended questions to explore possibilities',
-        'Use the AI to challenge your assumptions',
-        'Explore multiple directions before settling on one',
-        'Take notes on interesting tangents for future use'
+      title: 'AI Collaboration Tips',
+      icon: MessageSquare,
+      practices: [
+        'Provide context about your project or challenge',
+        'Ask the AI to suggest alternative perspectives',
+        'Request specific types of ideas (technical, creative, practical)',
+        'Use follow-up questions to dive deeper into concepts',
+        'Experiment with different prompting styles'
       ]
     },
     {
-      category: 'Moving to Creation',
-      tips: [
-        'Choose the most compelling angle that emerged',
-        'Use specific insights from brainstorming in your prompt',
-        'Reference audience insights discovered during brainstorming',
-        'Save successful brainstorming approaches for similar topics'
+      title: 'Idea Organization',
+      icon: Filter,
+      practices: [
+        'Review collected ideas regularly during the session',
+        'Look for patterns and themes across ideas',
+        'Group related concepts for stronger presentation flow',
+        'Prioritize ideas based on feasibility and impact',
+        'Combine complementary ideas for comprehensive solutions'
+      ]
+    },
+    {
+      title: 'Presentation Optimization',
+      icon: BarChart3,
+      practices: [
+        'Aim for 5-7 slides for focused presentations',
+        'Choose presentation style based on your audience',
+        'Use "Brief" content for overview presentations',
+        'Select "Detailed" for comprehensive technical presentations',
+        'Match language settings to your target audience'
       ]
     }
   ];
 
   return (
     <div className="space-y-12">
-      {/* Header */}
-      <div className="space-y-4">
+      {/* SEO-Optimized Header */}
+      <div className="space-y-6">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center">
-            <Lightbulb className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+            <Brain className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Brainstorming</h1>
-            <p className="text-lg text-gray-600">Explore ideas and refine your presentation concepts with AI</p>
+            <h1 className="text-4xl font-bold text-gray-900">Complete AI Brainstorming Guide</h1>
+            <p className="text-xl text-gray-600 mt-2">
+              Master collaborative ideation with AI assistance and transform ideas into professional presentations
+            </p>
+          </div>
+        </div>
+        
+        {/* SEO Breadcrumbs */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-500">
+          <Link href="/docs-section" className="hover:text-blue-600">Documentation</Link>
+          <ArrowRight className="w-4 h-4" />
+          <Link href="/docs-section/features" className="hover:text-blue-600">Features</Link>
+          <ArrowRight className="w-4 h-4" />
+          <span className="text-gray-900">Brainstorming with AI</span>
+        </nav>
+      </div>
+
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-8">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              AI-Powered Brainstorming Studio
+            </h2>
+            <p className="text-lg text-gray-700 mb-6">
+              Zentable's AI Brainstorming Studio provides a collaborative environment where you can 
+              ideate with AI, automatically capture and organize ideas, and transform them into 
+              professional presentations in minutes.
+            </p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Real-time idea capture</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">MCP tool integration</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Smart organization</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">One-click presentations</span>
+              </div>
+            </div>
+            <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700">
+              <Link href="/create/brainstorm">
+                <Brain className="w-5 h-5 mr-2" />
+                Start Brainstorming
+              </Link>
+            </Button>
+          </div>
+          <div className="bg-white rounded-lg p-6 shadow-lg">
+            <h3 className="font-bold text-lg mb-4">Key Features</h3>
+            <div className="space-y-3">
+              {brainstormingFeatures.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={index} className="flex items-center space-x-3">
+                    <Icon className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <h4 className="font-medium text-sm">{feature.title}</h4>
+                      <p className="text-xs text-gray-600">{feature.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Overview */}
-      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Interactive Brainstorming Mode</h2>
-        <p className="text-gray-700 text-lg leading-relaxed mb-4">
-          Zentable's brainstorming feature provides a dedicated space to explore ideas before creating formal presentations. 
-          Through conversational AI, you can refine concepts, explore different angles, and develop clear direction for your presentations.
-        </p>
-        <div className="flex items-center space-x-2 text-sm text-orange-700">
-          <CheckCircle className="w-4 h-4" />
-          <span>Idea exploration</span>
-          <CheckCircle className="w-4 h-4 ml-4" />
-          <span>Conversational refinement</span>
-          <CheckCircle className="w-4 h-4 ml-4" />
-          <span>Direct presentation creation</span>
-        </div>
-      </div>
-
-      {/* Capabilities */}
+      {/* Features Overview */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">Brainstorming Capabilities</h2>
+        <h2 className="text-3xl font-bold text-gray-900">Brainstorming Studio Features</h2>
         <div className="grid md:grid-cols-2 gap-6">
-          {brainstormingCapabilities.map((capability, index) => {
-            const Icon = capability.icon;
+          {brainstormingFeatures.map((feature, index) => {
+            const Icon = feature.icon;
             return (
-              <Card key={index} className="h-full">
+              <Card key={index}>
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-yellow-600" />
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{capability.title}</CardTitle>
-                      <CardDescription>{capability.description}</CardDescription>
+                      <CardTitle className="text-lg">{feature.title}</CardTitle>
+                      <CardDescription>{feature.description}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {capability.features.map((feature, i) => (
-                      <li key={i} className="text-sm text-gray-600 flex items-start space-x-2">
-                        <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span>{feature}</span>
+                    {feature.features.map((item, i) => (
+                      <li key={i} className="flex items-start space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -270,36 +442,42 @@ export default function BrainstormingPage() {
         </div>
       </div>
 
-      {/* Workflow */}
+      {/* Step-by-Step Workflow */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">How Brainstorming Works</h2>
+        <h2 className="text-3xl font-bold text-gray-900">Complete Brainstorming Workflow</h2>
+        <p className="text-lg text-gray-600">
+          Follow this comprehensive guide to maximize your brainstorming sessions and create impactful presentations.
+        </p>
+        
         <div className="space-y-6">
-          {workflowSteps.map((step, index) => {
+          {workflowSteps.map((step) => {
             const Icon = step.icon;
             return (
-              <Card key={index}>
+              <Card key={step.step} className="overflow-hidden">
                 <CardHeader>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold text-lg">
                       {step.step}
                     </div>
                     <div className="flex-1">
-                      <CardTitle className="flex items-center space-x-2">
+                      <CardTitle className="text-xl flex items-center space-x-2">
                         <Icon className="w-5 h-5" />
                         <span>{step.title}</span>
                       </CardTitle>
-                      <CardDescription>{step.description}</CardDescription>
+                      <CardDescription className="text-base mt-1">{step.description}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {step.details.map((detail, i) => (
-                      <div key={i} className="flex items-start space-x-2">
-                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">{detail}</span>
-                      </div>
-                    ))}
+                  <div className="ml-16">
+                    <ul className="space-y-2">
+                      {step.details.map((detail, i) => (
+                        <li key={i} className="flex items-start space-x-2">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0" />
+                          <span className="text-sm text-gray-600">{detail}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </CardContent>
               </Card>
@@ -310,27 +488,69 @@ export default function BrainstormingPage() {
 
       {/* Use Cases */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">Common Use Cases</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          {useCases.map((useCase, index) => {
-            const Icon = useCase.icon;
+        <h2 className="text-3xl font-bold text-gray-900">Real-World Use Cases</h2>
+        <p className="text-lg text-gray-600">
+          Explore how different industries and roles can leverage AI brainstorming for impactful presentations.
+        </p>
+        
+        <div className="space-y-8">
+          {useCases.map((category, index) => {
+            const Icon = category.icon;
             return (
-              <Card key={index} className="h-full">
+              <div key={index} className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">{category.category}</h3>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  {category.examples.map((example, i) => (
+                    <Card key={i} className="p-6">
+                      <h4 className="font-semibold text-gray-900 mb-2">{example.scenario}</h4>
+                      <p className="text-sm text-gray-600 mb-3">{example.description}</p>
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <p className="text-xs font-medium text-blue-900 mb-1">Expected Outcome:</p>
+                        <p className="text-xs text-blue-800">{example.outcome}</p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Technical Implementation */}
+      <div className="space-y-6">
+        <h2 className="text-3xl font-bold text-gray-900">Technical Architecture</h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          {technicalFeatures.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <Card key={index}>
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-blue-600" />
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-green-600" />
                     </div>
-                    <CardTitle className="text-lg">{useCase.title}</CardTitle>
+                    <div>
+                      <CardTitle className="text-lg">{feature.title}</CardTitle>
+                      <CardDescription>{feature.description}</CardDescription>
+                    </div>
                   </div>
-                  <CardDescription>{useCase.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-sm text-gray-700">
-                      <strong>Example:</strong> {useCase.example}
-                    </p>
-                  </div>
+                  <ul className="space-y-2">
+                    {feature.implementation.map((item, i) => (
+                      <li key={i} className="flex items-start space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             );
@@ -338,127 +558,55 @@ export default function BrainstormingPage() {
         </div>
       </div>
 
-      {/* Conversation Examples */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">Conversation Examples</h2>
-        <p className="text-gray-600">See how brainstorming conversations typically develop:</p>
-        <div className="space-y-6">
-          {conversationExamples.map((example, index) => (
-            <Card key={index}>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <div className="flex items-start space-x-2">
-                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                        U
-                      </div>
-                      <p className="text-sm text-blue-800">{example.user}</p>
-                    </div>
-                  </div>
-                  <div className="bg-green-50 rounded-lg p-4">
-                    <div className="flex items-start space-x-2">
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                        AI
-                      </div>
-                      <p className="text-sm text-green-800">{example.ai}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <ArrowRight className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600 font-medium">{example.outcome}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
       {/* Best Practices */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">Best Practices</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          {bestPractices.map((section, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="text-lg">{section.category}</CardTitle>
-              </CardHeader>
-              <CardContent>
+        <h2 className="text-3xl font-bold text-gray-900">Best Practices & Tips</h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          {bestPractices.map((practice, index) => {
+            const Icon = practice.icon;
+            return (
+              <Card key={index} className="p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">{practice.title}</h3>
+                </div>
                 <ul className="space-y-2">
-                  {section.tips.map((tip, i) => (
-                    <li key={i} className="text-sm text-gray-600 flex items-start space-x-2">
-                      <Lightbulb className="w-3 h-3 text-yellow-500 mt-0.5 flex-shrink-0" />
-                      <span>{tip}</span>
+                  {practice.practices.map((tip, i) => (
+                    <li key={i} className="flex items-start space-x-2">
+                      <CheckCircle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-600">{tip}</span>
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       </div>
 
-      {/* Integration with Other Features */}
-      <Card className="bg-gradient-to-r from-purple-50 to-blue-50">
-        <CardHeader>
-          <CardTitle className="text-xl">Integration with Other Features</CardTitle>
-          <CardDescription>Brainstorming works seamlessly with Zentable's other capabilities</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-gray-900 flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-purple-500" />
-                <span>AI Generation</span>
-              </h4>
-              <p className="text-sm text-gray-600">
-                Refined ideas from brainstorming feed directly into AI presentation generation for better results.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-gray-900 flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4 text-blue-500" />
-                <span>AI Assistant</span>
-              </h4>
-              <p className="text-sm text-gray-600">
-                Insights from brainstorming sessions inform the AI assistant's suggestions during editing.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-gray-900 flex items-center space-x-2">
-                <Target className="w-4 h-4 text-green-500" />
-                <span>Template Selection</span>
-              </h4>
-              <p className="text-sm text-gray-600">
-                Brainstorming helps identify the most appropriate slide templates and visual approaches.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-gray-900 flex items-center space-x-2">
-                <Brain className="w-4 h-4 text-orange-500" />
-                <span>MCP Integration</span>
-              </h4>
-              <p className="text-sm text-gray-600">
-                Brainstorming sessions can be initiated from your development environment via MCP integration.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Call to Action */}
-      <div className="bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg p-8 text-white text-center">
-        <h3 className="text-2xl font-bold mb-4">Start Brainstorming Your Next Presentation</h3>
-        <p className="text-lg opacity-90 mb-6">
-          Explore ideas, refine concepts, and develop compelling presentations through conversational AI.
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-8 text-white text-center">
+        <h3 className="text-3xl font-bold mb-4">Ready to Start AI-Powered Brainstorming?</h3>
+        <p className="text-xl opacity-90 mb-8 max-w-3xl mx-auto">
+          Transform your creative process with AI collaboration. Generate, organize, and present 
+          your ideas more effectively than ever before.
         </p>
-        <Button asChild variant="secondary" size="lg">
-          <Link href="/create/brainstorm" className="inline-flex items-center space-x-2">
-            <Lightbulb className="w-4 h-4" />
-            <span>Start Brainstorming</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <Button asChild variant="secondary" size="lg">
+            <Link href="/create/brainstorm" className="inline-flex items-center space-x-2">
+              <Brain className="w-5 h-5" />
+              <span>Start Brainstorming Now</span>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="bg-transparent border-white text-white hover:bg-white hover:text-purple-600">
+            <Link href="/docs-section/features/mcp-integration" className="inline-flex items-center space-x-2">
+              <Zap className="w-5 h-5" />
+              <span>Learn About MCP Integration</span>
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -17,7 +17,10 @@ import {
   Home,
   ArrowRight,
   Menu,
-  X
+  X,
+  Terminal,
+  BrainCircuit,
+  Plug
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -70,6 +73,24 @@ const docsNavigation = [
         href: '/docs-section/features/export',
         icon: Download,
         description: 'PDF export and sharing'
+      },
+      {
+        title: 'MCP Integration',
+        href: '/docs-section/features/mcp-integration',
+        icon: Terminal,
+        description: 'Claude Code, Cursor, VS Code, Windsurf'
+      },
+      {
+        title: 'Brainstorming with AI',
+        href: '/docs-section/features/brainstorming',
+        icon: BrainCircuit,
+        description: 'AI-powered idea generation'
+      },
+      {
+        title: 'Other MCP Providers',
+        href: '/docs-section/features/other-mcp-providers',
+        icon: Plug,
+        description: 'GitHub, PostgreSQL, AWS & more'
       }
     ]
   },
