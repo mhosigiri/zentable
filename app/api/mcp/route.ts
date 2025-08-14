@@ -337,7 +337,21 @@ async function handleCreatePresentation(userId: string, args: any) {
     console.log(`📊 Slides: ${args.slideCount}, Style: ${args.style}, Language: ${args.language}`)
     console.log(`🔍 Browser Search: ${args.enableBrowserSearch}`)
 
-    const { prompt, slideCount = 5, style = 'professional', language = 'en', contentLength = 'medium', enableBrowserSearch = false } = args
+    let { prompt, slideCount = 5, style = 'professional', language = 'en', contentLength = 'medium', enableBrowserSearch = false } = args
+    
+    // Handle overly detailed prompts by truncating if necessary
+    const MAX_PROMPT_LENGTH = 1500; // Characters
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+      console.warn(`Prompt too long (${prompt.length} chars), truncating to ${MAX_PROMPT_LENGTH} chars`);
+      // Try to find a natural break point
+      let truncated = prompt.substring(0, MAX_PROMPT_LENGTH);
+      const lastSentence = truncated.lastIndexOf('. ');
+      if (lastSentence > MAX_PROMPT_LENGTH * 0.7) {
+        truncated = truncated.substring(0, lastSentence + 1);
+      }
+      prompt = truncated + '...';
+      console.log('Truncated prompt to:', prompt);
+    }
     
     // Check and deduct credits for presentation creation
     const creditCheck = await mcpDatabase.checkCredits(userId, 'presentation_create')
@@ -440,13 +454,15 @@ The outline should create a compelling ${slideCount}-slide presentation with max
         system: outlineSystemPrompt,
         prompt: `Create a presentation outline for: "${prompt}"`,
         schema: OutlineSchema,
+        maxTokens: 4000, // Increased for detailed prompts
         providerOptions: {
           groq: groqOptions
         }
       });
       outline = response.object;
-    } catch (reasoningError) {
+    } catch (reasoningError: any) {
       console.warn('Reasoning model failed, falling back to standard model:', reasoningError);
+      console.warn('Error details:', reasoningError?.message || 'Unknown error');
       usedReasoningModel = false;
       
       const fallbackOptions: any = {};
@@ -466,7 +482,7 @@ The outline should create a compelling ${slideCount}-slide presentation with max
         system: outlineSystemPrompt,
         prompt: `Create a presentation outline for: "${prompt}"`,
         schema: OutlineSchema,
-        maxTokens: 2000,
+        maxTokens: 4000, // Increased for detailed prompts
         temperature: 0.7,
         providerOptions: {
           groq: fallbackOptions
@@ -554,14 +570,39 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
 
       const slidePrompt = `Section: "${section.title}"\nKey points: ${section.bulletPoints.join(', ')}`;
       
-      const { object: slideContent } = await generateObject({
-        model: groq(modelName),
-        system: slideSystemPrompt,
-        prompt: slidePrompt,
-        schema,
-        maxTokens: 1000,
-        temperature: 0.7,
-      });
+      let slideContent;
+      try {
+        const response = await generateObject({
+          model: groq(modelName),
+          system: slideSystemPrompt,
+          prompt: slidePrompt,
+          schema,
+          maxTokens: 2000, // Increased for more detailed content
+          temperature: 0.7,
+        });
+        slideContent = response.object;
+      } catch (slideError: any) {
+        console.warn(`Slide generation failed for "${section.title}", trying fallback:`, slideError?.message);
+        // Fallback to simpler model for this slide
+        try {
+          const response = await generateObject({
+            model: groq(fallbackModel),
+            system: slideSystemPrompt,
+            prompt: slidePrompt,
+            schema,
+            maxTokens: 2000,
+            temperature: 0.7,
+          });
+          slideContent = response.object;
+        } catch (fallbackError: any) {
+          console.error(`Both models failed for slide "${section.title}":`, fallbackError?.message);
+          // Create a basic slide as last resort
+          slideContent = {
+            content: `<h3>${section.title}</h3><ul>${section.bulletPoints.map(bp => `<li>${bp}</li>`).join('')}</ul>`,
+            imagePrompt: null
+          };
+        }
+      }
 
       // Extract image prompt if the template supports it
       const imagePrompt = (slideContent as any).imagePrompt || null;
@@ -620,16 +661,34 @@ You can view and edit this presentation in your dashboard at: https://zentableai
 The presentation has been saved to your account and is available for editing, sharing, and exporting.`
       }]
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ MCP: Error creating presentation:', error)
+    
+    // Provide more helpful error messages based on the error type
+    let errorMessage = '❌ **Error Creating Presentation**\n\n';
+    
+    if (error?.message?.includes('JSON') || error?.message?.includes('parse')) {
+      errorMessage += '**Issue**: The AI had difficulty processing your detailed prompt.\n\n';
+      errorMessage += '**Solutions**:\n';
+      errorMessage += '• Try a shorter, more concise prompt (e.g., "Machine Learning Fundamentals" instead of detailed slide-by-slide instructions)\n';
+      errorMessage += '• Let the AI handle the content structure - it works best with topic-based prompts\n';
+      errorMessage += '• If you need specific content, try breaking it into multiple simpler presentations\n\n';
+      errorMessage += '**Example that works well**: "Create a presentation about AI trends with 6 slides"';
+    } else if (error?.message?.includes('token') || error?.message?.includes('length')) {
+      errorMessage += '**Issue**: Your prompt is too long for processing.\n\n';
+      errorMessage += '**Solution**: Please use a shorter, more focused prompt. The tool works best with concise topic descriptions.';
+    } else if (error?.message?.includes('credit')) {
+      errorMessage += error.message;
+    } else {
+      errorMessage += `Sorry, there was an error creating your presentation. Please try again with a simpler prompt.\n\n`;
+      errorMessage += `**Tip**: The tool works best with concise topic prompts rather than detailed slide-by-slide instructions.\n\n`;
+      errorMessage += `Error details: ${error?.message || 'Unknown error'}`;
+    }
+    
     return {
       content: [{
         type: 'text',
-        text: `❌ **Error Creating Presentation**
-
-Sorry, there was an error creating your presentation. Please try again with a different prompt or contact support if the issue persists.
-
-Error details: ${error instanceof Error ? error.message : 'Unknown error'}`
+        text: errorMessage
       }],
       isError: true
     }
