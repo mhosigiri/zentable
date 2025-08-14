@@ -1,6 +1,6 @@
 {
   "name": "@menlopark/zentable-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "Zentable MCP Server - Generate presentations from any AI tool",
   "main": "zentable-mcp.mjs",

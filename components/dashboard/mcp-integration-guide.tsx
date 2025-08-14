@@ -175,6 +175,16 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
       tool: 'VS Code Copilot',
       example: 'Use MCP tools to create a detailed presentation about "Web Development Best Practices"',
       description: 'Access via Agent mode in Copilot chat'
+    },
+    {
+      tool: 'Claude Code (with Web Search)',
+      example: 'Create a presentation about "AI Industry Trends 2025" with 6 slides, enable web search for latest information',
+      description: 'Get current data and recent developments with enableBrowserSearch: true'
+    },
+    {
+      tool: 'Claude Desktop (with Web Search)',
+      example: '@zentable create a presentation on "Latest Climate Tech Innovations" with web search enabled',
+      description: 'Include real-time data and recent breakthroughs'
     }
   ]
 
@@ -345,6 +355,12 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
                 <code className="font-medium">contentLength</code> <span className="text-sm text-muted-foreground">(default: medium)</span>
                 <p className="text-sm text-muted-foreground mt-1">
                   Options: brief, medium, detailed
+                </p>
+              </div>
+              <div className="border rounded p-3">
+                <code className="font-medium">enableBrowserSearch</code> <span className="text-sm text-muted-foreground">(default: false)</span>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Enable web search for current, accurate information
                 </p>
               </div>
             </div>

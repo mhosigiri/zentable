@@ -335,8 +335,9 @@ async function handleCreatePresentation(userId: string, args: any) {
     console.log(`🎯 MCP: Creating presentation for user ${userId}`)
     console.log(`📝 Prompt: ${args.prompt}`)
     console.log(`📊 Slides: ${args.slideCount}, Style: ${args.style}, Language: ${args.language}`)
+    console.log(`🔍 Browser Search: ${args.enableBrowserSearch}`)
 
-    const { prompt, slideCount = 5, style = 'professional', language = 'en', contentLength = 'medium' } = args
+    const { prompt, slideCount = 5, style = 'professional', language = 'en', contentLength = 'medium', enableBrowserSearch = false } = args
     
     // Check and deduct credits for presentation creation
     const creditCheck = await mcpDatabase.checkCredits(userId, 'presentation_create')
@@ -387,8 +388,11 @@ async function handleCreatePresentation(userId: string, args: any) {
     const targetLanguage = languageMap[language] || 'English';
 
     // STEP 1: Generate outline (using same prompt as generate-outline route)
-    const outlineSystemPrompt = `You are an expert presentation designer and content strategist. Create a comprehensive, well-structured presentation outline that is ${writingStyle} in tone and written in ${targetLanguage}.
+    const browserSearchInstruction = enableBrowserSearch ? 
+      `\nIMPORTANT: Use browser search to find current, accurate, and relevant information about "${prompt}". Include up-to-date facts, statistics, trends, and developments in your presentation outline. Prioritize recent information and credible sources.\n` : '';
 
+    const outlineSystemPrompt = `You are an expert presentation designer and content strategist. Create a comprehensive, well-structured presentation outline that is ${writingStyle} in tone and written in ${targetLanguage}.
+${browserSearchInstruction}
 CRITICAL GUIDELINES FOR PRESENTATION CONTENT:
 - Generate exactly ${slideCount} sections for the presentation
 - Each section should have a clear, descriptive title (max 8-10 words)
@@ -417,17 +421,45 @@ The outline should create a compelling ${slideCount}-slide presentation with max
     let usedReasoningModel = true;
     
     try {
+      const groqOptions: any = {
+        experimental_telemetry: { isEnabled: true },
+      };
+
+      // Add browser search if enabled
+      if (enableBrowserSearch) {
+        groqOptions.tool_choice = 'required';
+        groqOptions.tools = [
+          {
+            type: 'browser_search'
+          }
+        ];
+      }
+
       const response = await generateObject({
         model: groq(modelName),
         system: outlineSystemPrompt,
         prompt: `Create a presentation outline for: "${prompt}"`,
         schema: OutlineSchema,
-        experimental_telemetry: { isEnabled: true },
+        providerOptions: {
+          groq: groqOptions
+        }
       });
       outline = response.object;
     } catch (reasoningError) {
       console.warn('Reasoning model failed, falling back to standard model:', reasoningError);
       usedReasoningModel = false;
+      
+      const fallbackOptions: any = {};
+      
+      // Add browser search if enabled
+      if (enableBrowserSearch) {
+        fallbackOptions.tool_choice = 'required';
+        fallbackOptions.tools = [
+          {
+            type: 'browser_search'
+          }
+        ];
+      }
       
       const response = await generateObject({
         model: groq(fallbackModel),
@@ -436,6 +468,9 @@ The outline should create a compelling ${slideCount}-slide presentation with max
         schema: OutlineSchema,
         maxTokens: 2000,
         temperature: 0.7,
+        providerOptions: {
+          groq: fallbackOptions
+        }
       });
       outline = response.object;
     }
@@ -671,15 +706,17 @@ function createMcpServer(userId: string) {
         slideCount: z.number().min(3).max(20).default(5).describe('Number of slides to generate (3-20)'),
         style: z.enum(['default', 'modern', 'minimal', 'creative', 'professional']).default('professional').describe('Presentation style'),
         language: z.string().default('en').describe('Language for the presentation content'),
-        contentLength: z.enum(['brief', 'medium', 'detailed']).default('medium').describe('How detailed the content should be')
+        contentLength: z.enum(['brief', 'medium', 'detailed']).default('medium').describe('How detailed the content should be'),
+        enableBrowserSearch: z.boolean().default(false).describe('Enable web search to find current, accurate information about the topic')
       }
     },
-    async ({ prompt, slideCount, style, language, contentLength }: {
+    async ({ prompt, slideCount, style, language, contentLength, enableBrowserSearch }: {
       prompt: string
       slideCount: number
       style: string
       language: string
       contentLength: string
+      enableBrowserSearch: boolean
     }) => {
       try {
         console.log(`🎯 MCP: Creating presentation for user ${userId}`)
@@ -687,7 +724,7 @@ function createMcpServer(userId: string) {
         console.log(`📊 Slides: ${slideCount}, Style: ${style}, Language: ${language}`)
 
         // Generate presentation using same approach as handleCreatePresentation but with proper return type
-        const result = await handleCreatePresentation(userId, { prompt, slideCount, style, language, contentLength })
+        const result = await handleCreatePresentation(userId, { prompt, slideCount, style, language, contentLength, enableBrowserSearch })
         return {
           content: result.content.map(item => ({
             type: item.type as 'text',
@@ -807,6 +844,11 @@ export async function POST(req: NextRequest) {
                     enum: ['brief', 'medium', 'detailed'],
                     default: 'medium',
                     description: 'How detailed the content should be'
+                  },
+                  enableBrowserSearch: {
+                    type: 'boolean',
+                    default: false,
+                    description: 'Enable web search to find current, accurate information about the topic'
                   }
                 },
                 required: ['prompt']
