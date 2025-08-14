@@ -7,12 +7,15 @@ import { generateObject } from 'ai'
 import { hashApiKey, isValidApiKeyFormat, extractApiKeyFromHeader } from '@/lib/mcp-api-keys'
 import { mcpDatabase } from '@/lib/mcp-database'
 import { generateUUID } from '@/lib/uuid'
+import { CREDIT_COSTS } from '@/lib/credits'
 
-// Configure Groq
+// Configure Groq with correct model
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 })
-const modelName = 'meta-llama/llama-4-scout-17b-16e-instruct'
+// Use the correct reasoning model that generate-outline uses
+const modelName = 'openai/gpt-oss-20b'
+const fallbackModel = 'llama-3.3-70b-versatile'
 
 // Outline schema for first step
 const OutlineSchema = z.object({
@@ -32,8 +35,39 @@ const OutlineSchema = z.object({
 })
 
 // Individual slide content schemas (same as generate-slide route)
+// Add all schemas including ones with image prompts
 const BlankCardSchema = z.object({
   content: z.string().describe('Complete HTML content starting with a heading (h3 for main title, h4 for subtitles) followed by the main content. Use appropriate formatting like <p>, <strong>, <em>, or additional headings. Structure: <h3>Title</h3><p>Content description...</p>'),
+})
+
+const ImageAndTextSchema = z.object({
+  content: z.string().describe('Complete HTML content with h3 title followed by paragraphs and/or bullet points that complement the image. Structure: <h3>Title</h3><p>Description text...</p><ul><li>Key point 1</li><li>Key point 2</li></ul>'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+})
+
+const TextAndImageSchema = z.object({
+  content: z.string().describe('Complete HTML content with h3 title followed by paragraphs and/or bullet points that complement the image. Structure: <h3>Title</h3><p>Description text...</p><ul><li>Point 1</li><li>Point 2</li></ul>'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+})
+
+const TitleWithBulletsAndImageSchema = z.object({
+  content: z.string().describe('Complete HTML content starting with h3 title followed by formatted bullet points using <ul> and <li> tags (3-4 points). Include formatting like <strong>, <em> for emphasis. Structure: <h3>Title</h3><ul><li>Point 1</li><li>Point 2</li></ul>'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+})
+
+const AccentLeftSchema = z.object({
+  content: z.string().describe('Complete HTML content starting with h3 title followed by short paragraphs and/or bullet points. Choose the format that best fits the content. Structure: <h3>Title</h3><p>Content...</p> or <h3>Title</h3><ul><li>Point 1</li><li>Point 2</li></ul>'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+})
+
+const AccentRightSchema = z.object({
+  content: z.string().describe('Complete HTML content starting with h3 title followed by short paragraphs and/or bullet points. Choose the format that best fits the content. Structure: <h3>Title</h3><p>Content...</p> or <h3>Title</h3><ul><li>Point 1</li><li>Point 2</li></ul>'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
+})
+
+const AccentTopSchema = z.object({
+  content: z.string().describe('Complete HTML content starting with h3 title followed by paragraphs and/or bullet points. Choose the format that best fits the content. Structure: <h3>Title</h3><p>Content...</p> or <h3>Title</h3><ul><li>Point 1</li><li>Point 2</li></ul>'),
+  imagePrompt: z.string().describe('Detailed prompt for generating an image that complements the content'),
 })
 
 const BulletsSchema = z.object({
@@ -48,7 +82,7 @@ const ParagraphSchema = z.object({
   content: z.string().describe('Complete HTML content with h3 title followed by multiple sections with h4 headings and paragraphs. Structure: <h3>Title</h3><h4>Section 1</h4><p>Paragraph 1</p><p>Paragraph 2</p><h4>Section 2</h4><p>Paragraph 1</p><p>Paragraph 2</p><h4>Conclusion</h4><p>Concluding thoughts</p>'),
 })
 
-// Schema selection helper
+// Schema selection helper - includes templates with images
 function getSchemaForTemplate(templateType: string): z.ZodType<any> {
   switch (templateType) {
     case 'blank-card':
@@ -59,6 +93,18 @@ function getSchemaForTemplate(templateType: string): z.ZodType<any> {
       return TitleWithBulletsSchema;
     case 'paragraph':
       return ParagraphSchema;
+    case 'image-and-text':
+      return ImageAndTextSchema;
+    case 'text-and-image':
+      return TextAndImageSchema;
+    case 'title-with-bullets-and-image':
+      return TitleWithBulletsAndImageSchema;
+    case 'accent-left':
+      return AccentLeftSchema;
+    case 'accent-right':
+      return AccentRightSchema;
+    case 'accent-top':
+      return AccentTopSchema;
     default:
       return BlankCardSchema;
   }
@@ -143,7 +189,7 @@ async function validateApiKey(authorization: string | null): Promise<string | nu
   return validation.isValid ? validation.userId! : null;
 }
 
-// Presentation creation handler
+// Presentation creation handler with credit checks
 async function handleCreatePresentation(userId: string, args: any) {
   try {
     console.log(`🎯 MCP: Creating presentation for user ${userId}`)
@@ -151,6 +197,34 @@ async function handleCreatePresentation(userId: string, args: any) {
     console.log(`📊 Slides: ${args.slideCount}, Style: ${args.style}, Language: ${args.language}`)
 
     const { prompt, slideCount = 5, style = 'professional', language = 'en', contentLength = 'medium' } = args
+    
+    // Check and deduct credits for presentation creation
+    const creditCheck = await mcpDatabase.checkCredits(userId, 'presentation_create')
+    if (!creditCheck.hasCredits) {
+      return {
+        content: [{
+          type: 'text',
+          text: `❌ **Insufficient Credits**\n\nYou need ${CREDIT_COSTS.presentation_create} credits to create a presentation but only have ${creditCheck.currentBalance}.\n\nPlease upgrade your plan or purchase additional credits.`
+        }],
+        isError: true
+      }
+    }
+    
+    // Deduct credits
+    const creditResult = await mcpDatabase.deductCredits(userId, 'presentation_create', {
+      presentation_prompt: prompt,
+      slide_count: slideCount
+    })
+    
+    if (!creditResult.success) {
+      return {
+        content: [{
+          type: 'text',
+          text: `❌ **Error Processing Credits**\n\n${creditResult.error || 'Failed to process credit transaction. Please try again.'}`
+        }],
+        isError: true
+      }
+    }
 
     // Map style to writing tone (from generate-outline route)
     const styleMap: Record<string, string> = {
@@ -198,12 +272,35 @@ Remember: This is for SLIDE presentations - content must be scannable and visual
 
 The outline should create a compelling ${slideCount}-slide presentation with maximum visual variety.`;
 
-    const { object: outline } = await generateObject({
-      model: groq(modelName),
-      system: outlineSystemPrompt,
-      prompt: `Create a presentation outline for: "${prompt}"`,
-      schema: OutlineSchema,
-    });
+    // Try reasoning model first, fallback if needed
+    let outline: z.infer<typeof OutlineSchema>;
+    let usedReasoningModel = true;
+    
+    try {
+      const response = await generateObject({
+        model: groq(modelName),
+        system: outlineSystemPrompt,
+        prompt: `Create a presentation outline for: "${prompt}"`,
+        schema: OutlineSchema,
+        experimental_telemetry: { isEnabled: true },
+      });
+      outline = response.object;
+    } catch (reasoningError) {
+      console.warn('Reasoning model failed, falling back to standard model:', reasoningError);
+      usedReasoningModel = false;
+      
+      const response = await generateObject({
+        model: groq(fallbackModel),
+        system: outlineSystemPrompt,
+        prompt: `Create a presentation outline for: "${prompt}"`,
+        schema: OutlineSchema,
+        maxTokens: 2000,
+        temperature: 0.7,
+      });
+      outline = response.object;
+    }
+    
+    console.log('Model used:', usedReasoningModel ? modelName : fallbackModel);
 
     // Add template types and IDs to sections
     const usedTemplates: string[] = [];
@@ -284,14 +381,17 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
         temperature: 0.7,
       });
 
+      // Extract image prompt if the template supports it
+      const imagePrompt = (slideContent as any).imagePrompt || null;
+      
       generatedSlides.push({
         templateType: section.templateType,
         title: section.title,
         content: slideContent.content,
         position: i,
         bulletPoints: section.bulletPoints,
-        imagePrompt: null,
-        imageUrl: null
+        imagePrompt: imagePrompt,
+        imageUrl: null // Images will be generated asynchronously after slide creation
       });
     }
 
@@ -308,8 +408,18 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
     })
 
     await mcpDatabase.saveSlides(savedPresentation.id, generatedSlides)
+    
+    // Trigger image generation for slides that have image prompts (async, non-blocking)
+    const slidesWithImages = generatedSlides.filter(slide => slide.imagePrompt);
+    if (slidesWithImages.length > 0) {
+      // Fire and forget - images will be generated in the background
+      generateImagesForSlides(savedPresentation.id, userId).catch(error => {
+        console.error('Background image generation failed:', error);
+      });
+    }
 
     console.log(`✅ MCP: Presentation created successfully: ${savedPresentation.id}`)
+    console.log(`📸 MCP: ${slidesWithImages.length} slides queued for image generation`)
 
     return {
       content: [{
@@ -323,7 +433,7 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
 **Slides Overview:**
 ${sectionsWithTemplates.map((section, i) => `${i + 1}. **${section.title}** (${section.templateType})`).join('\n')}
 
-You can view and edit this presentation in your dashboard at: https://your-domain.com/docs/${savedPresentation.id}
+You can view and edit this presentation in your dashboard at: https://zentableai.com/docs/${savedPresentation.id}
 
 The presentation has been saved to your account and is available for editing, sharing, and exporting.`
       }]
@@ -341,6 +451,58 @@ Error details: ${error instanceof Error ? error.message : 'Unknown error'}`
       }],
       isError: true
     }
+  }
+}
+
+// Background image generation function
+async function generateImagesForSlides(presentationId: string, userId: string) {
+  try {
+    // Fetch the presentation slides with image prompts
+    const slides = await mcpDatabase.getSlidesWithImagePrompts(presentationId);
+    
+    if (!slides || slides.length === 0) {
+      console.log('No slides with image prompts found');
+      return;
+    }
+    
+    console.log(`🎨 Starting image generation for ${slides.length} slides`);
+    
+    // Generate images for each slide that has an image prompt
+    for (const slide of slides) {
+      if (slide.image_prompt && !slide.image_url) {
+        try {
+          // Call the generate-image API endpoint
+          const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://zentableai.com'}/api/generate-image`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              prompt: slide.image_prompt,
+              style: 'professional',
+              slideId: slide.id,
+              userId: userId
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Image generated for slide ${slide.id}`);
+          } else {
+            console.error(`Failed to generate image for slide ${slide.id}`);
+          }
+        } catch (error) {
+          console.error(`Error generating image for slide ${slide.id}:`, error);
+        }
+        
+        // Add a small delay between image generations to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    console.log('✅ Image generation completed');
+  } catch (error) {
+    console.error('Error in generateImagesForSlides:', error);
   }
 }
 

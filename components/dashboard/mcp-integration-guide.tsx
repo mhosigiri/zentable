@@ -31,15 +31,15 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
   const getConfig = (tool: string) => {
     const baseConfig = {
       mcpServers: {
-        "slides-ai": {
+        "zentable": {
           command: "npx",
           args: [
             "-y",
-            "@your-company/slides-ai-mcp@latest"
+            "@menlopark/zentable-mcp@latest"
           ],
           env: {
-            SLIDES_AI_API_KEY: sampleApiKey || 'YOUR_API_KEY',
-            SLIDES_AI_SERVER_URL: serverUrl.replace('/api/mcp', '')
+            ZENTABLE_API_KEY: sampleApiKey || 'YOUR_API_KEY',
+            ZENTABLE_SERVER_URL: serverUrl.replace('/api/mcp', '')
           }
         }
       }
@@ -58,21 +58,21 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
           inputs: [
             {
               type: "promptString",
-              id: "slides-ai-api-key",
-              description: "SlidesAI API Key",
+              id: "zentable-api-key",
+              description: "Zentable API Key",
               password: true
             }
           ],
           servers: {
-            "slides-ai": {
+            "zentable": {
               command: "npx",
               args: [
                 "-y",
-                "@your-company/slides-ai-mcp@latest"
+                "@menlopark/zentable-mcp@latest"
               ],
               env: {
-                SLIDES_AI_API_KEY: "${input:slides-ai-api-key}",
-                SLIDES_AI_SERVER_URL: serverUrl.replace('/api/mcp', '')
+                ZENTABLE_API_KEY: "${input:zentable-api-key}",
+                ZENTABLE_SERVER_URL: serverUrl.replace('/api/mcp', '')
               }
             }
           }
@@ -83,6 +83,20 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
   }
 
   const integrationSteps = [
+    {
+      id: 'claude-code',
+      name: 'Claude Code',
+      icon: '🔧',
+      description: 'Anthropic\'s official CLI for Claude',
+      steps: [
+        'Install Claude Code CLI: npm install -g @anthropic/claude-cli',
+        'Run: claude auth login to authenticate',
+        'Create a .claude/mcp.json file in your project root',
+        'Add the configuration below',
+        'Run: claude mcp connect to verify the connection'
+      ],
+      configFile: '.claude/mcp.json'
+    },
     {
       id: 'cursor',
       name: 'Cursor',
@@ -143,14 +157,19 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
 
   const usageExamples = [
     {
+      tool: 'Claude Code',
+      example: 'Create a presentation about &quot;Machine Learning Fundamentals&quot; with 8 slides in professional style',
+      description: 'Use natural language to generate presentations'
+    },
+    {
       tool: 'Cursor/Windsurf',
       example: 'Create a presentation about &quot;Machine Learning Fundamentals&quot; with 8 slides in professional style',
       description: 'Use natural language to generate presentations'
     },
     {
       tool: 'Claude Desktop',
-      example: '@slides-ai generate a presentation on &quot;Sustainable Energy&quot; with 6 slides',
-      description: 'Use the @slides-ai mention to access tools'
+      example: '@zentable generate a presentation on &quot;Sustainable Energy&quot; with 6 slides',
+      description: 'Use the @zentable mention to access tools'
     },
     {
       tool: 'VS Code Copilot',
@@ -193,8 +212,8 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="cursor" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="claude-code" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
               {integrationSteps.map((tool) => (
                 <TabsTrigger key={tool.id} value={tool.id} className="text-xs">
                   <span className="mr-1">{tool.icon}</span>
@@ -356,49 +375,6 @@ export function McpIntegrationGuide({ serverUrl, sampleApiKey }: McpIntegrationG
                 <li>• Try a simple test: &quot;Create a 3-slide presentation about cats&quot;</li>
               </ul>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Local Development */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Local Development & Testing</CardTitle>
-          <CardDescription>
-            For testing during development, you can use the local server directly.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Alert>
-              <Lightbulb className="w-4 h-4" />
-              <AlertDescription>
-                <strong>For local testing:</strong> Start your development server first with <code>npm run dev</code>, 
-                then use the configurations below with your local server URL.
-              </AlertDescription>
-            </Alert>
-            
-                         <div className="bg-muted p-3 rounded border">
-               <p className="text-sm font-medium mb-2">Local Development Config:</p>
-               <pre className="text-xs overflow-auto">
-{JSON.stringify({
-  mcpServers: {
-    "slides-ai-local": {
-      command: "/absolute/path/to/your/project/bin/launch-mcp.sh",
-      args: [],
-      env: {
-        SLIDES_AI_API_KEY: "YOUR_API_KEY",
-        SLIDES_AI_SERVER_URL: "http://localhost:3000"
-      }
-    }
-  }
-}, null, 2)}
-              </pre>
-            </div>
-            
-            <p className="text-sm text-muted-foreground">
-              Replace <code>/path/to/your/project</code> with the absolute path to your SlidesAI project directory.
-            </p>
           </div>
         </CardContent>
       </Card>

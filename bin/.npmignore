@@ -1,0 +1,27 @@
+# Development files
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# Test files
+test/
+tests/
+*.test.js
+*.test.mjs
+
+# Documentation (except README)
+docs/
+*.md
+!README.md
+
+# Source control
+.git/
+.gitignore
+
+# Launch script (not needed for npx - users will use npx directly)
+launch-mcp.sh
+
+# Other development files
+.env*
+.npmrc

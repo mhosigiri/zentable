@@ -26,7 +26,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+          <TabsTrigger value="api-keys">MCP Connections</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
         
@@ -36,13 +36,13 @@ export default function SettingsPage() {
         
         <TabsContent value="api-keys" className="space-y-6">
           <ApiKeysSection />
+          <McpIntegrationGuide 
+            serverUrl={serverUrl} 
+          />
         </TabsContent>
         
         <TabsContent value="integrations" className="space-y-6">
           <MCPToolsManager />
-          <McpIntegrationGuide 
-            serverUrl={serverUrl} 
-          />
         </TabsContent>
       </Tabs>
     </div>

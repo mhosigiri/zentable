@@ -1,11 +1,11 @@
 {
-  "name": "@your-company/slides-ai-mcp",
-  "version": "1.0.0",
+  "name": "@menlopark/zentable-mcp",
+  "version": "1.0.1",
   "type": "module",
-  "description": "SlidesAI MCP Server - Generate presentations from any AI tool",
-  "main": "slides-ai-mcp.mjs",
+  "description": "Zentable MCP Server - Generate presentations from any AI tool",
+  "main": "zentable-mcp.mjs",
   "bin": {
-    "slides-ai-mcp": "./slides-ai-mcp.mjs"
+    "zentable-mcp": "./zentable-mcp.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -15,7 +15,8 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["mcp", "presentations", "ai", "slides"],
-  "author": "Your Company",
-  "license": "MIT"
+  "keywords": ["mcp", "presentations", "ai", "slides", "zentable"],
+  "author": "Zentable",
+  "license": "MIT",
+  "homepage": "https://zentableai.com"
 } 

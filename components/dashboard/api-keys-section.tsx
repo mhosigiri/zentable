@@ -165,7 +165,7 @@ export function ApiKeysSection() {
               Create API Key
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Create New API Key</DialogTitle>
               <DialogDescription>
@@ -188,8 +188,8 @@ export function ApiKeysSection() {
                     <div className="space-y-2">
                       <p className="font-medium">Your new API key:</p>
                       <div className="flex items-center space-x-2">
-                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono">
-                          {showKey ? newApiKey : '•'.repeat(newApiKey.length)}
+                        <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">
+                          {showKey ? newApiKey : '•'.repeat(Math.min(newApiKey.length, 40))}
                         </code>
                         <Button
                           size="sm"

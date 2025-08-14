@@ -277,6 +277,141 @@ export class McpDatabaseService {
     }
   }
 
+  // ============ CREDIT MANAGEMENT FOR MCP ============
+
+  async checkCredits(userId: string, actionType: string): Promise<{ hasCredits: boolean; currentBalance: number }> {
+    try {
+      console.log('=== MCP Database: Checking Credits ===')
+      console.log('User ID:', userId)
+      console.log('Action Type:', actionType)
+
+      const { data: profile, error } = await this.supabaseClient
+        .from('profiles')
+        .select('credits_balance')
+        .eq('id', userId)
+        .single()
+
+      if (error || !profile) {
+        console.error('Error checking credits:', error)
+        return { hasCredits: false, currentBalance: 0 }
+      }
+
+      // Credit costs mapping
+      const creditCosts: Record<string, number> = {
+        presentation_create: 10,
+        slide_generate: 5,
+        image_generate: 2,
+        chat_message: 2,
+        brainstorming: 3,
+      }
+
+      const requiredCredits = creditCosts[actionType] || 10
+      const hasCredits = profile.credits_balance >= requiredCredits
+
+      console.log('Current balance:', profile.credits_balance)
+      console.log('Required credits:', requiredCredits)
+      console.log('Has sufficient credits:', hasCredits)
+
+      return { 
+        hasCredits, 
+        currentBalance: profile.credits_balance 
+      }
+    } catch (error) {
+      console.error('Exception checking credits:', error)
+      return { hasCredits: false, currentBalance: 0 }
+    }
+  }
+
+  async deductCredits(userId: string, actionType: string, metadata: Record<string, any> = {}): Promise<{ success: boolean; newBalance?: number; error?: string }> {
+    try {
+      console.log('=== MCP Database: Deducting Credits ===')
+      console.log('User ID:', userId)
+      console.log('Action Type:', actionType)
+      console.log('Metadata:', metadata)
+
+      // Credit costs mapping
+      const creditCosts: Record<string, number> = {
+        presentation_create: 10,
+        slide_generate: 5,
+        image_generate: 2,
+        chat_message: 2,
+        brainstorming: 3,
+      }
+
+      const creditsToDeduct = creditCosts[actionType] || 10
+
+      // Call the database function to deduct credits atomically
+      const { data, error } = await this.supabaseClient.rpc('deduct_credits', {
+        user_uuid: userId,
+        credits_to_deduct: creditsToDeduct,
+        action_type_param: actionType,
+        metadata_param: metadata,
+      })
+
+      if (error) {
+        console.error('Error deducting credits:', error)
+        return { 
+          success: false, 
+          error: error.message 
+        }
+      }
+
+      if (!data) {
+        console.log('Insufficient credits or user not found')
+        return { 
+          success: false, 
+          error: 'Insufficient credits or user not found' 
+        }
+      }
+
+      // Get updated balance
+      const { data: profile } = await this.supabaseClient
+        .from('profiles')
+        .select('credits_balance')
+        .eq('id', userId)
+        .single()
+
+      console.log('Credits deducted successfully')
+      console.log('New balance:', profile?.credits_balance || 0)
+
+      return { 
+        success: true, 
+        newBalance: profile?.credits_balance || 0 
+      }
+    } catch (error) {
+      console.error('Exception deducting credits:', error)
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    }
+  }
+
+  async getSlidesWithImagePrompts(presentationId: string): Promise<any[]> {
+    try {
+      console.log('=== MCP Database: Getting Slides with Image Prompts ===')
+      console.log('Presentation ID:', presentationId)
+
+      const { data: slides, error } = await this.supabaseClient
+        .from('slides')
+        .select('*')
+        .eq('presentation_id', presentationId)
+        .not('image_prompt', 'is', null)
+        .order('position', { ascending: true })
+
+      if (error) {
+        console.error('Error getting slides with image prompts:', error)
+        return []
+      }
+
+      console.log('Found slides with image prompts:', slides?.length || 0)
+      return slides || []
+    } catch (error) {
+      console.error('Exception getting slides with image prompts:', error)
+      return []
+    }
+  }
+
   // ============ PRESENTATION MANAGEMENT FOR MCP ============
 
   async createPresentation(data: {

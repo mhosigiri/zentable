@@ -369,7 +369,7 @@ export default function PricingPage() {
             <div>
               <h3 className="font-semibold mb-2">What are credits?</h3>
               <p className="text-gray-600 text-sm">
-                Credits are used for AI-powered features like generating presentations, slides, images, and chat interactions. Each action consumes a specific number of credits.
+                Credits are used for AI-powered features like generating presentations, slides, images, and chat interactions. With 500 credits, you can create around 10 presentations.
               </p>
             </div>
             <div>
@@ -393,27 +393,11 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Credit Usage Guide */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-center mb-8">How Credits Work</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-4xl mx-auto">
-            {creditCosts.map((item, index) => (
-              <Card key={index} className="text-center">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">{item.action}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{item.cost}</div>
-                  <div className="text-xs text-gray-500">credits</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <footer className="bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white py-16 mt-20">
-          <div className="max-w-7xl mx-auto px-4">
+      </div>
+      
+      {/* Footer */}
+      <footer className="w-full bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white py-16 mt-20">
+        <div className="w-full px-4">
             <div className="text-center">
               <div className="flex items-center justify-center space-x-3 mb-6">
                 <img 
@@ -469,7 +453,6 @@ export default function PricingPage() {
             </div>
           </div>
         </footer>
-      </div>
     </div>
   )
 }

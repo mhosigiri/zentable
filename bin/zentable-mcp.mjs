@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * SlidesAI MCP Server
+ * Zentable MCP Server
  * A Model Context Protocol server for generating presentations
  */
 
@@ -14,11 +14,11 @@ import { z } from 'zod'
 const fetch = (await import('node-fetch')).default
 
 // Server configuration
-const SERVER_URL = process.env.SLIDES_AI_SERVER_URL || 'https://your-slides-ai-domain.com'
-const API_KEY = process.env.SLIDES_AI_API_KEY
+const SERVER_URL = process.env.ZENTABLE_SERVER_URL || 'https://zentableai.com'
+const API_KEY = process.env.ZENTABLE_API_KEY
 
 if (!API_KEY) {
-  console.error('❌ Error: SLIDES_AI_API_KEY environment variable is required')
+  console.error('❌ Error: ZENTABLE_API_KEY environment variable is required')
   console.error('Get your API key from: ' + SERVER_URL + '/dashboard/settings')
   process.exit(1)
 }
@@ -34,7 +34,7 @@ const PresentationSchema = z.object({
 
 // Create MCP server
 const server = new Server({
-  name: 'slides-ai-mcp-server',
+  name: 'zentable-mcp-server',
   version: '1.0.0'
 }, {
   capabilities: {
@@ -100,7 +100,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     // Validate arguments
     const validatedArgs = PresentationSchema.parse(args)
     
-    // Call the SlidesAI MCP API
+    // Call the Zentable MCP API
     console.error('Relaying call to backend API:', `${SERVER_URL}/api/mcp`);
     console.error('Using API Key:', `${API_KEY.substring(0, 8)}...`);
 
@@ -159,7 +159,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport()
   await server.connect(transport)
-  console.error('SlidesAI MCP Server running on stdio')
+  console.error('Zentable MCP Server running on stdio')
 }
 
 main().catch((error) => {

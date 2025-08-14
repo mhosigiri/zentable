@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pricing?canceled=true`,
       client_reference_id: user.id,
+      allow_promotion_codes: true, // Enable coupon/promo codes in checkout
       metadata: {
         userId: user.id,
         planName: planName,
