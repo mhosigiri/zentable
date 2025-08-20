@@ -44,6 +44,7 @@ import { exportSlidesToPDF } from '@/lib/export';
 import { fetchGeneratedSlide, fetchGeneratedImage } from '@/lib/ai/generation';
 import { useSlideNavigation } from '@/hooks/useSlideNavigation';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
+import { useCreditErrorHandler } from '@/hooks/use-credit-error-handler';
 import { useMyRuntime } from './MyRuntimeProvider';
 import { generateUUID, isValidUUID } from '@/lib/uuid';
 
@@ -68,6 +69,7 @@ export default function PresentationPage() {
   const router = useRouter();
   const documentId = params.id as string;
   const { setTheme, getThemeForDocument } = useTheme();
+  const { handleApiResponse } = useCreditErrorHandler();
   const initRef = useRef(false);
 
   // Helper function to estimate data size
@@ -507,6 +509,27 @@ export default function PresentationPage() {
         // eslint-disable-next-line no-console
         console.error('❌ Slide generation failed for slide:', slideIndex, error);
         
+        // Handle credit errors with toast notification
+        if (error instanceof Error && error.message.includes('Insufficient credits')) {
+          // Extract credit error details from the error message if possible
+          const errorText = error.message;
+          // Create a mock 402 response to trigger the credit error handler
+          const mockResponse = new Response(JSON.stringify({
+            error: errorText,
+            creditsRequired: 5, // Default slide generation cost
+            currentBalance: 0
+          }), {
+            status: 402,
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          try {
+            await handleApiResponse(mockResponse);
+          } catch (handlerError) {
+            // Handler will show toast and throw, which is expected
+          }
+        }
+        
         // Remove from generating slides set
         setGeneratingSlides(prev => {
           const newSet = new Set(prev);
@@ -556,6 +579,27 @@ export default function PresentationPage() {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('❌ Image generation failed for slide:', slideIndex, error);
+      
+      // Handle credit errors with toast notification
+      if (error instanceof Error && error.message.includes('Insufficient credits')) {
+        // Extract credit error details from the error message if possible
+        const errorText = error.message;
+        // Create a mock 402 response to trigger the credit error handler
+        const mockResponse = new Response(JSON.stringify({
+          error: errorText,
+          creditsRequired: 2, // Default image generation cost
+          currentBalance: 0
+        }), {
+          status: 402,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        try {
+          await handleApiResponse(mockResponse);
+        } catch (handlerError) {
+          // Handler will show toast and throw, which is expected
+        }
+      }
       
       // Remove from generating set
       setGeneratingImages(prev => {
@@ -837,6 +881,28 @@ export default function PresentationPage() {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to generate slide:', error);
+      
+      // Handle credit errors with toast notification
+      if (error instanceof Error && error.message.includes('Insufficient credits')) {
+        // Extract credit error details from the error message if possible
+        const errorText = error.message;
+        // Create a mock 402 response to trigger the credit error handler
+        const mockResponse = new Response(JSON.stringify({
+          error: errorText,
+          creditsRequired: 5, // Default slide generation cost
+          currentBalance: 0
+        }), {
+          status: 402,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        try {
+          await handleApiResponse(mockResponse);
+        } catch (handlerError) {
+          // Handler will show toast and throw, which is expected
+        }
+      }
+      
       // Remove failed slide
       deleteSlide(targetIndex);
     } finally {

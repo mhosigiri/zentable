@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useCreditErrorHandler } from '@/hooks/use-credit-error-handler';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -315,6 +316,8 @@ export default function OutlinePage() {
     }
   };
 
+  const { handleApiResponse } = useCreditErrorHandler();
+  
   const generateOutline = async (docData?: DocumentData) => {
     const data = docData || documentData;
     if (!data) return;
@@ -356,6 +359,9 @@ export default function OutlinePage() {
         body: JSON.stringify(requestBody),
       });
 
+      // Handle credit errors with toast notification
+      await handleApiResponse(response);
+      
       if (!response.ok) {
         throw new Error('Failed to generate outline');
       }

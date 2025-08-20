@@ -8,6 +8,7 @@ import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { useAssistantLayout } from "@/components/ui/assistant-layout";
+import { useCreditErrorHandler } from '@/hooks/use-credit-error-handler';
 
 interface AssistantSidebarProps {
   presentationId: string;
@@ -85,6 +86,9 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
     setCurrentThreadId(localStorage.getItem(`threadId_${presentationId}`) || null);
   }, [presentationId]);
 
+  // Initialize error handler
+  const { handleApiResponse } = useCreditErrorHandler();
+
   // Initialize the chat runtime with our assistant-chat API endpoint
   const runtime = useChatRuntime({
     api: "/api/assistant-chat",
@@ -92,7 +96,13 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
       context: { presentationId },
       threadId: currentThreadId 
     },
-    onResponse: (response) => {
+    onResponse: async (response) => {
+      // Handle 402 errors (insufficient credits)
+      if (response.status === 402) {
+        await handleApiResponse(response);
+        return;
+      }
+      
       // Check for thread ID in response headers
       const threadId = response.headers.get('X-Thread-Id');
       if (threadId && threadId !== currentThreadId) {
