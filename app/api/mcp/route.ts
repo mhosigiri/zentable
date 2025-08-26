@@ -454,7 +454,6 @@ The outline should create a compelling ${slideCount}-slide presentation with max
         system: outlineSystemPrompt,
         prompt: `Create a presentation outline for: "${prompt}"`,
         schema: OutlineSchema,
-        maxTokens: 4000, // Increased for detailed prompts
         providerOptions: {
           groq: groqOptions
         }
@@ -482,7 +481,6 @@ The outline should create a compelling ${slideCount}-slide presentation with max
         system: outlineSystemPrompt,
         prompt: `Create a presentation outline for: "${prompt}"`,
         schema: OutlineSchema,
-        maxTokens: 4000, // Increased for detailed prompts
         temperature: 0.7,
         providerOptions: {
           groq: fallbackOptions
@@ -577,7 +575,6 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
           system: slideSystemPrompt,
           prompt: slidePrompt,
           schema,
-          maxTokens: 2000, // Increased for more detailed content
           temperature: 0.7,
         });
         slideContent = response.object;
@@ -590,7 +587,6 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
             system: slideSystemPrompt,
             prompt: slidePrompt,
             schema,
-            maxTokens: 2000,
             temperature: 0.7,
           });
           slideContent = response.object;

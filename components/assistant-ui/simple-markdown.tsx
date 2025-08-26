@@ -1,9 +1,14 @@
-"use client";
+'use client';
 
-import React, { memo } from "react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
-const MarkdownTextImpl = ({ children, className }: { children: string; className?: string }) => {
+interface SimpleMarkdownProps {
+  children: string;
+  className?: string;
+}
+
+export function SimpleMarkdown({ children, className }: SimpleMarkdownProps) {
   // Simple markdown parsing for basic formatting
   const parseMarkdown = (text: string) => {
     // Convert markdown to HTML-like structure
@@ -28,6 +33,5 @@ const MarkdownTextImpl = ({ children, className }: { children: string; className
       dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
   );
-};
+}
 
-export const MarkdownText = memo(MarkdownTextImpl);

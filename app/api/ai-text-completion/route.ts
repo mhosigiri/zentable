@@ -143,10 +143,9 @@ IMPORTANT: Return ONLY the HTML that should replace the selected text. No explan
       system: systemPrompt,
       prompt: userPrompt,
       temperature: 0.7,
-      maxTokens: 1000,
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error('Error in AI text completion:', error);
     return new Response(

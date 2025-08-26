@@ -14,6 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { SlideRenderer, SlideData } from '@/components/slides/SlideRenderer';
 import { ThemedLayout } from '@/components/ui/themed-layout';
 import { AssistantSidebar } from '@/components/assistant-ui/sidebar';
+import { ChatWidget } from '@/components/assistant-ui/chat-widget';
 import { AssistantLayout, AssistantLayoutProvider } from '@/components/ui/assistant-layout';
 import { SlidesHeader } from '@/components/ui/slides-header';
 import { SlidesSidebar } from '@/components/ui/slides-sidebar';
@@ -1312,6 +1313,15 @@ export default function PresentationPage() {
         onClose={() => setShowAIModal(false)}
         onGenerate={handleAIGenerate}
         isGenerating={isGeneratingNewSlide}
+      />
+      
+      {/* AI Assistant Chat Widget */}
+      <ChatWidget 
+        presentationId={documentId} 
+        onSlideUpdate={() => {
+          // Refresh slides when AI makes changes
+          console.log('AI made changes, refreshing slides...');
+        }}
       />
         </AssistantLayout>
       </AssistantLayoutProvider>

@@ -238,7 +238,7 @@ const AssistantMessage: FC = () => {
       <div className="text-foreground col-span-2 col-start-2 row-start-1 my-1.5 max-w-[calc(var(--thread-max-width)*0.8)] break-words leading-7">
         <MessagePrimitive.Content
           components={{
-            Text: MarkdownText,
+            Text: ({ text, ...props }) => <MarkdownText>{text}</MarkdownText>,
             tools: {
               Fallback: (props: any) => (
                 <ToolResult

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useCompletion } from "ai/react";
+import { useCompletion } from "@ai-sdk/react";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,17 +39,6 @@ export function AISelector({
 
   const { completion, complete, isLoading, setCompletion } = useCompletion({
     api: '/api/ai-text-completion',
-    onResponse: (response) => {
-      if (response.status === 429) {
-        toast.error("You have reached your request limit for the day.");
-        return;
-      }
-      if (!response.ok) {
-        toast.error("Failed to generate AI completion. Please try again.");
-        return;
-      }
-      setShowCommands(false);
-    },
     onError: (error) => {
       // console.error('AI completion error:', error);
       toast.error("Failed to generate AI completion. Please try again.");

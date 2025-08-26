@@ -3,9 +3,8 @@
 import React, { FC, useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Wand2, GripVertical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Thread } from "@/components/assistant-ui/thread";
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
+import { Thread } from "./thread";
+import { MyRuntimeProvider } from "@/app/MyRuntimeProvider";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { useAssistantLayout } from "@/components/ui/assistant-layout";
 
@@ -85,24 +84,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
     setCurrentThreadId(localStorage.getItem(`threadId_${presentationId}`) || null);
   }, [presentationId]);
 
-  // Initialize the chat runtime with our assistant-chat API endpoint
-  const runtime = useChatRuntime({
-    api: "/api/assistant-chat",
-    body: { 
-      context: { presentationId },
-      threadId: currentThreadId 
-    },
-    onResponse: (response) => {
-      // Check for thread ID in response headers
-      const threadId = response.headers.get('X-Thread-Id');
-      if (threadId && threadId !== currentThreadId) {
-        setCurrentThreadId(threadId);
-        // Persist in localStorage as well
-        localStorage.setItem(`threadId_${presentationId}`, threadId);
-        // console.log('Updated thread ID from response:', threadId);
-      }
-    }
-  });
+
   
   // Set up effect to listen for slide update messages from approved tool calls
   React.useEffect(() => {
@@ -190,9 +172,9 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
         
         {/* Chat thread */}
         <div className="flex-1 overflow-hidden">
-          <AssistantRuntimeProvider runtime={runtime}>
+          <MyRuntimeProvider presentationId={presentationId}>
             <Thread />
-          </AssistantRuntimeProvider>
+          </MyRuntimeProvider>
         </div>
       </div>
     </TooltipProvider>

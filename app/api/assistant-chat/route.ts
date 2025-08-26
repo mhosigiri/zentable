@@ -1,5 +1,6 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { streamText, UIMessage, convertToModelMessages, tool } from 'ai';
+import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { getSlidesByPresentation } from '@/lib/slides';
 import { DatabaseService } from '@/lib/database';
 import { slideTools } from '@/lib/ai/slide-tools';
@@ -27,8 +28,15 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { messages: reqMessages, context: reqContext, threadId, saveMessage } = body;
-    messages = reqMessages;
+    const { 
+      messages: reqMessages, 
+      system, 
+      tools, 
+      context: reqContext, 
+      threadId, 
+      saveMessage 
+    } = body;
+    messages = reqMessages || [];
     context = reqContext;
     currentThreadId = threadId;
     
@@ -221,17 +229,47 @@ REMINDERS:
       maxSteps: 20
     });
 
+    console.log('[assistant-chat] About to call convertToModelMessages with:', {
+      messages: messages,
+      messagesType: typeof messages,
+      messagesLength: messages?.length,
+      messagesIsArray: Array.isArray(messages),
+      tools: tools,
+      toolsType: typeof tools
+    });
+    
+    let convertedMessages;
+    try {
+      // Convert UIMessages to ModelMessages for AI SDK v5
+      convertedMessages = convertToModelMessages(messages || []);
+      console.log('[assistant-chat] Successfully converted messages:', {
+        convertedLength: convertedMessages?.length,
+        convertedType: typeof convertedMessages
+      });
+    } catch (convertError) {
+      console.error('[assistant-chat] Error converting messages:', convertError);
+      throw convertError;
+    }
+    
+    let frontendToolsResult;
+    try {
+      frontendToolsResult = frontendTools(tools || []);
+      console.log('[assistant-chat] Successfully created frontendTools:', {
+        frontendToolsLength: frontendToolsResult?.length,
+        frontendToolsType: typeof frontendToolsResult
+      });
+    } catch (frontendToolsError) {
+      console.error('[assistant-chat] Error creating frontendTools:', frontendToolsError);
+      frontendToolsResult = {};
+    }
+    
     const result = await streamText({
       model: openai('gpt-4o-mini'),
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        ...messages,
-      ],
+      system: system || systemPrompt,
+      messages: convertedMessages,
       temperature: 0.7,
       tools: {
+        ...frontendToolsResult,
         getSlideContent: slideTools.getSlideContent,
         updateSlideContent: slideTools.proposeSlideUpdate,
         getSlideIdByNumber: slideTools.getSlideIdByNumber,
@@ -244,37 +282,36 @@ REMINDERS:
         updateSlideImage: slideTools.updateSlideImage,
         changeSlideTemplate: slideTools.changeSlideTemplate,
       },
-      toolChoice: 'auto',
-      maxSteps: 20,
-      onFinish: async (completion) => {
-        // Log the completion details
-        console.log('[assistant-chat] OpenAI stream completed:', {
-          threadId: currentThreadId,
-          responseLength: completion.text?.length || 0,
-          toolCallsCount: completion.toolCalls?.length || 0,
-          usage: completion.usage,
-          finishReason: completion.finishReason,
-          modelId: completion.providerMetadata?.openai?.modelId || 'unknown'
-        });
-        
-        console.log('[assistant-chat] Full completion object keys:', Object.keys(completion));
-        // Save assistant's response to database when the stream finishes
-        if (currentThreadId && completion.text) {
-          try {
-            const toolCalls = completion.toolCalls && completion.toolCalls.length > 0 ? 
-              completion.toolCalls : null;
-            await db.createMessage(currentThreadId, 'assistant', completion.text, toolCalls);
-            console.log('Saved assistant message to thread:', currentThreadId, 
-              { textLength: completion.text.length, toolCallsCount: toolCalls?.length || 0 });
-          } catch (error) {
-            console.error('Failed to save assistant message:', error);
-          }
+    });
+
+    // Handle completion after stream ends
+    result.text.then(async (completion: string) => {
+      // Log the completion details
+      console.log('[assistant-chat] OpenAI stream completed:', {
+        threadId: currentThreadId,
+        responseLength: completion?.length || 0,
+        usage: result.usage,
+        finishReason: result.finishReason,
+      });
+      
+      // Save assistant's response to database when the stream finishes
+      if (currentThreadId && completion) {
+        try {
+          const toolCalls = await result.toolCalls;
+          const toolCallsArray = toolCalls && toolCalls.length > 0 ? toolCalls : null;
+          await db.createMessage(currentThreadId, 'assistant', completion, toolCallsArray);
+          console.log('Saved assistant message to thread:', currentThreadId, 
+            { textLength: completion.length, toolCallsCount: toolCallsArray?.length || 0 });
+        } catch (error: any) {
+          console.error('Failed to save assistant message:', error);
         }
       }
+    }).catch((error: any) => {
+      console.error('Error in text promise:', error);
     });
 
     console.log('[assistant-chat] Stream created successfully, returning response');
-    const response = result.toDataStreamResponse({
+    const response = result.toUIMessageStreamResponse({
       // Include threadId in response headers for client-side persistence
       headers: currentThreadId ? { 'X-Thread-Id': currentThreadId } : undefined
     });

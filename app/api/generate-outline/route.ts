@@ -346,7 +346,6 @@ Create a presentation outline for: "${prompt}"`;
         messages: [{ role: 'user', content: userPrompt }],
         schema: OutlineSchema,
         temperature: 0.6,
-        maxTokens: 2048,
         providerOptions: {
           groq: groqOptions
         }
@@ -374,7 +373,6 @@ Create a presentation outline for: "${prompt}"`;
         messages: [{ role: 'user', content: userPrompt }],
         schema: OutlineSchema,
         temperature: 0.6,
-        maxTokens: 2048,
         providerOptions: {
           groq: fallbackOptions
         }
@@ -385,11 +383,7 @@ Create a presentation outline for: "${prompt}"`;
     console.log('=== MODEL OUTPUT ===');
     console.log('Model used:', usedReasoningModel ? modelName : 'llama-3.3-70b-versatile (fallback)');
     console.log('Browser Search Enabled:', enableBrowserSearch);
-    console.log('Token usage:', {
-      promptTokens: response.usage?.promptTokens,
-      completionTokens: response.usage?.completionTokens,
-      totalTokens: response.usage?.totalTokens
-    });
+    console.log('Token usage:', response.usage);
     
     // Simple browser search debugging
     if (enableBrowserSearch) {

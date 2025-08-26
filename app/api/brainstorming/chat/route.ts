@@ -296,47 +296,48 @@ ALWAYS use the suggestIdeas tool when users ask for ideas, recommendations, or b
         ...messages,
       ],
       tools: allTools,
-      maxSteps: 5,
-      onFinish: async ({ text, toolCalls }) => {
-        // Close MCP clients to free resources
-        for (const client of mcpClients) {
-          try {
-            await client.close();
-          } catch (error) {
-            console.error('Error closing MCP client:', error);
-          }
-        }
-
-        // Save assistant message
-        if (currentThreadId && text) {
-          await supabase
-          .from('brainstorming_messages')
-          .insert({
-            thread_id: currentThreadId,
-            role: 'assistant',
-            content: text,
-            tool_calls: toolCalls?.length > 0 ? toolCalls.map(call => ({
-              ...call,
-              status: 'completed',
-              timestamp: new Date().toISOString()
-            })) : null
-          });
-        }
-      },
-      onError: async (error) => {
-        // Close MCP clients on error to prevent resource leaks
-        for (const client of mcpClients) {
-          try {
-            await client.close();
-          } catch (closeError) {
-            console.error('Error closing MCP client on error:', closeError);
-          }
-        }
-        console.error('Brainstorming chat error:', error);
-      }
     });
 
-    return result.toDataStreamResponse({
+    // Handle completion after stream ends
+    result.text.then(async (text: string) => {
+      // Close MCP clients to free resources
+      for (const client of mcpClients) {
+        try {
+          await client.close();
+        } catch (error: any) {
+          console.error('Error closing MCP client:', error);
+        }
+      }
+
+      // Save assistant message
+      if (currentThreadId && text) {
+        const toolCalls = await result.toolCalls;
+        await supabase
+        .from('brainstorming_messages')
+        .insert({
+          thread_id: currentThreadId,
+          role: 'assistant',
+          content: text,
+          tool_calls: toolCalls?.length > 0 ? toolCalls.map(call => ({
+            ...call,
+            status: 'completed',
+            timestamp: new Date().toISOString()
+          })) : null
+        });
+      }
+    }).catch(async (error: any) => {
+      // Close MCP clients on error to prevent resource leaks
+      for (const client of mcpClients) {
+        try {
+          await client.close();
+        } catch (closeError) {
+          console.error('Error closing MCP client on error:', closeError);
+        }
+      }
+      console.error('Brainstorming chat error:', error);
+    });
+
+    return result.toTextStreamResponse({
       headers: {
         'X-Thread-Id': currentThreadId || '',
         'X-Session-Id': sessionId || ''

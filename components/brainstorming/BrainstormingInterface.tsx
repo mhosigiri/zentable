@@ -14,8 +14,8 @@ import {
   Sparkles,
   Loader2
 } from 'lucide-react';
-import { BrainstormingRuntimeProvider } from './BrainstormingRuntimeProvider';
 import { BrainstormingThread } from './BrainstormingThread';
+import { BrainstormingRuntimeProvider } from './BrainstormingRuntimeProvider';
 import { MCPToolsToggle } from './MCPToolsToggle';
 import { BrainstormingDatabaseService } from '@/lib/brainstorming-database';
 import { createClient } from '@/lib/supabase/client';
@@ -245,12 +245,11 @@ export function BrainstormingInterface() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
-              <BrainstormingRuntimeProvider
-                sessionId={sessionId}
-                activeMCPTools={activeMCPTools}
-              >
-                {sessionId && <BrainstormingThread onIdeaSaved={refreshIdeas} />}
-              </BrainstormingRuntimeProvider>
+                              {sessionId && (
+                                <BrainstormingRuntimeProvider sessionId={sessionId} activeMCPTools={activeMCPTools}>
+                                  <BrainstormingThread onIdeaSaved={refreshIdeas} />
+                                </BrainstormingRuntimeProvider>
+                              )}
             </CardContent>
           </Card>
 

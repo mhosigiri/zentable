@@ -4,8 +4,7 @@ import { FC, useState } from "react";
 import { MessageCircle, X, Minimize, Maximize } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Thread } from "./thread";
-// Use ThreadProvider from the official Shadcn integration that already works in our app
-import { ThreadPrimitive } from "@assistant-ui/react";
+import { MyRuntimeProvider } from "@/app/MyRuntimeProvider";
 
 interface ChatWidgetProps {
   presentationId: string;
@@ -81,8 +80,9 @@ export const ChatWidget: FC<ChatWidgetProps> = ({
           {!isMinimized && (
             <div className="flex flex-1 flex-col overflow-hidden">
               <div className="h-full w-full">
-                {/* The Thread component is already configured to work with our API endpoint */}
-                <Thread />
+                <MyRuntimeProvider presentationId={presentationId}>
+                  <Thread />
+                </MyRuntimeProvider>
               </div>
             </div>
           )}

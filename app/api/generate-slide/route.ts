@@ -334,13 +334,7 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
         system: systemPrompt,
         prompt,
         schema,
-        maxTokens: 2000,
         temperature: 0.7,
-        experimental_providerMetadata: {
-          groq: {
-            response_format: { type: "json_object" }
-          }
-        }
       });
 
       console.log('✅ generateObject completed successfully');
@@ -366,7 +360,6 @@ Remember: Transform the outline into CONCISE, visually-friendly presentation con
           system: systemPrompt,
           prompt,
           schema,
-          maxTokens: 2000,
           temperature: 0.7,
         });
 

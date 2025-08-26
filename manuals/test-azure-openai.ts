@@ -29,7 +29,6 @@ async function testTextGeneration() {
       model: azureOpenAI(deploymentName),
       prompt: 'Say hello from Azure OpenAI in 10 words or less.',
       temperature: 0.2,
-      maxTokens: 20,
     });
     
     console.log('✅ Text Generation Success!');

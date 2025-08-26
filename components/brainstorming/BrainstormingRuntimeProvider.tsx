@@ -1,7 +1,7 @@
 "use client";
 
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
+import { useChatRuntime, AssistantChatTransport } from "@assistant-ui/react-ai-sdk";
 
 interface BrainstormingRuntimeProviderProps {
   children: React.ReactNode;
@@ -15,13 +15,19 @@ export function BrainstormingRuntimeProvider({
   activeMCPTools = []
 }: BrainstormingRuntimeProviderProps) {
   const runtime = useChatRuntime({
-    api: "/api/brainstorming/chat",
-    body: {
-      context: {
-        sessionId,
-        activeMCPTools
+    transport: new AssistantChatTransport({
+      api: "/api/brainstorming/chat",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: {
+        context: {
+          sessionId,
+          activeMCPTools
+        }
       }
-    }
+    }),
   });
 
   return (

@@ -5,7 +5,7 @@ export const brainstormingTools = {
 
   createIdea: tool({
     description: 'Create a new idea in the brainstorming session',
-    parameters: z.object({
+    inputSchema: z.object({
       title: z.string().describe('The title of the idea'),
       description: z.string().describe('A brief description of the idea'),
       content: z.string().optional().describe('Detailed content or explanation'),
@@ -32,7 +32,7 @@ export const brainstormingTools = {
 
   suggestIdeas: tool({
     description: 'Generate and provide multiple diverse, specific, and actionable ideas based on the user\'s request. Use this tool to create structured, saveable ideas that users can add to their idea bank.',
-    parameters: z.object({
+    inputSchema: z.object({
       theme: z.string().describe('The specific topic, challenge, or domain to generate ideas for'),
       ideas: z.array(z.object({
         title: z.string().describe('A specific, actionable title for the idea'),
@@ -61,7 +61,7 @@ export const brainstormingTools = {
 
   categorizeIdeas: tool({
     description: 'Organize and categorize existing ideas',
-    parameters: z.object({
+    inputSchema: z.object({
       ideaIds: z.array(z.string()).describe('IDs of ideas to categorize'),
       categories: z.array(z.string()).describe('Suggested categories')
     }),
@@ -75,7 +75,7 @@ export const brainstormingTools = {
 
   evaluateIdea: tool({
     description: 'Evaluate an idea based on various criteria',
-    parameters: z.object({
+    inputSchema: z.object({
       ideaId: z.string().describe('ID of the idea to evaluate'),
       criteria: z.array(z.enum([
         'feasibility',
@@ -96,7 +96,7 @@ export const brainstormingTools = {
 
   findConnections: tool({
     description: 'Find connections and relationships between different ideas',
-    parameters: z.object({
+    inputSchema: z.object({
       ideaIds: z.array(z.string()).min(2).describe('IDs of ideas to find connections between')
     }),
     execute: async ({ ideaIds }) => {
@@ -109,7 +109,7 @@ export const brainstormingTools = {
 
   summarizeSession: tool({
     description: 'Create a summary of the brainstorming session',
-    parameters: z.object({
+    inputSchema: z.object({
       format: z.enum(['brief', 'detailed', 'actionable']).optional()
         .describe('Format of the summary'),
       includeNext: z.boolean().optional()
@@ -125,7 +125,7 @@ export const brainstormingTools = {
 
   createActionItems: tool({
     description: 'Convert ideas into actionable tasks',
-    parameters: z.object({
+    inputSchema: z.object({
       ideaIds: z.array(z.string()).describe('IDs of ideas to convert to actions'),
       timeline: z.enum(['immediate', 'short-term', 'long-term']).optional()
         .describe('Timeline for the action items')
@@ -140,7 +140,7 @@ export const brainstormingTools = {
 
   generateTags: tool({
     description: 'Generate relevant tags for ideas to help with organization and categorization',
-    parameters: z.object({
+    inputSchema: z.object({
       ideaId: z.string().describe('ID of the idea to generate tags for'),
       content: z.string().describe('Content of the idea to analyze'),
       tagTypes: z.array(z.enum(['domain', 'action', 'priority', 'semantic']))
@@ -160,7 +160,7 @@ export const brainstormingTools = {
 
   mcpToolCall: tool({
     description: 'Call external MCP tools for additional data or functionality during brainstorming',
-    parameters: z.object({
+    inputSchema: z.object({
       toolName: z.string().describe('Name of the MCP tool to call'),
       parameters: z.record(z.any()).describe('Parameters to pass to the MCP tool'),
       context: z.string().optional().describe('Context about why this tool is being called')
@@ -205,7 +205,7 @@ export const brainstormingTools = {
 
   enhanceWithExternalData: tool({
     description: 'Enhance brainstorming session with external data sources through MCP integration',
-    parameters: z.object({
+    inputSchema: z.object({
       dataSource: z.enum(['market_research', 'competitor_data', 'industry_trends', 'customer_feedback'])
         .describe('Type of external data to fetch'),
       topic: z.string().describe('The brainstorming topic to enhance'),
