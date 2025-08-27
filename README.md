@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Zentable AI Logo](https://zentableai.com/zentable.png)
+![Zentable AI Logo](./public/assets/Zentable.png)
 
 **Transform ideas into professional presentations in minutes with AI**
 
