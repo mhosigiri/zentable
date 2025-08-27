@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Zentable AI Logo](./public/assets/Zentable.png)
+<img src="./public/assets/Zentable.png" alt="Zentable AI Logo" width="80" height="80" />
 
 **Transform ideas into professional presentations in minutes with AI**
 
