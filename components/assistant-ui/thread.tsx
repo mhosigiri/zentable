@@ -247,7 +247,6 @@ const AssistantMessage: FC = () => {
                     args: props.args,
                     result: props.result
                   }}
-                  onApprove={props.toolName === 'updateSlideContent' ? handleApproveSlideUpdate : undefined}
                 />
               )
             }

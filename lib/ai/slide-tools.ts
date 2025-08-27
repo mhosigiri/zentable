@@ -25,20 +25,30 @@ export const getSlideContent = tool({
           success: false,
           error: "Slide not found",
           slideId,
+          message: "The requested slide could not be found. Please check the slide ID or try a different slide.",
         };
       }
 
       console.log("✅ Found slide - returning content for display");
 
+      // Get slide position for better context
+      const allSlides = await getSlidesByPresentation(slide.presentation_id);
+      const slidePosition = allSlides.findIndex(s => s.id === slideId) + 1;
+      const totalSlides = allSlides.length;
+
       return {
         success: true,
         slideId: slide.id,
+        slidePosition,
+        totalSlides,
         title: slide.title,
         templateType: slide.template_type,
         content: slide.content,
         imageUrl: slide.image_url,
         imagePrompt: slide.image_prompt,
-        message: "Slide content retrieved successfully. Please display it to the user in the chat.",
+        contentLength: slide.content?.length || 0,
+        hasImage: !!slide.image_url,
+        message: `Successfully retrieved Slide ${slidePosition} of ${totalSlides}. The slide uses the "${slide.template_type}" template and contains ${slide.content?.length || 0} characters of content.`,
       };
     } catch (error) {
       console.error("❌ Exception in getSlideContent tool:", error);
@@ -46,6 +56,7 @@ export const getSlideContent = tool({
         success: false,
         error: "An exception occurred when getting slide content",
         slideId,
+        message: "There was an error retrieving the slide content. Please try again.",
       };
     }
   },
@@ -202,6 +213,7 @@ export const getSlideIdByNumber = tool({
           success: false,
           error: "No slides found for this presentation",
           slideNumber,
+          message: "This presentation doesn't have any slides yet. Would you like me to help you create the first slide?",
         };
       }
 
@@ -217,6 +229,8 @@ export const getSlideIdByNumber = tool({
           success: false,
           error: `Invalid slide number. Please provide a number between 1 and ${slides.length}`,
           slideNumber,
+          totalSlides: slides.length,
+          message: `Slide ${slideNumber} doesn't exist. This presentation has ${slides.length} slides (numbered 1-${slides.length}). Which slide would you like to work with?`,
         };
       }
 
@@ -230,8 +244,10 @@ export const getSlideIdByNumber = tool({
         success: true,
         slideId: slide.id,
         slideNumber,
+        totalSlides: slides.length,
         templateType: slide.template_type,
         title: slide.title || null,
+        message: `Found Slide ${slideNumber} of ${slides.length}: "${slide.title || 'Untitled'}" (${slide.template_type} template)`,
       };
     } catch (error) {
       console.error("❌ Exception in getSlideIdByNumber tool:", error);
@@ -239,6 +255,7 @@ export const getSlideIdByNumber = tool({
         success: false,
         error: "An exception occurred when fetching slide ID",
         slideNumber,
+        message: "There was an error finding the requested slide. Please try again.",
       };
     }
   },
@@ -254,28 +271,46 @@ export const createSlide = tool({
     position: z.number().optional().describe('The position to insert the new slide at (0-indexed)'),
   }),
   execute: async ({ presentationId, templateType, title, content, position }) => {
-    const newSlide = {
-      id: generateUUID(),
-      presentation_id: presentationId,
-      template_type: templateType,
-      title: title || 'New Slide',
-      content: content || '',
-      position: position,
-      // Ensure all other SlideData fields are present
-      bulletPoints: [],
-      imagePrompt: null,
-      imageUrl: null,
-      isGeneratingImage: false,
-      isHidden: false,
-      isGenerating: false,
-    };
+    try {
+      // Get current slide count for better context
+      const allSlides = await getSlidesByPresentation(presentationId);
+      const currentSlideCount = allSlides.length;
+      const newPosition = position !== undefined ? position : currentSlideCount;
+      
+      const newSlide = {
+        id: generateUUID(),
+        presentation_id: presentationId,
+        template_type: templateType,
+        title: title || 'New Slide',
+        content: content || '',
+        position: newPosition,
+        // Ensure all other SlideData fields are present
+        bulletPoints: [],
+        imagePrompt: null,
+        imageUrl: null,
+        isGeneratingImage: false,
+        isHidden: false,
+        isGenerating: false,
+      };
 
-    return {
-      success: true,
-      message: 'Slide creation proposed. Ready to be added to UI.',
-      newSlide,
-      requiresApproval: true,
-    };
+      return {
+        success: true,
+        message: `Ready to create a new slide with the "${templateType}" template. This will be slide ${newPosition + 1} of ${currentSlideCount + 1} in your presentation.`,
+        newSlide,
+        templateType,
+        slideTitle: newSlide.title,
+        position: newPosition,
+        totalSlidesAfterCreation: currentSlideCount + 1,
+        requiresApproval: true,
+      };
+    } catch (error) {
+      console.error('❌ Error in createSlide tool:', error);
+      return {
+        success: false,
+        error: "Failed to create slide",
+        message: "There was an error preparing the new slide. Please try again.",
+      };
+    }
   },
 });
 
@@ -344,14 +379,52 @@ export const deleteSlide = tool({
     slideId: z.string().describe('The ID of the slide to delete'),
   }),
   execute: async ({ slideId }) => {
-    // In a real scenario, we'd also need the position. For UI-first,
-    // we'll assume the frontend can find the position from the ID.
-    return {
-      success: true,
-      message: 'Slide deletion proposed.',
-      slideId,
-      requiresApproval: true,
-    };
+    try {
+      // Get the slide details for better context
+      const slide = await getSlideById(slideId);
+      if (!slide) {
+        return { 
+          success: false, 
+          error: 'Slide not found',
+          slideId,
+          message: "The slide you're trying to delete could not be found. It may have already been removed.",
+        };
+      }
+
+      // Get slide position and total count
+      const allSlides = await getSlidesByPresentation(slide.presentation_id);
+      const slidePosition = allSlides.findIndex(s => s.id === slideId) + 1;
+      const totalSlides = allSlides.length;
+
+      // Prevent deleting the last slide
+      if (totalSlides === 1) {
+        return {
+          success: false,
+          error: 'Cannot delete the last slide',
+          slideId,
+          message: "You cannot delete the last slide in your presentation. Please add another slide first, or consider editing this slide instead.",
+        };
+      }
+
+      return {
+        success: true,
+        message: `Ready to delete Slide ${slidePosition} of ${totalSlides}: "${slide.title || 'Untitled'}" (${slide.template_type} template). This action cannot be undone.`,
+        slideId,
+        slideTitle: slide.title,
+        slidePosition,
+        totalSlides,
+        templateType: slide.template_type,
+        requiresApproval: true,
+      };
+    } catch (error) {
+      console.error('❌ Error in deleteSlide tool:', error);
+      return {
+        success: false,
+        error: "Failed to prepare slide deletion",
+        slideId,
+        message: "There was an error preparing to delete the slide. Please try again.",
+      };
+    }
   },
 });
 

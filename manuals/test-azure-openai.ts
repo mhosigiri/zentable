@@ -27,7 +27,7 @@ async function testTextGeneration() {
   try {
     const { text } = await generateText({
       model: azureOpenAI(deploymentName),
-      prompt: 'Say hello from Azure OpenAI in 10 words or less.',
+      messages: [{ role: 'user', content: 'Say hello from Azure OpenAI in 10 words or less.' }],
       temperature: 0.2,
     });
     
@@ -56,9 +56,9 @@ async function testObjectGeneration() {
   try {
     const { object } = await generateObject({
       model: azureOpenAI(deploymentName),
-      system: 'You are a helpful test assistant. Always respond with valid JSON.',
-      prompt: 'Create a test response with a greeting, success status, and current timestamp.',
+      messages: [{ role: 'user', content: 'Create a test response with a greeting, success status, and current timestamp.' }],
       schema: TestSchema,
+      temperature: 0.2,
     });
     
     console.log('✅ Object Generation Success!');
@@ -90,9 +90,9 @@ async function testOutlineGeneration() {
   try {
     const { object } = await generateObject({
       model: azureOpenAI(deploymentName),
-      system: 'You are an expert presentation designer. Create concise, professional presentation content.',
-      prompt: 'Create a mini presentation outline about "Benefits of Cloud Computing" with 2-3 sections.',
+      messages: [{ role: 'user', content: 'Create a mini presentation outline about "Benefits of Cloud Computing" with 2-3 sections.' }],
       schema: MiniOutlineSchema,
+      temperature: 0.6,
     });
     
     console.log('✅ Outline Generation Success!');
