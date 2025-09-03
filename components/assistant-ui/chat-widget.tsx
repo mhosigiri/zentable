@@ -3,8 +3,7 @@
 import { FC, useState } from "react";
 import { MessageCircle, X, Minimize, Maximize } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Thread } from "./thread";
-import { MyRuntimeProvider } from "@/app/MyRuntimeProvider";
+import { HITLChat } from "./hitl-chat";
 
 interface ChatWidgetProps {
   presentationId: string;
@@ -80,9 +79,7 @@ export const ChatWidget: FC<ChatWidgetProps> = ({
           {!isMinimized && (
             <div className="flex flex-1 flex-col overflow-hidden">
               <div className="h-full w-full">
-                <MyRuntimeProvider presentationId={presentationId}>
-                  <Thread />
-                </MyRuntimeProvider>
+                <HITLChat presentationId={presentationId} />
               </div>
             </div>
           )}

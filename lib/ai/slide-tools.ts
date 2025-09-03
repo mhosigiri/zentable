@@ -1,11 +1,15 @@
 import { tool } from 'ai';
-import { getSlideById, updateSlideContent, getSlidesByPresentation } from '@/lib/slides';
+import { getSlideById, getSlidesByPresentation } from '@/lib/slides';
 import { generateUUID } from '@/lib/uuid';
 import { themes, getThemeById } from '@/lib/themes';
 import { z } from 'zod';
 import { fetchGeneratedSlideForServer } from './generation';
 
-
+// Approval constants for HITL
+export const APPROVAL = {
+  YES: 'Yes, confirmed.',
+  NO: 'No, denied.',
+} as const;
 
 export const getSlideContent = tool({
   description: "Get a slide's full HTML content, title, and template type for 'view only' requests.",
@@ -62,134 +66,92 @@ export const getSlideContent = tool({
   },
 });
 
-// Define the updateSlideContent tool using the AI SDK tool helper
-const updateSlideContentTool = tool({
-  description: 'Update the content of a slide with new HTML content',
+// HITL: This tool requires human approval - NO execute function
+export const updateSlideContent = tool({
+  description: 'Update the content of a slide with new HTML content. This requires user approval.',
   inputSchema: z.object({
     slideId: z.string().describe('The ID of the slide to update'),
     content: z.string().describe('The new HTML content for the slide'),
   }),
-  execute: async ({ slideId, content }) => {
-    console.log('🔍 Tool called: updateSlideContent');
-    console.log(`📝 SlideID: ${slideId}`);
-    console.log(`📄 Content length: ${content.length} characters`);
-    console.log(`📄 Content preview: ${content.substring(0, 100)}...`);
-    
-    try {
-      // Get existing slide first
-      console.log('🔍 Fetching slide from database...');
-      const slide = await getSlideById(slideId);
-      
-      if (!slide) {
-        console.warn('⚠️ Slide not found with ID:', slideId);
-        return {
-          success: false,
-          error: "Slide not found",
-          slideId
-        };
-      }
-      
-      console.log('✅ Found slide:');
-      console.log(`   - ID: ${slide.id}`);
-      console.log(`   - Original content length: ${slide.content?.length || 0} chars`);
-      console.log(`   - Original content preview: ${slide.content?.substring(0, 100) || '(empty)'}...`);
-      
-      // Update the slide content
-      console.log('🔄 Calling updateSlideContent function...');
-      const success = await updateSlideContent(slideId, content);
-      
-      if (success) {
-        console.log('✅ Database update successful!');
-        
-        // Verify the update by fetching the slide again
-        console.log('🔍 Verifying update by fetching slide again...');
-        const updatedSlide = await getSlideById(slideId);
-        
-        if (updatedSlide && updatedSlide.content === content) {
-          console.log('✅ Verification successful - content matches update');
-        } else if (updatedSlide) {
-          console.warn('⚠️ Verification issue - content doesn\'t match update');
-          console.log(`   - Updated content length: ${updatedSlide.content?.length || 0}`);
-          console.log(`   - Expected content length: ${content.length}`);
-        } else {
-          console.error('❌ Verification failed - could not fetch updated slide');
-        }
-        
-        return {
-          success: true,
-          slideId,
-          message: "Slide content updated successfully"
-        };
-      } else {
-        console.error('❌ Database update returned false');
-        return {
-          success: false,
-          error: "Failed to update slide content",
-          slideId
-        };
-      }
-    } catch (error) {
-      console.error('❌ Exception in updateSlideContent tool:', error);
-      return {
-        success: false,
-        error: "An exception occurred when updating slide content",
-        slideId: slideId
-      };
-    }
-  },
+  // NO execute function - requires human approval
+  // In AI SDK v5, tools without execute functions automatically require approval
 });
 
-export const proposeSlideUpdate = tool({
-  description:
-    "Propose an update to slide content with improved HTML. This will show a preview for user approval.",
+// HITL: This tool requires human approval - NO execute function  
+export const createSlide = tool({
+  description: 'Create a new slide with specified template type and content. This requires user approval.',
   inputSchema: z.object({
-    slideId: z.string().describe("The ID of the slide to update"),
-    content: z.string().describe("The new HTML content for the slide"),
+    presentationId: z.string().describe('The ID of the presentation to add the slide to'),
+    templateType: z.string().describe('The template type for the new slide'),
+    title: z.string().describe('The title for the new slide'),
+    content: z.string().optional().describe('Optional content for the new slide'),
+    position: z.number().optional().describe('Optional position to insert the slide (0-based)'),
   }),
-  execute: async ({ slideId, content }) => {
-    console.log("🔍 Tool called: updateSlideContent (PREVIEW MODE)");
-    console.log("📝 SlideID:", slideId);
-    console.log("📄 Content length:", content.length, "characters");
-    console.log("📄 Content preview:", content.substring(0, 100) + "...");
-
-    try {
-      // Get the current slide to show what we're updating
-      console.log("🔍 Fetching slide from database...");
-      const currentSlide = await getSlideById(slideId);
-
-      if (!currentSlide) {
-        console.error("❌ Slide not found with ID:", slideId);
-        return {
-          success: false,
-          error: "Slide not found",
-          slideId,
-        };
-      }
-
-      console.log("✅ Found slide - returning proposed changes for approval");
-
-      // Return proposed changes without updating database
-      return {
-        success: true,
-        message: "Slide content update proposed - awaiting approval",
-        slideId,
-        currentContent: currentSlide.content,
-        proposedContent: content,
-        contentLength: content.length,
-        slideTitle: currentSlide.title,
-        requiresApproval: true,
-      };
-    } catch (error) {
-      console.error("❌ Exception in updateSlideContent tool:", error);
-      return {
-        success: false,
-        error: "An exception occurred when proposing slide content update",
-        slideId,
-      };
-    }
-  },
+  // NO execute function - requires human approval
 });
 
+// HITL: This tool requires human approval - NO execute function
+export const deleteSlide = tool({
+  description: 'Delete a slide from the presentation. This requires user approval.',
+  inputSchema: z.object({
+    slideId: z.string().describe('The ID of the slide to delete'),
+  }),
+  // NO execute function - requires human approval
+});
+
+// HITL: This tool requires human approval - NO execute function
+export const duplicateSlide = tool({
+  description: 'Create a copy of an existing slide. This requires user approval.',
+  inputSchema: z.object({
+    slideId: z.string().describe('The ID of the slide to duplicate'),
+    position: z.number().optional().describe('Optional position to insert the duplicated slide'),
+  }),
+  // NO execute function - requires human approval
+});
+
+// HITL: This tool requires human approval - NO execute function
+export const moveSlide = tool({
+  description: 'Move a slide to a new position in the presentation. This requires user approval.',
+  inputSchema: z.object({
+    slideId: z.string().describe('The ID of the slide to move'),
+    newPosition: z.number().describe('The new position for the slide (0-based)'),
+  }),
+  // NO execute function - requires human approval
+});
+
+// HITL: This tool requires human approval - NO execute function
+export const changeSlideTemplate = tool({
+  description: 'Change the template type of an existing slide while preserving content. This requires user approval.',
+  inputSchema: z.object({
+    slideId: z.string().describe('The ID of the slide to change template for'),
+    newTemplateType: z.string().describe('The new template type'),
+    preserveContent: z.boolean().optional().describe('Whether to preserve existing content during template change'),
+  }),
+  // NO execute function - requires human approval
+});
+
+// HITL: This tool requires human approval - NO execute function
+export const updateSlideImage = tool({
+  description: 'Update or generate a new image for a slide using an image prompt. This requires user approval.',
+  inputSchema: z.object({
+    slideId: z.string().describe('The ID of the slide to update image for'),
+    imagePrompt: z.string().describe('The prompt to generate the image'),
+    action: z.enum(['generate', 'remove']).describe('Whether to generate a new image or remove existing image'),
+  }),
+  // NO execute function - requires human approval
+});
+
+// HITL: This tool requires human approval - NO execute function
+export const applyTheme = tool({
+  description: 'Apply a theme to the entire presentation. This requires user approval.',
+  inputSchema: z.object({
+    presentationId: z.string().describe('The ID of the presentation to apply theme to'),
+    themeId: z.string().describe('The ID of the theme to apply'),
+  }),
+  // NO execute function - requires human approval
+});
+
+// This tool runs automatically - has execute function
 export const getSlideIdByNumber = tool({
   description: "Get the ID of a slide by its number in the presentation",
   inputSchema: z.object({
@@ -199,116 +161,56 @@ export const getSlideIdByNumber = tool({
       .describe("The number of the slide (1-based index)"),
   }),
   execute: async ({ presentationId, slideNumber }) => {
-    console.log(`🔍 Tool called: getSlideIdByNumber`);
-    console.log(`📝 PresentationID: ${presentationId}`);
-    console.log(`📄 SlideNumber: ${slideNumber}`);
+    console.log("🔍 Tool called: getSlideIdByNumber");
+    console.log("📝 PresentationID:", presentationId);
+    console.log("📝 SlideNumber:", slideNumber);
 
     try {
-      // Get all slides for the presentation
       const slides = await getSlidesByPresentation(presentationId);
 
       if (!slides || slides.length === 0) {
-        console.warn("⚠️ No slides found for presentation:", presentationId);
+        console.error("❌ No slides found for presentation:", presentationId);
         return {
           success: false,
           error: "No slides found for this presentation",
+          presentationId,
           slideNumber,
-          message: "This presentation doesn't have any slides yet. Would you like me to help you create the first slide?",
+          message: "No slides found for this presentation. Please check the presentation ID.",
         };
       }
 
-      console.log(`✅ Found ${slides.length} slides in presentation`);
-
-      // Slide numbers are 1-based, but array is 0-based
-      const index = slideNumber - 1;
-      if (index < 0 || index >= slides.length) {
-        console.warn(
-          `⚠️ Invalid slide number: ${slideNumber} (total slides: ${slides.length})`
-        );
+      if (slideNumber < 1 || slideNumber > slides.length) {
+        console.error("❌ Invalid slide number:", slideNumber, "for presentation with", slides.length, "slides");
         return {
           success: false,
-          error: `Invalid slide number. Please provide a number between 1 and ${slides.length}`,
+          error: "Invalid slide number",
+          presentationId,
           slideNumber,
           totalSlides: slides.length,
-          message: `Slide ${slideNumber} doesn't exist. This presentation has ${slides.length} slides (numbered 1-${slides.length}). Which slide would you like to work with?`,
+          message: `Invalid slide number ${slideNumber}. This presentation has ${slides.length} slides (numbered 1-${slides.length}).`,
         };
       }
 
-      const slide = slides[index];
-      console.log(`✅ Found slide at position ${slideNumber}:`);
-      console.log(`   - ID: ${slide.id}`);
-      console.log(`   - Type: ${slide.template_type}`);
-      console.log(`   - Title: ${slide.title || "(no title)"}`);
+      const slide = slides[slideNumber - 1]; // Convert to 0-based index
+      console.log("✅ Found slide:", slide.id);
 
       return {
         success: true,
         slideId: slide.id,
         slideNumber,
         totalSlides: slides.length,
+        slideTitle: slide.title,
         templateType: slide.template_type,
-        title: slide.title || null,
-        message: `Found Slide ${slideNumber} of ${slides.length}: "${slide.title || 'Untitled'}" (${slide.template_type} template)`,
+        message: `Found Slide ${slideNumber} of ${slides.length}: "${slide.title}" (ID: ${slide.id})`,
       };
     } catch (error) {
       console.error("❌ Exception in getSlideIdByNumber tool:", error);
       return {
         success: false,
-        error: "An exception occurred when fetching slide ID",
+        error: "An exception occurred when getting slide ID by number",
+        presentationId,
         slideNumber,
-        message: "There was an error finding the requested slide. Please try again.",
-      };
-    }
-  },
-});
-
-export const createSlide = tool({
-  description: 'Create a new slide with a specific template and optional content.',
-  inputSchema: z.object({
-    presentationId: z.string().describe('The ID of the presentation to add the slide to'),
-    templateType: z.string().describe('The template type for the new slide (e.g., "title-with-bullets")'),
-    title: z.string().optional().describe('The title for the new slide'),
-    content: z.string().optional().describe('The HTML content for the new slide'),
-    position: z.number().optional().describe('The position to insert the new slide at (0-indexed)'),
-  }),
-  execute: async ({ presentationId, templateType, title, content, position }) => {
-    try {
-      // Get current slide count for better context
-      const allSlides = await getSlidesByPresentation(presentationId);
-      const currentSlideCount = allSlides.length;
-      const newPosition = position !== undefined ? position : currentSlideCount;
-      
-      const newSlide = {
-        id: generateUUID(),
-        presentation_id: presentationId,
-        template_type: templateType,
-        title: title || 'New Slide',
-        content: content || '',
-        position: newPosition,
-        // Ensure all other SlideData fields are present
-        bulletPoints: [],
-        imagePrompt: null,
-        imageUrl: null,
-        isGeneratingImage: false,
-        isHidden: false,
-        isGenerating: false,
-      };
-
-      return {
-        success: true,
-        message: `Ready to create a new slide with the "${templateType}" template. This will be slide ${newPosition + 1} of ${currentSlideCount + 1} in your presentation.`,
-        newSlide,
-        templateType,
-        slideTitle: newSlide.title,
-        position: newPosition,
-        totalSlidesAfterCreation: currentSlideCount + 1,
-        requiresApproval: true,
-      };
-    } catch (error) {
-      console.error('❌ Error in createSlide tool:', error);
-      return {
-        success: false,
-        error: "Failed to create slide",
-        message: "There was an error preparing the new slide. Please try again.",
+        message: "There was an error finding the slide. Please try again.",
       };
     }
   },
@@ -373,170 +275,11 @@ export const createSlideWithAI = tool({
   },
 });
 
-export const deleteSlide = tool({
-  description: 'Delete a slide from the presentation.',
-  inputSchema: z.object({
-    slideId: z.string().describe('The ID of the slide to delete'),
-  }),
-  execute: async ({ slideId }) => {
-    try {
-      // Get the slide details for better context
-      const slide = await getSlideById(slideId);
-      if (!slide) {
-        return { 
-          success: false, 
-          error: 'Slide not found',
-          slideId,
-          message: "The slide you're trying to delete could not be found. It may have already been removed.",
-        };
-      }
-
-      // Get slide position and total count
-      const allSlides = await getSlidesByPresentation(slide.presentation_id);
-      const slidePosition = allSlides.findIndex(s => s.id === slideId) + 1;
-      const totalSlides = allSlides.length;
-
-      // Prevent deleting the last slide
-      if (totalSlides === 1) {
-        return {
-          success: false,
-          error: 'Cannot delete the last slide',
-          slideId,
-          message: "You cannot delete the last slide in your presentation. Please add another slide first, or consider editing this slide instead.",
-        };
-      }
-
-      return {
-        success: true,
-        message: `Ready to delete Slide ${slidePosition} of ${totalSlides}: "${slide.title || 'Untitled'}" (${slide.template_type} template). This action cannot be undone.`,
-        slideId,
-        slideTitle: slide.title,
-        slidePosition,
-        totalSlides,
-        templateType: slide.template_type,
-        requiresApproval: true,
-      };
-    } catch (error) {
-      console.error('❌ Error in deleteSlide tool:', error);
-      return {
-        success: false,
-        error: "Failed to prepare slide deletion",
-        slideId,
-        message: "There was an error preparing to delete the slide. Please try again.",
-      };
-    }
-  },
-});
-
-export const duplicateSlide = tool({
-  description: 'Duplicate an existing slide.',
-  inputSchema: z.object({
-    slideId: z.string().describe('The ID of the slide to duplicate'),
-  }),
-  execute: async ({ slideId }) => {
-    const originalSlide = await getSlideById(slideId);
-    if (!originalSlide) {
-      return { success: false, error: 'Original slide not found' };
-    }
-
-    const duplicatedSlide = {
-      ...originalSlide,
-      id: generateUUID(), // New ID for the duplicated slide
-    };
-
-    return {
-      success: true,
-      message: 'Slide duplication proposed.',
-      duplicatedSlide,
-      originalSlideId: slideId,
-      requiresApproval: true,
-    };
-  },
-});
-
-export const moveSlide = tool({
-  description: 'Move a slide to a new position.',
-  inputSchema: z.object({
-    slideId: z.string().describe('The ID of the slide to move'),
-    newPosition: z.number().describe('The new position for the slide (0-indexed)'),
-  }),
-  execute: async ({ slideId, newPosition }) => {
-    return {
-      success: true,
-      message: 'Slide move proposed.',
-      slideId,
-      newPosition,
-      requiresApproval: true,
-    };
-  },
-});
-
-const themeListForDescription = themes
-  .map(theme => `- ${theme.name} (ID: ${theme.id})`)
-  .join('\n');
-
-export const applyTheme = tool({
-  description: `Apply a theme to the presentation. The user can specify a theme by name. Use the following list to find the correct theme ID. Available themes:\n${themeListForDescription}`,
-  inputSchema: z.object({
-    themeId: z.string().describe('The ID of the theme to apply from the list in the description.'),
-  }),
-  execute: async ({ themeId }) => {
-    const theme = getThemeById(themeId);
-    if (!theme) {
-      return { success: false, error: 'Theme not found' };
-    }
-    return {
-      success: true,
-      message: `Theme "${theme.name}" proposed.`,
-      themeId: theme.id,
-      themeName: theme.name,
-      requiresApproval: true,
-    };
-  },
-});
-
-export const updateSlideImage = tool({
-  description: 'Generate or update the image for a slide',
-  inputSchema: z.object({
-    slideId: z.string().describe('The ID of the slide to update the image for'),
-    imagePrompt: z.string().describe('The prompt to generate a new image'),
-  }),
-  execute: async ({ slideId, imagePrompt }) => {
-    return {
-      success: true,
-      message: 'Slide image update proposed.',
-      slideId,
-      imagePrompt,
-      requiresApproval: true,
-    };
-  },
-});
-
-export const changeSlideTemplate = tool({
-  description: 'Change the template of a specific slide.',
-  inputSchema: z.object({
-    slideId: z.string().describe('The ID of the slide to change'),
-    newTemplateType: z.string().describe('The new template type for the slide'),
-  }),
-  execute: async ({ slideId, newTemplateType }) => {
-    // We can add validation for templateType if needed
-    return {
-      success: true,
-      message: 'Slide template change proposed.',
-      slideId,
-      newTemplateType,
-      requiresApproval: true,
-    };
-  },
-});
-
 export const slideTools = {
   getSlideContent: getSlideContent,
-  updateSlideContent: updateSlideContentTool,
-  proposeSlideUpdate: proposeSlideUpdate,
+  updateSlideContent: updateSlideContent,
   getSlideIdByNumber: getSlideIdByNumber,
   createSlide: createSlide,
-  createSlideWithAI: createSlideWithAI,
   deleteSlide: deleteSlide,
   duplicateSlide: duplicateSlide,
   moveSlide: moveSlide,

@@ -3,8 +3,7 @@
 import React, { FC, useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Wand2, GripVertical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Thread } from "./thread";
-import { MyRuntimeProvider } from "@/app/MyRuntimeProvider";
+import { HITLChat } from "./hitl-chat";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { useAssistantLayout } from "@/components/ui/assistant-layout";
 
@@ -172,9 +171,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
         
         {/* Chat thread */}
         <div className="flex-1 overflow-hidden">
-          <MyRuntimeProvider presentationId={presentationId}>
-            <Thread />
-          </MyRuntimeProvider>
+          <HITLChat presentationId={presentationId} />
         </div>
       </div>
     </TooltipProvider>
