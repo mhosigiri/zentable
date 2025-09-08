@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, getToolName, isToolUIPart } from 'ai';
 import { slideTools } from '@/lib/ai/slide-tools';
@@ -8,6 +8,7 @@ import { APPROVAL, getToolsRequiringConfirmation } from '@/lib/ai/hitl-utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getThemeById } from '@/lib/themes';
 import { HumanInTheLoopUIMessage, SlideTools } from '@/lib/ai/hitl-types';
+import { useMyRuntime } from '@/app/docs/[id]/MyRuntimeProvider';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, SendHorizontal, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -48,11 +49,14 @@ const getUserFriendlyToolName = (toolName: string): string => {
 interface HITLChatStyledProps {
   presentationId: string;
   className?: string;
+  onSlideUpdate?: (slideId: string, newContent: string | null) => void;
 }
 
-export function HITLChatStyled({ presentationId, className }: HITLChatStyledProps) {
+export function HITLChatStyled({ presentationId, className, onSlideUpdate }: HITLChatStyledProps) {
   const [input, setInput] = useState('');
   const { setTheme } = useTheme();
+  const slideManager = useMyRuntime();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { messages, sendMessage, addToolResult } = useChat<HumanInTheLoopUIMessage>({
     transport: new DefaultChatTransport({
       api: '/api/assistant-chat',
@@ -64,7 +68,7 @@ export function HITLChatStyled({ presentationId, className }: HITLChatStyledProp
     }),
   });
 
-  const toolsRequiringConfirmation = getToolsRequiringConfirmation(slideTools);
+  const toolsRequiringConfirmation = useMemo(() => getToolsRequiringConfirmation(slideTools), []);
   
   const pendingToolCallConfirmation = messages.some(m =>
     m.parts?.some(
@@ -80,6 +84,62 @@ export function HITLChatStyled({ presentationId, className }: HITLChatStyledProp
     messages[messages.length - 1]?.role === 'user' && 
     !pendingToolCallConfirmation;
 
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isAIProcessing]);
+
+  // Track processed tool calls to prevent infinite loops
+  const [processedToolCalls, setProcessedToolCalls] = useState<Set<string>>(new Set());
+  const [approvedToolCalls, setApprovedToolCalls] = useState<Set<string>>(new Set());
+
+  // Handle tool results and update client-side state
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role !== 'assistant' || !lastMessage.parts) return;
+
+    console.log('🔍 HITL: Checking last message parts:', lastMessage.parts);
+
+    lastMessage.parts.forEach((part: any, index: number) => {
+      console.log(`🔍 HITL: Part ${index}:`, {
+        isToolUIPart: isToolUIPart(part),
+        state: part.state,
+        hasOutput: !!part.output,
+        toolName: isToolUIPart(part) ? getToolName(part) : 'N/A',
+        output: part.output
+      });
+
+      if (isToolUIPart(part) && part.state === 'output-available' && part.output) {
+        const toolName = getToolName(part);
+        const toolCallId = part.toolCallId;
+        
+        // Check if we've already processed this tool call
+        if (processedToolCalls.has(toolCallId)) {
+          console.log(`⏭️ HITL: Skipping already processed tool call: ${toolCallId}`);
+          return;
+        }
+
+        // Check if this tool call has been approved by the user
+        if (approvedToolCalls.has(toolCallId)) {
+          console.log(`✅ HITL: Tool call ${toolCallId} has been approved, skipping`);
+          return;
+        }
+        
+        console.log(`🎯 HITL: Processing tool result for ${toolName}:`, part.output);
+        
+        // Don't automatically process any tools - let handleApprove handle them all
+        // This prevents the tool call from being marked as processed before user approval
+        console.log(`⏳ HITL: Tool ${toolName} is waiting for user approval`);
+      }
+    });
+  }, [messages, processedToolCalls, approvedToolCalls]);
+
   const handleApprove = async (toolCallId: string, toolName: string, toolInput: any) => {
     // Handle theme application on client side
     if (toolName === 'applyTheme' && toolInput && 'themeId' in toolInput && toolInput.themeId) {
@@ -89,6 +149,103 @@ export function HITLChatStyled({ presentationId, className }: HITLChatStyledProp
         setTheme(theme, presentationId);
       }
     }
+    
+    // Handle slide creation on client side - just like applyTheme
+    if (toolName === 'createSlide' && toolInput) {
+      console.log(`🎯 HITL: Creating slide directly from approval:`, toolInput);
+      try {
+        // Generate a proper UUID for the slide
+        const generateUUID = () => {
+          return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        };
+
+        const newSlide = {
+          id: generateUUID(), // Proper UUID
+          presentationId: presentationId,
+          templateType: toolInput.templateType || 'title-with-bullets',
+          title: toolInput.title || 'New Slide',
+          content: toolInput.content || '',
+          position: toolInput.position !== undefined ? toolInput.position : slideManager.slides.length,
+          bulletPoints: [],
+          imagePrompt: undefined,
+          imageUrl: undefined,
+          isGeneratingImage: false,
+          isHidden: false,
+          isGenerating: false,
+        };
+        
+        console.log(`🎯 HITL: Adding slide to client state:`, newSlide);
+        slideManager.addSlide(newSlide, newSlide.position);
+        console.log(`✅ HITL: Successfully added slide to client state`);
+      } catch (error) {
+        console.error(`❌ HITL: Error creating slide:`, error);
+      }
+    }
+
+    // Handle slide deletion
+    if (toolName === 'deleteSlide' && toolInput && toolInput.slideId) {
+      console.log(`🗑️ HITL: Removing slide from client state:`, toolInput.slideId);
+      const slideIndex = slideManager.slides.findIndex(s => s.id === toolInput.slideId);
+      if (slideIndex !== -1) {
+        slideManager.deleteSlide(slideIndex);
+        console.log(`✅ HITL: Successfully deleted slide`);
+      }
+    }
+
+    // Handle slide duplication
+    if (toolName === 'duplicateSlide' && toolInput && toolInput.slideId) {
+      console.log(`📋 HITL: Duplicating slide in client state:`, toolInput.slideId);
+      const slideIndex = slideManager.slides.findIndex(s => s.id === toolInput.slideId);
+      if (slideIndex !== -1) {
+        slideManager.duplicateSlide(slideIndex);
+        console.log(`✅ HITL: Successfully duplicated slide`);
+      }
+    }
+
+    // Handle slide movement
+    if (toolName === 'moveSlide' && toolInput && toolInput.slideId && toolInput.newPosition !== undefined) {
+      console.log(`🔄 HITL: Moving slide in client state:`, toolInput.slideId, 'to position', toolInput.newPosition);
+      const oldIndex = slideManager.slides.findIndex(s => s.id === toolInput.slideId);
+      if (oldIndex !== -1) {
+        slideManager.reorderSlides(oldIndex, toolInput.newPosition);
+        console.log(`✅ HITL: Successfully moved slide`);
+      }
+    }
+
+    // Handle template change
+    if (toolName === 'changeSlideTemplate' && toolInput && toolInput.slideId && toolInput.newTemplateType) {
+      console.log(`🎨 HITL: Changing slide template in client state:`, toolInput.slideId, 'to', toolInput.newTemplateType);
+      slideManager.updateSlideById(toolInput.slideId, { templateType: toolInput.newTemplateType });
+      console.log(`✅ HITL: Successfully changed slide template`);
+    }
+
+    // Handle slide content update
+    if (toolName === 'updateSlideContent' && toolInput && toolInput.slideId) {
+      console.log(`📝 HITL: Updating slide content in client state:`, toolInput.slideId);
+      const updates: any = {};
+      if (toolInput.title) updates.title = toolInput.title;
+      if (toolInput.content) updates.content = toolInput.content;
+      if (toolInput.bulletPoints) updates.bulletPoints = toolInput.bulletPoints;
+      slideManager.updateSlideById(toolInput.slideId, updates);
+      console.log(`✅ HITL: Successfully updated slide content`);
+    }
+
+    // Handle slide image update
+    if (toolName === 'updateSlideImage' && toolInput && toolInput.slideId) {
+      console.log(`🖼️ HITL: Updating slide image in client state:`, toolInput.slideId);
+      const updates: any = {};
+      if (toolInput.imagePrompt) updates.imagePrompt = toolInput.imagePrompt;
+      if (toolInput.imageUrl) updates.imageUrl = toolInput.imageUrl;
+      slideManager.updateSlideById(toolInput.slideId, updates);
+      console.log(`✅ HITL: Successfully updated slide image`);
+    }
+    
+    // Mark this tool call as approved
+    setApprovedToolCalls(prev => new Set(prev).add(toolCallId));
     
     await addToolResult({
       toolCallId,
@@ -284,6 +441,9 @@ export function HITLChatStyled({ presentationId, className }: HITLChatStyledProp
               </div>
             </div>
           )}
+
+          {/* Scroll anchor */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Scroll to bottom button */}

@@ -171,7 +171,7 @@ export const AssistantSidebar: FC<AssistantSidebarProps> = ({
         
         {/* Chat thread */}
         <div className="flex-1 overflow-hidden">
-          <HITLChatStyled presentationId={presentationId} />
+          <HITLChatStyled presentationId={presentationId} onSlideUpdate={onSlideUpdate} />
         </div>
       </div>
     </TooltipProvider>

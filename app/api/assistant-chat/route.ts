@@ -12,6 +12,7 @@ import {
 import { getSlidesByPresentation } from '@/lib/slides';
 import { DatabaseService } from '@/lib/database';
 import { slideTools } from '@/lib/ai/slide-tools';
+import { processToolCalls, slideExecuteFunctions } from '@/lib/ai/hitl-utils';
 
 import { createClient } from '@/lib/supabase/server';
 import { withCreditCheck } from '@/lib/credits';
@@ -340,7 +341,7 @@ REMINDERS:
     
 
     
-    // For HITL to work properly, we need to use createUIMessageStream
+    // For HITL to work properly, we need to use createUIMessageStream with processToolCalls
     const stream = createUIMessageStream({
       originalMessages: messages,
       execute: async ({ writer }) => {
@@ -367,7 +368,17 @@ REMINDERS:
           stopWhen: stepCountIs(5),
         });
 
-        writer.merge(result.toUIMessageStream({ originalMessages: messages }));
+        // Process the result through HITL system
+        const processedMessages = await processToolCalls(
+          {
+            tools: slideTools,
+            writer,
+            messages,
+          },
+          slideExecuteFunctions
+        );
+
+        writer.merge(result.toUIMessageStream({ originalMessages: processedMessages }));
       },
     });
 

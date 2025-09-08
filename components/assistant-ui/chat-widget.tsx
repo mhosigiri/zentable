@@ -79,7 +79,7 @@ export const ChatWidget: FC<ChatWidgetProps> = ({
           {!isMinimized && (
             <div className="flex flex-1 flex-col overflow-hidden">
               <div className="h-full w-full">
-                <HITLChatStyled presentationId={presentationId} />
+                <HITLChatStyled presentationId={presentationId} onSlideUpdate={onSlideUpdate} />
               </div>
             </div>
           )}

@@ -10,6 +10,7 @@ import {
 import { getSlideById, updateSlideContent, getSlidesByPresentation } from '@/lib/slides';
 import { generateUUID } from '@/lib/uuid';
 import { themes, getThemeById } from '@/lib/themes';
+import { supabase } from '@/lib/supabase';
 
 // Approval constants for HITL
 export const APPROVAL = {
@@ -197,8 +198,31 @@ export const slideExecuteFunctions = {
         isGenerating: false,
       };
 
-      // Here you would call your actual slide creation function
-      // For now, we'll return the prepared slide data
+      // Actually save the slide to the database
+      const { error } = await supabase
+        .from('slides')
+        .insert([{
+          id: newSlide.id,
+          presentation_id: presentationId,
+          template_type: templateType,
+          title: newSlide.title,
+          content: newSlide.content,
+          bullet_points: newSlide.bulletPoints,
+          image_url: newSlide.imageUrl,
+          image_prompt: newSlide.imagePrompt,
+          position: newPosition,
+          is_hidden: newSlide.isHidden,
+          is_generating: newSlide.isGenerating,
+          is_generating_image: newSlide.isGeneratingImage,
+        }]);
+
+      if (error) {
+        console.error('❌ Database error creating slide:', error);
+        throw error;
+      }
+
+      console.log('✅ Successfully created slide in database:', newSlide.id);
+
       return {
         success: true,
         message: `Created new slide with "${templateType}" template as slide ${newPosition + 1}`,
