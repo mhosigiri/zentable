@@ -27,6 +27,7 @@ import {
 import { DatabaseService } from '@/lib/database';
 import { generateUUID, generatePrefixedId } from '@/lib/uuid';
 import { createClient } from '@/lib/supabase/client';
+import { useCreditErrorHandler } from '@/hooks/use-credit-error-handler';
 
 // Create database service with proper user-authenticated client
 const browserClient = createClient();
@@ -36,6 +37,7 @@ import { PresentationExamples, type Example } from '@/components/presentation-ex
 export default function GeneratePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { handleApiResponse } = useCreditErrorHandler();
   const [selectedType, setSelectedType] = useState('presentation');
   const [prompt, setPrompt] = useState('');
   const [cardCount, setCardCount] = useState('5');
@@ -71,8 +73,58 @@ export default function GeneratePage() {
     return generateUUID();
   };
 
+  // Check if user has enough credits before starting generation
+  const checkCreditsBeforeGenerate = async (): Promise<boolean> => {
+    try {
+      // Get user's current credit balance by calling our credit API
+      const response = await fetch('/api/user/credits', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        // If we can't check credits, let the normal flow handle it
+        return true;
+      }
+
+      const creditData = await response.json();
+      const currentCredits = creditData.balance || 0;
+      const requiredCredits = 10; // Cost for presentation_create
+
+      if (currentCredits < requiredCredits) {
+        // Create a mock 402 response to trigger our error handler
+        const mockResponse = new Response(JSON.stringify({
+          error: `You need ${requiredCredits} credits to generate a presentation, but only have ${currentCredits}.`,
+          creditsRequired: requiredCredits,
+          currentBalance: currentCredits
+        }), {
+          status: 402,
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        await handleApiResponse(mockResponse);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Credit check failed:', error);
+      // If credit check fails, let the normal flow handle it
+      return true;
+    }
+  };
+
   const handleGenerateOutline = async () => {
     if (!prompt.trim()) return;
+
+    // Check credits before starting generation
+    const hasCredits = await checkCreditsBeforeGenerate();
+    if (!hasCredits) {
+      // Credit error toast has already been shown by checkCreditsBeforeGenerate
+      return;
+    }
 
     setIsGenerating(true);
     

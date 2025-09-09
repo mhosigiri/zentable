@@ -35,6 +35,12 @@ export async function fetchGeneratedSlide(section: GenerationSection, documentDa
     }),
   });
 
+  // Handle credit errors (402) specially
+  if (response.status === 402) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`Insufficient credits: ${errorData.error || 'Not enough credits to generate slide'}`);
+  }
+
   if (!response.ok) {
     throw new Error('Failed to generate slide content from API');
   }
@@ -76,6 +82,13 @@ export async function fetchGeneratedSlideForServer(section: GenerationSection, d
       imageStyle: documentData?.imageStyle || 'professional',
     }),
   });
+
+  // Handle credit errors (402) specially
+  if (response.status === 402) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error(`[Server-side Fetch] Credit error:`, errorData);
+    throw new Error(`Insufficient credits: ${errorData.error || 'Not enough credits to generate slide'}`);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -119,6 +132,12 @@ export async function fetchGeneratedImage(
       imageStyle,
     }),
   });
+
+  // Handle credit errors (402) specially
+  if (response.status === 402) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`Insufficient credits: ${errorData.error || 'Not enough credits to generate image'}`);
+  }
 
   if (!response.ok) {
     throw new Error('Failed to generate image from API');
